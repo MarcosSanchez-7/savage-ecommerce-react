@@ -1,0 +1,8 @@
+
+{
+  "name": "SAVAGE Streetwear & Jewelry",
+  "description": "A high-end urban fashion landing page featuring premium streetwear and aggressive jewelry designs with an AI-powered styling assistant.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

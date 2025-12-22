@@ -1,0 +1,164 @@
+
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useShop } from '../context/ShopContext';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import { ShoppingBag, ArrowLeft, Star, Share2 } from 'lucide-react';
+
+const ProductDetail: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { products, addToCart, cart } = useShop();
+
+    const product = products.find(p => p.id === id);
+
+    // State
+    const [selectedImage, setSelectedImage] = useState(0);
+    const [selectedSize, setSelectedSize] = useState<string>('');
+
+    if (!product) {
+        return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">Producto no encontrado</div>;
+    }
+
+    const handleAddToCart = () => {
+        if (!selectedSize && product.sizes.length > 0) {
+            alert('Por favor selecciona un talle');
+            return;
+        }
+        addToCart(product, selectedSize || 'One Size');
+    };
+
+    const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
+    return (
+        <div className="min-h-screen bg-background-dark text-white">
+            <Navbar cartCount={cartCount} />
+
+            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"
+                >
+                    <ArrowLeft size={20} /> Volver
+                </button>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    {/* Gallery Section */}
+                    <div className="space-y-6">
+                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface-dark border border-white/5 relative group">
+                            <img
+                                src={product.images[selectedImage]}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                            />
+                            {/* Image Navigation (Optional if multiple images) */}
+                            {product.images.length > 1 && (
+                                <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={() => setSelectedImage(prev => prev > 0 ? prev - 1 : product.images.length - 1)}>
+                                        <ArrowLeft size={20} />
+                                    </button>
+                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={() => setSelectedImage(prev => prev < product.images.length - 1 ? prev + 1 : 0)}>
+                                        <ArrowLeft size={20} className="rotate-180" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {product.images.length > 1 && (
+                            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                                {product.images.map((img, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setSelectedImage(idx)}
+                                        className={`relative w-24 aspect-square rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${selectedImage === idx ? 'border-primary' : 'border-transparent hover:border-gray-600'}`}
+                                    >
+                                        <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Details Section */}
+                    <div className="flex flex-col">
+                        <div className="mb-2 flex gap-2">
+                            {product.tags.map(tag => (
+                                <span key={tag} className="px-2 py-1 bg-white/10 text-xs font-bold uppercase rounded text-primary border border-primary/20">{tag}</span>
+                            ))}
+                            {product.isNew && <span className="px-2 py-1 bg-primary text-xs font-bold uppercase rounded text-white">NUEVO</span>}
+                        </div>
+
+                        <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4 leading-none">{product.name}</h1>
+
+                        <div className="flex items-end gap-4 mb-8">
+                            <span className="text-4xl font-bold font-mono text-primary">Gs. {product.price.toLocaleString()}</span>
+                            {product.originalPrice && (
+                                <span className="text-xl text-gray-500 line-through mb-1">Gs. {product.originalPrice.toLocaleString()}</span>
+                            )}
+                        </div>
+
+                        <p className="text-gray-400 mb-8 leading-relaxed">
+                            {product.description || "Diseñada con los mejores materiales para redefinir el streetwear moderno. Combina estilo urbano con comodidad premium."}
+                        </p>
+
+                        {/* Size Selector */}
+                        <div className="mb-10">
+                            <div className="flex justify-between items-center mb-4">
+                                <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
+                                <button className="text-xs text-primary underline">Guía de talles</button>
+                            </div>
+                            <div className="flex flex-wrap gap-3">
+                                {product.sizes.map(size => (
+                                    <button
+                                        key={size}
+                                        onClick={() => setSelectedSize(size)}
+                                        className={`h-12 w-20 flex items-center justify-center border rounded font-mono font-medium transition-all ${selectedSize === size ? 'bg-white text-black border-white' : 'border-gray-800 text-gray-400 hover:border-gray-600'}`}
+                                    >
+                                        {size}
+                                    </button>
+                                ))}
+                            </div>
+                            {product.fit && <p className="mt-4 text-sm text-gray-500">Fit: <span className="text-white font-medium">{product.fit}</span></p>}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="mt-auto space-y-4">
+                            <button
+                                onClick={handleAddToCart}
+                                className="w-full py-5 bg-primary hover:bg-red-700 text-white font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg"
+                            >
+                                <ShoppingBag size={24} /> Agregar al Carrito
+                            </button>
+
+                            <div className="flex gap-4">
+                                <button className="flex-1 py-3 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
+                                    <Star size={16} /> Guardar
+                                </button>
+                                <button className="flex-1 py-3 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
+                                    <Share2 size={16} /> Compartir
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 border-t border-gray-800 pt-6 space-y-3">
+                            <div className="flex items-center gap-3 text-sm text-gray-400">
+                                <span className="material-symbols-outlined text-green-500">check_circle</span>
+                                Envío gratis en compras mayores a Gs. 200.000
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-gray-400">
+                                <span className="material-symbols-outlined text-green-500">check_circle</span>
+                                Devoluciones gratis hasta 30 días
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+
+            <Footer />
+        </div>
+    );
+};
+
+export default ProductDetail;

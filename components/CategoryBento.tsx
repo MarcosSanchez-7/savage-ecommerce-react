@@ -1,0 +1,82 @@
+
+import React from 'react';
+import { useShop } from '../context/ShopContext';
+import { Link } from 'react-router-dom';
+
+const CategoryBento: React.FC = () => {
+  const { bannerBento } = useShop();
+
+  // Fallback defaults in case context is empty (shouldn't happen with default state)
+  const large = bannerBento.find(b => b.id === 'large') || {
+    title: 'Joyas',
+    subtitle: '',
+    buttonText: 'Ver Colección',
+    image: '',
+    link: '/category/Joyas'
+  };
+  const topRight = bannerBento.find(b => b.id === 'top_right') || {
+    title: 'Ropa',
+    buttonText: 'Explorar',
+    image: '',
+    link: '/category/Ropa'
+  };
+  const bottomRight = bannerBento.find(b => b.id === 'bottom_right') || {
+    title: 'Nuevos Ingresos',
+    subtitle: '',
+    image: '',
+    link: '/category/New'
+  };
+
+  return (
+    <section className="py-12 px-6 lg:px-12 max-w-[1400px] mx-auto">
+      <h2 className="text-3xl font-bold uppercase tracking-tight mb-8">Categorías</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-4 h-auto md:h-[600px]">
+        {/* JOYAS - Large Block */}
+        <Link to={large.link} className="relative group md:col-span-2 md:row-span-2 rounded overflow-hidden cursor-pointer block">
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+            style={{ backgroundImage: `url('${large.image}')` }}
+          />
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors" />
+          <div className="absolute bottom-0 left-0 p-8">
+            <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">{large.title}</h3>
+            {large.subtitle && <p className="text-gray-200 text-sm max-w-xs mb-4">{large.subtitle}</p>}
+            <span className="inline-flex items-center text-sm font-bold uppercase tracking-widest border-b border-white pb-1 group-hover:text-primary group-hover:border-primary transition-colors">
+              {large.buttonText}
+            </span>
+          </div>
+        </Link>
+
+        {/* ROPA - Medium Block */}
+        <Link to={topRight.link} className="relative group md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer block">
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+            style={{ backgroundImage: `url('${topRight.image}')` }}
+          />
+          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+          <div className="absolute bottom-0 left-0 p-6">
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">{topRight.title}</h3>
+            <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
+              {topRight.buttonText}
+            </span>
+          </div>
+        </Link>
+
+        {/* NUEVOS INGRESOS - Medium Block */}
+        <Link to={bottomRight.link} className="relative group md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer bg-surface-dark border border-gray-800 flex items-center justify-center block">
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"
+            style={{ backgroundImage: `url('${bottomRight.image}')` }}
+          />
+          <div className="relative z-10 text-center p-6">
+            <span className="material-symbols-outlined text-4xl mb-3 text-primary">bolt</span>
+            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">{bottomRight.title}</h3>
+            {bottomRight.subtitle && <p className="text-accent-gray text-xs uppercase tracking-wide">{bottomRight.subtitle}</p>}
+          </div>
+        </Link>
+      </div>
+    </section>
+  );
+};
+
+export default CategoryBento;
