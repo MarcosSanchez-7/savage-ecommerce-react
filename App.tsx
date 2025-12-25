@@ -9,8 +9,6 @@ import { ShopProvider } from './context/ShopContext';
 
 const App: React.FC = () => {
   const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
-  console.log('Current App Mode:', import.meta.env.VITE_APP_MODE, '| isStockApp:', isStockApp);
-
   return (
     <ShopProvider>
       <BrowserRouter>

@@ -30,9 +30,9 @@ const CategoryBento: React.FC = () => {
   return (
     <section className="py-12 px-6 lg:px-12 max-w-[1400px] mx-auto">
       <h2 className="text-3xl font-bold uppercase tracking-tight mb-8">Categorías</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-4 h-auto md:h-[600px]">
+      <div className="flex md:grid md:grid-cols-3 md:grid-rows-2 gap-4 h-[400px] md:h-[600px] overflow-x-auto snap-x snap-mandatory scrollbar-hide">
         {/* JOYAS - Large Block */}
-        <Link to={large.link} className="relative group md:col-span-2 md:row-span-2 rounded overflow-hidden cursor-pointer block">
+        <Link to={large.link} className="relative group min-w-[85vw] md:min-w-0 md:col-span-2 md:row-span-2 rounded overflow-hidden cursor-pointer block snap-center">
           <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
             style={{ backgroundImage: `url('${large.image}')` }}
@@ -48,7 +48,7 @@ const CategoryBento: React.FC = () => {
         </Link>
 
         {/* ROPA - Medium Block */}
-        <Link to={topRight.link} className="relative group md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer block">
+        <Link to={topRight.link} className="relative group min-w-[85vw] md:min-w-0 md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer block snap-center">
           <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
             style={{ backgroundImage: `url('${topRight.image}')` }}
@@ -63,15 +63,15 @@ const CategoryBento: React.FC = () => {
         </Link>
 
         {/* NUEVOS INGRESOS - Medium Block */}
-        <Link to={bottomRight.link} className="relative group md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer bg-surface-dark border border-gray-800 flex items-center justify-center block">
+        <Link to={bottomRight.link} className="relative group min-w-[85vw] md:min-w-0 md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer block snap-center">
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
             style={{ backgroundImage: `url('${bottomRight.image}')` }}
           />
-          <div className="relative z-10 text-center p-6">
-            <span className="material-symbols-outlined text-4xl mb-3 text-primary">bolt</span>
+          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+          <div className="absolute bottom-0 left-0 p-6">
             <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">{bottomRight.title}</h3>
-            {bottomRight.subtitle && <p className="text-accent-gray text-xs uppercase tracking-wide">{bottomRight.subtitle}</p>}
+            {bottomRight.subtitle && <p className="text-gray-300 text-xs uppercase tracking-wide group-hover:text-white transition-colors">{bottomRight.subtitle}</p>}
           </div>
         </Link>
       </div>

@@ -128,14 +128,14 @@ const CartDrawer: React.FC = () => {
                                         <span className="font-mono font-bold">Gs. {item.price.toLocaleString()}</span>
                                         <div className="flex items-center gap-3 bg-black rounded-lg px-2 py-1 border border-gray-800">
                                             <button
-                                                onClick={() => updateQuantity(item.id, -1)}
+                                                onClick={() => updateQuantity(item.id, item.selectedSize, -1)}
                                                 className="p-1 hover:text-primary transition-colors disabled:opacity-50"
                                             >
                                                 <Minus size={12} />
                                             </button>
                                             <span className="text-sm w-4 text-center">{item.quantity}</span>
                                             <button
-                                                onClick={() => updateQuantity(item.id, 1)}
+                                                onClick={() => updateQuantity(item.id, item.selectedSize, 1)}
                                                 className="p-1 hover:text-primary transition-colors"
                                             >
                                                 <Plus size={12} />

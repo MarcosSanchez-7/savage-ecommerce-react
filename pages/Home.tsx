@@ -12,12 +12,11 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 const Home: React.FC = () => {
-    const { products, addToCart, cart } = useShop();
+    const { products, addToCart, cart, categories } = useShop();
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    // Get unique categories
-    const categories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+    // Categories are now directly from context (objects)
 
     return (
         <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
@@ -35,29 +34,43 @@ const Home: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {products.slice(0, 8).map(product => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                onAddToCart={() => addToCart(product)}
-                            />
-                        ))}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                        {/* Sort by isFeatured first, then fallback to original order */}
+                        {products
+                            .sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))
+                            .slice(0, 8)
+                            .map(product => (
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    onAddToCart={() => addToCart(product)}
+                                />
+                            ))}
                     </div>
                 </section>
 
                 {/* Dynamic Category Sections */}
-                {categories.map(category => {
+                {categories.map(categoryObj => {
+                    const category = categoryObj.id;
                     const categoryProducts = products.filter(p => p.category === category);
-                    if (categoryProducts.length === 0) return null;
-                    const displayProducts = categoryProducts.slice(0, 8);
+                    if (categoryProducts.length === 0 && category !== 'huerfanos') return null; // Logic to skip empty unless needed
+                    if (categoryProducts.length === 0) return null; // Safe check
+
+                    const displayProducts = categoryProducts
+                        .sort((a, b) => (a.isCategoryFeatured === b.isCategoryFeatured ? 0 : a.isCategoryFeatured ? -1 : 1))
+                        .slice(0, 8);
+
                     const hasMore = categoryProducts.length > 8;
 
                     return (
-                        <section key={category} className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900">
+                        <section
+                            key={category}
+                            className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
+                            style={{ opacity: categoryObj.opacity !== undefined ? categoryObj.opacity : 1 }}
+                        >
                             <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                                 <div>
-                                    <h2 className="text-3xl font-bold uppercase tracking-tight">{category}</h2>
+                                    <h2 className="text-3xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
                                     <p className="text-accent-gray mt-1 text-sm">Explora nuestra colección de {category}</p>
                                 </div>
                                 {hasMore && (
@@ -70,7 +83,7 @@ const Home: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {displayProducts.map(product => (
                                     <ProductCard
                                         key={product.id}

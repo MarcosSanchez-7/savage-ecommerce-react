@@ -2,6 +2,7 @@ export interface Product {
   id: string;
   name: string;
   category: string;
+  subcategory?: string;
   type?: 'clothing' | 'footwear'; // New field for Type Selector
   price: number;
   originalPrice?: number;
@@ -10,6 +11,8 @@ export interface Product {
   fit?: string;
   tags: string[];
   isNew?: boolean;
+  isFeatured?: boolean; // Featured in Home "Destacados"
+  isCategoryFeatured?: boolean; // Featured within its specific category
   description?: string;
 }
 
@@ -17,6 +20,8 @@ export interface Category {
   id: string;
   name: string;
   image?: string;
+  subcategories?: string[];
+  opacity?: number;
 }
 
 export interface HeroSlide {
@@ -24,6 +29,7 @@ export interface HeroSlide {
   title: string;
   subtitle: string;
   buttonText: string;
+  buttonLink?: string;
   image: string;
 }
 
@@ -58,6 +64,8 @@ export interface SocialConfig {
   whatsapp: string;
   address?: string;
   shippingText?: string;
+  extraShippingInfo?: string;
+  topHeaderText?: string;
 }
 
 export interface BlogPost {

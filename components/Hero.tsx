@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useShop } from '../context/ShopContext';
+import { Link } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight
 } from 'lucide-react';
@@ -57,9 +58,12 @@ const Hero: React.FC = () => {
           {current.subtitle}
         </h2>
         <div className="flex flex-wrap justify-center gap-4">
-          <button className="bg-primary hover:bg-red-700 text-white h-12 px-8 rounded font-bold text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-red-900/20">
+          <Link
+            to={current.buttonLink || '/'}
+            className="bg-primary hover:bg-red-700 text-white h-12 px-8 rounded font-bold text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-red-900/20 flex items-center justify-center"
+          >
             {current.buttonText || 'EXPLORAR AHORA'}
-          </button>
+          </Link>
           <button className="bg-transparent border border-white/30 hover:border-white text-white h-12 px-8 rounded font-bold text-sm tracking-[0.1em] uppercase transition-all hover:bg-white/5 active:scale-95">
             Ver Lookbook
           </button>

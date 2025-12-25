@@ -9,13 +9,17 @@ import { ShoppingBag, ArrowLeft, Star, Share2 } from 'lucide-react';
 const ProductDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { products, addToCart, cart } = useShop();
+    const { products, addToCart, cart, socialConfig } = useShop();
 
     const product = products.find(p => p.id === id);
 
     // State
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
+
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [id]);
 
     if (!product) {
         return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">Producto no encontrado</div>;
@@ -83,7 +87,7 @@ const ProductDetail: React.FC = () => {
                     {/* Details Section */}
                     <div className="flex flex-col">
                         <div className="mb-2 flex gap-2">
-                            {product.tags.map(tag => (
+                            {product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA'].includes(t.toUpperCase())).map(tag => (
                                 <span key={tag} className="px-2 py-1 bg-white/10 text-xs font-bold uppercase rounded text-primary border border-primary/20">{tag}</span>
                             ))}
                             {product.isNew && <span className="px-2 py-1 bg-primary text-xs font-bold uppercase rounded text-white">NUEVO</span>}
@@ -93,20 +97,22 @@ const ProductDetail: React.FC = () => {
 
                         <div className="flex items-end gap-4 mb-8">
                             <span className="text-4xl font-bold font-mono text-primary">Gs. {product.price.toLocaleString()}</span>
-                            {product.originalPrice && (
+                            {product.originalPrice && product.originalPrice > product.price && (
                                 <span className="text-xl text-gray-500 line-through mb-1">Gs. {product.originalPrice.toLocaleString()}</span>
                             )}
                         </div>
 
-                        <p className="text-gray-400 mb-8 leading-relaxed">
-                            {product.description || "Diseñada con los mejores materiales para redefinir el streetwear moderno. Combina estilo urbano con comodidad premium."}
-                        </p>
+                        {product.description && (
+                            <p className="text-gray-400 mb-8 leading-relaxed whitespace-pre-line">
+                                {product.description}
+                            </p>
+                        )}
 
                         {/* Size Selector */}
                         <div className="mb-10">
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
-                                <button className="text-xs text-primary underline">Guía de talles</button>
+                                {/* <button className="text-xs text-primary underline">Guía de talles</button> */}
                             </div>
                             <div className="flex flex-wrap gap-3">
                                 {product.sizes.map(size => (
@@ -131,24 +137,24 @@ const ProductDetail: React.FC = () => {
                                 <ShoppingBag size={24} /> Agregar al Carrito
                             </button>
 
-                            <div className="flex gap-4">
+                            {/* <div className="flex gap-4">
                                 <button className="flex-1 py-3 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
                                     <Star size={16} /> Guardar
                                 </button>
                                 <button className="flex-1 py-3 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
                                     <Share2 size={16} /> Compartir
                                 </button>
-                            </div>
+                            </div> */}
                         </div>
 
                         <div className="mt-8 border-t border-gray-800 pt-6 space-y-3">
                             <div className="flex items-center gap-3 text-sm text-gray-400">
                                 <span className="material-symbols-outlined text-green-500">check_circle</span>
-                                Envío gratis en compras mayores a Gs. 200.000
+                                {socialConfig.shippingText || 'Envío gratis en compras mayores a Gs. 200.000'}
                             </div>
                             <div className="flex items-center gap-3 text-sm text-gray-400">
                                 <span className="material-symbols-outlined text-green-500">check_circle</span>
-                                Devoluciones gratis hasta 30 días
+                                {socialConfig.extraShippingInfo || 'Devoluciones gratis hasta 30 días'}
                             </div>
                         </div>
 

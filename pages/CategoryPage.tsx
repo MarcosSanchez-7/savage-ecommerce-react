@@ -9,11 +9,21 @@ import { ArrowLeft } from 'lucide-react';
 
 const CategoryPage: React.FC = () => {
     const { category } = useParams<{ category: string }>();
-    const { products, addToCart, cart } = useShop();
+    const { products, categories, addToCart, cart } = useShop();
+    const [activeSubcategory, setActiveSubcategory] = React.useState<string>('ALL');
 
-    const categoryProducts = products.filter(
-        p => p.category.toLowerCase() === category?.toLowerCase()
-    );
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [category]);
+
+    const currentCategoryInfo = categories.find(c => c.id.toLowerCase() === category?.toLowerCase() || c.name.toLowerCase() === category?.toLowerCase());
+
+    const categoryProducts = products.filter(p => {
+        const matchesCategory = p.category.toLowerCase() === category?.toLowerCase();
+        if (!matchesCategory) return false;
+        if (activeSubcategory === 'ALL') return true;
+        return p.subcategory === activeSubcategory;
+    });
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -32,8 +42,29 @@ const CategoryPage: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Subcategories Filter */}
+                {currentCategoryInfo?.subcategories && currentCategoryInfo.subcategories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-8 animate-in fade-in slide-in-from-left-4 duration-500">
+                        <button
+                            onClick={() => setActiveSubcategory('ALL')}
+                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === 'ALL' ? 'bg-primary border-primary text-white' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
+                        >
+                            VER TODO
+                        </button>
+                        {currentCategoryInfo.subcategories.map(sub => (
+                            <button
+                                key={sub}
+                                onClick={() => setActiveSubcategory(sub)}
+                                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === sub ? 'bg-white text-black border-white' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
+                            >
+                                {sub}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {categoryProducts.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {categoryProducts.map(product => (
                             <ProductCard
                                 key={product.id}

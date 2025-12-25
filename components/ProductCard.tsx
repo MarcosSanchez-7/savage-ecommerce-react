@@ -37,14 +37,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
               Nuevo
             </div>
           )}
-          {product.tags && product.tags.map(tag => (
+          {product.tags && product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA'].includes(t.toUpperCase())).map(tag => (
             <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
               {tag}
             </div>
           ))}
         </div>
 
-        {product.originalPrice && (
+        {product.originalPrice && product.originalPrice > product.price && (
           <div className="absolute top-3 right-3 bg-red-800 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
             -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
           </div>
@@ -64,10 +64,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           </p>
         </div>
         <div className="text-right">
-          <p className={`font-medium ${product.originalPrice ? 'text-primary' : 'text-white'}`}>
+          <p className={`font-medium ${product.originalPrice && product.originalPrice > product.price ? 'text-primary' : 'text-white'}`}>
             Gs. {product.price.toLocaleString()}
           </p>
-          {product.originalPrice && (
+          {product.originalPrice && product.originalPrice > product.price && (
             <p className="text-gray-500 line-through text-xs font-normal">Gs. {product.originalPrice.toLocaleString()}</p>
           )}
         </div>

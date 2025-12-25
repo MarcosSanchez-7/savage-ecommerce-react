@@ -21,6 +21,7 @@ interface ShopContextType {
     removeFromCart: (productId: string, size: string) => void;
     updateQuantity: (productId: string, size: string, delta: number) => void;
     addProduct: (product: Product) => void;
+    updateProduct: (product: Product) => void;
     deleteProduct: (productId: string) => void;
     updateHeroSlides: (slides: HeroSlide[]) => void;
     createOrder: (order: Order) => void;
@@ -28,11 +29,13 @@ interface ShopContextType {
     deleteOrder: (orderId: string) => void;
     clearOrders: () => void;
     addBlogPost: (post: BlogPost) => void;
+    updateBlogPost: (post: BlogPost) => void;
     deleteBlogPost: (id: string) => void;
     updateSocialConfig: (config: SocialConfig) => void;
     cartTotal: number;
     categories: Category[];
     addCategory: (category: Category) => void;
+    updateCategory: (category: Category) => void;
     deleteCategory: (categoryId: string) => void;
     deliveryZones: DeliveryZone[];
     addDeliveryZone: (zone: DeliveryZone) => void;
@@ -44,6 +47,7 @@ interface ShopContextType {
     updateBannerBento: (banners: BannerBento[]) => void;
     lifestyleConfig: LifestyleConfig;
     updateLifestyleConfig: (config: LifestyleConfig) => void;
+    saveAllData: () => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -62,6 +66,7 @@ const DEFAULT_HERO_SLIDES: HeroSlide[] = [
         title: 'SAVAGE ESSENCE 2026',
         subtitle: 'REDEFINIENDO EL STREETWEAR PREMIUM URBANO.',
         buttonText: 'EXPLORAR AHORA',
+        buttonLink: '/category/Deportivo',
         image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?q=80&w=2000&auto=format&fit=crop'
     }
 ];
@@ -72,13 +77,15 @@ const DEFAULT_SOCIAL_CONFIG: SocialConfig = {
     email: 'contacto@savagebrand.com',
     whatsapp: '5491112345678',
     address: 'Palermo Soho, Buenos Aires',
-    shippingText: 'Envío gratis en compras mayores a $200'
+    shippingText: 'Envío gratis en compras mayores a $200',
+    extraShippingInfo: 'Devoluciones gratis hasta 30 días',
+    topHeaderText: 'ENVÍOS GRATIS A TODO EL PAÍS 🇵🇾'
 };
 
 const DEFAULT_CATEGORIES: Category[] = [
-    { id: 'ropa', name: 'Ropa', image: '' },
-    { id: 'deportivo', name: 'Deportivo', image: '' },
-    { id: 'calzados', name: 'Calzados', image: '' },
+    { id: 'ropa', name: 'Ropa', image: '', subcategories: ['Remeras', 'Hoodies', 'Pantalones', 'Shorts'] },
+    { id: 'deportivo', name: 'Deportivo', image: '', subcategories: ['Player', 'Fan', 'Retro'] },
+    { id: 'calzados', name: 'Calzados', image: '', subcategories: ['Nike', 'Adidas', 'Puma', 'New Balance'] },
     { id: 'joyas', name: 'Joyas', image: '' },
     { id: 'accesorios', name: 'Accesorios', image: '' },
     { id: 'huerfanos', name: 'Huérfanos', image: '' }
@@ -187,6 +194,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setProducts(prev => [...prev, product]);
     };
 
+    const updateProduct = (updatedProduct: Product) => {
+        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+    };
+
     const deleteProduct = (productId: string) => {
         setProducts(prev => prev.filter(p => p.id !== productId));
     };
@@ -225,6 +236,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setBlogPosts(prev => [post, ...prev]);
     };
 
+    const updateBlogPost = (updatedPost: BlogPost) => {
+        setBlogPosts(prev => prev.map(post => post.id === updatedPost.id ? updatedPost : post));
+    };
+
     const deleteBlogPost = (id: string) => {
         setBlogPosts(prev => prev.filter(p => p.id !== id));
     };
@@ -251,6 +266,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 ? { ...p, category: 'huerfanos', tags: [...p.tags, 'Sin Categoría'] }
                 : p
         ));
+    };
+
+    const updateCategory = (updatedCategory: Category) => {
+        setCategories(prev => prev.map(c => c.id === updatedCategory.id ? updatedCategory : c));
     };
 
     // Delivery Zone Logic
@@ -333,6 +352,20 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const updateLifestyleConfig = (config: LifestyleConfig) => setLifestyleConfig(config);
 
+    const saveAllData = () => {
+        localStorage.setItem('savage_products', JSON.stringify(products));
+        localStorage.setItem('savage_categories', JSON.stringify(categories));
+        localStorage.setItem('savage_cart', JSON.stringify(cart));
+        localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides));
+        localStorage.setItem('savage_orders', JSON.stringify(orders));
+        localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts));
+        localStorage.setItem('savage_social_config', JSON.stringify(socialConfig));
+        localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones));
+        localStorage.setItem('savage_navbar_links', JSON.stringify(navbarLinks));
+        localStorage.setItem('savage_banner_bento', JSON.stringify(bannerBento));
+        localStorage.setItem('savage_lifestyle_config', JSON.stringify(lifestyleConfig));
+    };
+
     return (
         <ShopContext.Provider value={{
             products,
@@ -347,6 +380,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             removeFromCart,
             updateQuantity,
             addProduct,
+            updateProduct,
             deleteProduct,
             updateHeroSlides,
             createOrder,
@@ -354,12 +388,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             deleteOrder,
             clearOrders,
             addBlogPost,
+            updateBlogPost,
             deleteBlogPost,
             updateSocialConfig,
 
             cartTotal,
             categories,
             addCategory,
+            updateCategory,
             deleteCategory,
             deliveryZones,
             addDeliveryZone,
@@ -372,7 +408,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateBannerBento,
 
             lifestyleConfig,
-            updateLifestyleConfig
+            updateLifestyleConfig,
+            saveAllData
 
         }}>
             {children}

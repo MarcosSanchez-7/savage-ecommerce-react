@@ -93,6 +93,16 @@ const COLORS = [
     { name: 'Purple', hex: '#7c3aed' },
     { name: 'Amber', hex: '#d97706' },
     { name: 'Pink', hex: '#db2777' },
+    { name: 'Cyan', hex: '#06b6d4' },
+    { name: 'Lime', hex: '#84cc16' },
+    { name: 'Fuchsia', hex: '#d946ef' },
+    { name: 'Indigo', hex: '#4f46e5' },
+    { name: 'Rose', hex: '#e11d48' },
+    { name: 'Orange', hex: '#f97316' },
+    { name: 'Teal', hex: '#14b8a6' },
+    { name: 'Violet', hex: '#8b5cf6' },
+    { name: 'Sky', hex: '#0ea5e9' },
+    { name: 'Yellow', hex: '#eab308' },
 ];
 
 // Basic Point-In-Polygon check (Ray Casting)
@@ -602,6 +612,22 @@ const DeliveryZoneMap: React.FC = () => {
                                             title={c.name}
                                         />
                                     ))}
+                                    {/* Custom Color Picker */}
+                                    <div className="relative group">
+                                        <input
+                                            type="color"
+                                            value={zoneColor}
+                                            onChange={(e) => setZoneColor(e.target.value)}
+                                            className="w-8 h-8 p-0 border-0 rounded-full overflow-hidden opacity-0 absolute inset-0 cursor-pointer"
+                                        />
+                                        <div
+                                            className={`w-8 h-8 rounded-full border-2 flex items-center justify-center bg-transparent transition-all ${!COLORS.some(c => c.hex === zoneColor) ? 'border-white' : 'border-gray-600'}`}
+                                            style={{ background: !COLORS.some(c => c.hex === zoneColor) ? zoneColor : 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)' }}
+                                            title="Color Personalizado"
+                                        >
+                                            <Palette size={14} className="text-white drop-shadow-md mix-blend-difference" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
