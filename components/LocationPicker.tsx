@@ -36,11 +36,6 @@ const LocationMarker: React.FC<{ onSelect: (lat: number, lng: number) => void }>
         },
     });
 
-    // Try to locate user on mount
-    useEffect(() => {
-        map.locate();
-    }, [map]);
-
     return position === null ? null : (
         <Marker position={position} />
     );
@@ -69,8 +64,7 @@ const MapController: React.FC<{ setMap: (map: L.Map) => void }> = ({ setMap }) =
 };
 
 const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, initialLocation, onClose }) => {
-    // Default to Buenos Aires/Asuncion region if no initial logic works, but map.locate should handle it.
-    // Using generic center temporarily
+    // Default to Buenos Aires/Asuncion region if no initial logic works
     const defaultCenter = initialLocation || { lat: -25.2637, lng: -57.5759 }; // Asuncion, Paraguay approx
 
     // Search State
@@ -109,18 +103,24 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, initi
         }
     };
 
+    const handleLocateMe = () => {
+        if (mapInstance) {
+            mapInstance.locate();
+        }
+    };
+
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl w-full max-w-2xl h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-0 md:p-4">
+            <div className="bg-[#0a0a0a] border-0 md:border border-gray-800 rounded-none md:rounded-xl w-full max-w-2xl h-full md:h-[80vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-300 shadow-2xl">
 
                 {/* Header */}
-                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a] z-10">
+                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a] z-10 shrink-0">
                     <div>
                         <h3 className="text-white font-bold text-lg flex items-center gap-2">
                             <MapPin className="text-primary" size={20} />
-                            Seleccionar Ubicación
+                            Ubicación
                         </h3>
-                        <p className="text-gray-400 text-xs">Toca en el mapa para marcar tu dirección.</p>
+                        {/* <p className="text-gray-400 text-xs hidden md:block">Toca en el mapa para marcar tu dirección.</p> */}
                     </div>
                     <button
                         onClick={onClose}
@@ -131,21 +131,20 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, initi
                 </div>
 
                 {/* Search Bar - Integrated Block */}
-                <div className="bg-[#0a0a0a] border-b border-gray-800 p-2 z-10 w-full flex justify-center">
+                <div className="bg-[#0a0a0a] border-b border-gray-800 p-2 z-10 w-full flex justify-center shrink-0">
                     <div className="flex gap-2 w-full max-w-lg relative bg-gray-900 rounded-lg border border-gray-700 overflow-hidden">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                            placeholder=" Buscar ciudad, barrio o calle..."
+                            placeholder="Buscar ciudad o barrio..."
                             className="flex-1 bg-transparent border-none text-white text-sm p-3 focus:outline-none placeholder-gray-500"
                         />
                         <button
                             onClick={handleSearch}
                             disabled={isSearching}
                             className="bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white px-4 flex items-center justify-center transition-colors border-l border-gray-700"
-                            title="Buscar"
                         >
                             {isSearching ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
                         </button>
@@ -153,7 +152,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, initi
                 </div>
 
                 {/* Map Container */}
-                <div className="flex-1 relative z-0">
+                <div className="flex-1 relative z-0 min-h-0">
                     <MapContainer
                         center={defaultCenter}
                         zoom={13}
@@ -168,19 +167,27 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, initi
                         <MapFixer />
                         <MapController setMap={setMapInstance} />
                     </MapContainer>
+
+                    {/* Floating Locate Button */}
+                    <button
+                        onClick={handleLocateMe}
+                        className="absolute bottom-4 right-4 z-[400] bg-black text-white p-3 rounded-full shadow-lg border border-gray-700 hover:bg-gray-900 transition-all"
+                    >
+                        <Navigation size={20} />
+                    </button>
                 </div>
 
                 {/* Footer/Actions */}
-                <div className="p-4 border-t border-gray-800 bg-[#0a0a0a] flex justify-between items-center z-10">
-                    <div className="flex items-center gap-2 text-xs text-yellow-500 bg-yellow-900/10 px-3 py-2 rounded-lg border border-yellow-900/20">
-                        <Navigation size={14} />
-                        <span>Usamos tu GPS si está activo.</span>
+                <div className="p-4 border-t border-gray-800 bg-[#0a0a0a] flex justify-between items-center z-10 shrink-0 safe-pb-4">
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                        <span className="hidden md:inline">Toca el mapa para marcar envíos fuera del GPS.</span>
+                        <span className="md:hidden">Toca para marcar.</span>
                     </div>
                     <button
                         onClick={onClose}
-                        className="bg-primary hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg uppercase text-xs tracking-wider transition-colors shadow-lg"
+                        className="bg-primary hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg uppercase text-sm tracking-wider transition-colors shadow-lg"
                     >
-                        Confirmar Ubicación
+                        CONFIRMAR
                     </button>
                 </div>
             </div>
