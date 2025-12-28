@@ -18,7 +18,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         onClick={() => navigate(`/product/${product.id}`)}
       >
         <div
-          className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+          className={`w-full h-full bg-center transition-transform duration-700 group-hover:scale-110 ${product.type === 'footwear' ? 'bg-contain bg-no-repeat' : 'bg-cover'}`}
           style={{ backgroundImage: `url('${product.images[0]}')` }}
         />
         <button
@@ -37,7 +37,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
               Nuevo
             </div>
           )}
-          {product.tags && product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA'].includes(t.toUpperCase())).map(tag => (
+          {product.tags && product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA', 'Nuevo', 'NUEVO'].includes(t.toUpperCase()) && !(product.isNew && t.toUpperCase() === 'NUEVO')).map(tag => (
             <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
               {tag}
             </div>
@@ -60,7 +60,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
             {product.name}
           </h3>
           <p className="text-accent-gray text-xs uppercase tracking-wide mt-1">
-            {product.category}
+            {product.subcategory || product.category}
           </p>
         </div>
         <div className="text-right">

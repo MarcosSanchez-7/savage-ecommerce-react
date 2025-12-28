@@ -72,12 +72,23 @@ export interface BlogPost {
   id: string;
   title: string;
   image: string;
-  content: string; // The "comentario" or body
-  author: string;
-  date: string;
-  rating?: number; // For the "5 stars" request
+  content?: string; // made optional as it's not present in constants.tsx
+  author?: string; // made optional
+  date?: string; // made optional
+  rating?: number;
   tags?: string[];
-  tag?: string; // Singular tag for older posts or specific override
+  tag?: string;
+  linkText?: string;
+  link?: string;
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  location: string;
+  text: string;
+  rating: number;
+  avatar: string;
 }
 
 export interface DeliveryZone {

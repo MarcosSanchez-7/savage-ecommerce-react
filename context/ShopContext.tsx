@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
+import { supabase } from '../services/supabase';
 
 interface CartItem extends Product {
     quantity: number;
@@ -93,18 +94,13 @@ const DEFAULT_CATEGORIES: Category[] = [
 
 export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Products
-    const [products, setProducts] = useState<Product[]>(() => {
-        const saved = localStorage.getItem('savage_products');
-        return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-    });
+    // Products - Now synced with Supabase
+    const [products, setProducts] = useState<Product[]>([]);
 
-    // Categories
-    const [categories, setCategories] = useState<Category[]>(() => {
-        const saved = localStorage.getItem('savage_categories');
-        return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
-    });
+    // Categories - Now synced with Supabase
+    const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
 
-    // Cart
+    // Cart - Stays in LocalStorage (Cart shouldn't be shared across devices usually unless logged in user, which we don't have yet)
     const [cart, setCart] = useState<CartItem[]>(() => {
         const saved = localStorage.getItem('savage_cart');
         return saved ? JSON.parse(saved) : [];
@@ -141,16 +137,64 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Persistence Effects
-    // Persistence Effects
-    useEffect(() => { localStorage.setItem('savage_products', JSON.stringify(products)); }, [products]);
-    useEffect(() => { localStorage.setItem('savage_categories', JSON.stringify(categories)); }, [categories]);
+    // --- SUPABASE MIGRATION: FETCH DATA ---
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // Fetch Products
+            const { data: productsData, error: productsError } = await supabase
+                .from('products')
+                .select('*');
+
+            if (productsError) {
+                console.error('Error fetching products from Supabase:', productsError);
+                if (productsError.code === '42501' || productsError.message.includes('row-level security')) {
+                    alert('ERROR: Bloqueo de seguridad de Base de Datos. Desactiva RLS en Supabase o agrega políticas de acceso "Select" para visualizarlos.');
+                } else {
+                    alert(`Error cargando productos: ${productsError.message}`);
+                }
+            } else if (productsData) {
+                // Transform Supabase data if needed to match frontend Product type
+                // Assuming Database columns match Product interface closely
+                setProducts(productsData.map(p => ({
+                    ...p,
+                    price: Number(p.price),
+                    originalPrice: p.original_price ? Number(p.original_price) : undefined,
+                    isFeatured: p.is_featured,
+                    isCategoryFeatured: p.is_category_featured,
+                    isNew: p.is_new,
+                    subcategory: p.subcategory || '' // Handle nulls gracefully
+                })));
+            }
+
+            // Fetch Categories (if you plan to store them in DB too, otherwise keep default)
+            const { data: categoriesData, error: catError } = await supabase
+                .from('categories')
+                .select('*');
+
+            if (!catError && categoriesData && categoriesData.length > 0) {
+                setCategories(categoriesData);
+            }
+
+        } catch (error) {
+            console.error('Exception fetching data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    // --- END SUPABASE FETCH ---
+
+    // Persistence Effects (Legacy LocalStorage for non-critical stuff or backup)
     useEffect(() => { localStorage.setItem('savage_cart', JSON.stringify(cart)); }, [cart]);
     useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
-    useEffect(() => {
-        localStorage.setItem('savage_orders', JSON.stringify(orders));
-    }, [orders]);
+    useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
     useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
     useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
     useEffect(() => { localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones)); }, [deliveryZones]);
@@ -189,17 +233,114 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const toggleCart = () => setIsCartOpen(prev => !prev);
     const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-    // Admin Logic
-    const addProduct = (product: Product) => {
+    // Admin Logic - SUPABASE SYNCED
+    const addProduct = async (product: Product) => {
+        // Optimistic UI update (using the temporary ID passed from Admin)
         setProducts(prev => [...prev, product]);
+
+        try {
+            // DB Mapping: OMIT 'id' so Supabase generates a UUID
+            const dbProduct = {
+                // id: product.id, <--- REMOVED to let DB generate UUID
+                savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
+                name: product.name,
+                price: parseFloat(product.price.toString()),
+                original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
+                category: product.category,
+                subcategory: product.subcategory,
+                type: product.type,
+                images: product.images,
+                sizes: product.sizes,
+                tags: product.tags,
+                fit: product.fit,
+                is_new: product.isNew,
+                is_featured: product.isFeatured,
+                is_category_featured: product.isCategoryFeatured,
+                description: product.description,
+                stock_quantity: 0
+            };
+
+            const { data, error } = await supabase
+                .from('products')
+                .insert([dbProduct])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error adding product to Supabase:', error);
+
+                // Security policy error check
+                if (error.code === '42501') {
+                    alert('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
+                } else {
+                    alert(`Hubo un error guardando en la base de datos: ${error.message}`);
+                }
+
+                // Revert optimistic update on error
+                setProducts(prev => prev.filter(p => p.id !== product.id));
+            } else if (data) {
+                // Success! Update the local state with the REAL UUID from the DB
+                // This replaces the temporary timestamp ID with the valid UUID
+                setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
+            }
+
+        } catch (err) {
+            console.error(err);
+            setProducts(prev => prev.filter(p => p.id !== product.id));
+        }
     };
 
-    const updateProduct = (updatedProduct: Product) => {
+    const updateProduct = async (updatedProduct: Product) => {
+        // Optimistic UI
         setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+
+        try {
+            const dbProduct = {
+                name: updatedProduct.name,
+                price: parseFloat(updatedProduct.price.toString()),
+                original_price: updatedProduct.originalPrice ? parseFloat(updatedProduct.originalPrice.toString()) : null,
+                category: updatedProduct.category,
+                subcategory: updatedProduct.subcategory,
+                type: updatedProduct.type,
+                images: updatedProduct.images,
+                sizes: updatedProduct.sizes,
+                tags: updatedProduct.tags,
+                fit: updatedProduct.fit,
+                is_new: updatedProduct.isNew,
+                is_featured: updatedProduct.isFeatured,
+                is_category_featured: updatedProduct.isCategoryFeatured,
+                description: updatedProduct.description
+            };
+
+            const { error } = await supabase
+                .from('products')
+                .update(dbProduct)
+                .eq('id', updatedProduct.id);
+
+            if (error) {
+                console.error('Error updating product in Supabase:', error);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const deleteProduct = (productId: string) => {
+    const deleteProduct = async (productId: string) => {
+        // Optimistic UI
         setProducts(prev => prev.filter(p => p.id !== productId));
+
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+
+            if (error) {
+                console.error('Error deleting product from Supabase:', error);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const updateHeroSlides = (slides: HeroSlide[]) => {
@@ -250,26 +391,87 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     // Category Logic
-    const addCategory = (category: Category) => {
+    // Category Logic - SUPABASE SYNCED
+    const addCategory = async (category: Category) => {
         setCategories(prev => [...prev, category]);
+
+        try {
+            const { error } = await supabase
+                .from('categories')
+                .insert([category]);
+
+            if (error) {
+                console.error('Error adding category to DB:', error);
+                alert('Error al guardar categoría en la nube.');
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const deleteCategory = (categoryId: string) => {
+    const deleteCategory = async (categoryId: string) => {
         // Prevent deleting 'huerfanos'
         if (categoryId === 'huerfanos') return;
 
+        // Optimistic UI
         setCategories(prev => prev.filter(c => c.id !== categoryId));
-
-        // Move products to 'huerfanos'
         setProducts(prev => prev.map(p =>
             p.category === categoryId
                 ? { ...p, category: 'huerfanos', tags: [...p.tags, 'Sin Categoría'] }
                 : p
         ));
+
+        try {
+            // 1. Move products to 'huerfanos' in DB
+            // IMPORTANT: 'huerfanos' category MUST exist in the DB for this to work if there is a FK constraint.
+            // If it doesn't exist, this might fail or create inconsistent data depending on DB setup.
+            // Assuming 'huerfanos' exists or FK is loose.
+            const { error: productsError } = await supabase
+                .from('products')
+                .update({ category: 'huerfanos' })
+                .eq('category', categoryId); // Relies on exact match. categoryId comes from UI layer.
+
+            if (productsError) {
+                console.error('Error moving products to huerfanos:', productsError);
+                throw new Error('No se pudieron mover los productos a Huérfanos.');
+            }
+
+            // 2. Delete category
+            const { error: deleteError } = await supabase
+                .from('categories')
+                .delete()
+                .eq('id', categoryId);
+
+            if (deleteError) {
+                console.error('Error deleting category from DB:', deleteError);
+                // If violation of FK, alert specific message
+                if (deleteError.code === '23503') { // foreign_key_violation
+                    alert('No se pudo eliminar la categoría porque aún tiene productos vinculados. Intenta recargar la página.');
+                } else {
+                    alert(`Error al eliminar categoría: ${deleteError.message}`);
+                }
+                // Rollback optimistic update
+                const { data: catData } = await supabase.from('categories').select('*');
+                if (catData) setCategories(catData);
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const updateCategory = (updatedCategory: Category) => {
+    const updateCategory = async (updatedCategory: Category) => {
         setCategories(prev => prev.map(c => c.id === updatedCategory.id ? updatedCategory : c));
+
+        try {
+            const { error } = await supabase
+                .from('categories')
+                .update(updatedCategory)
+                .eq('id', updatedCategory.id);
+
+            if (error) console.error('Error updating category in DB:', error);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     // Delivery Zone Logic

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -8,13 +8,19 @@ import ProductCard from '../components/ProductCard';
 import { ArrowLeft } from 'lucide-react';
 
 const CategoryPage: React.FC = () => {
-    const { category } = useParams<{ category: string }>();
+    const { category, subcategory } = useParams<{ category: string; subcategory?: string }>();
+    const navigate = useNavigate();
     const { products, categories, addToCart, cart } = useShop();
     const [activeSubcategory, setActiveSubcategory] = React.useState<string>('ALL');
 
     React.useEffect(() => {
+        if (subcategory) {
+            setActiveSubcategory(subcategory);
+        } else {
+            setActiveSubcategory('ALL');
+        }
         window.scrollTo(0, 0);
-    }, [category]);
+    }, [category, subcategory]);
 
     const currentCategoryInfo = categories.find(c => c.id.toLowerCase() === category?.toLowerCase() || c.name.toLowerCase() === category?.toLowerCase());
 
@@ -46,7 +52,7 @@ const CategoryPage: React.FC = () => {
                 {currentCategoryInfo?.subcategories && currentCategoryInfo.subcategories.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-8 animate-in fade-in slide-in-from-left-4 duration-500">
                         <button
-                            onClick={() => setActiveSubcategory('ALL')}
+                            onClick={() => navigate(`/category/${category}`)}
                             className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === 'ALL' ? 'bg-primary border-primary text-white' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
                         >
                             VER TODO
@@ -54,7 +60,7 @@ const CategoryPage: React.FC = () => {
                         {currentCategoryInfo.subcategories.map(sub => (
                             <button
                                 key={sub}
-                                onClick={() => setActiveSubcategory(sub)}
+                                onClick={() => navigate(`/category/${category}/${sub}`)}
                                 className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === sub ? 'bg-white text-black border-white' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
                             >
                                 {sub}

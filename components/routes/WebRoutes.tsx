@@ -8,14 +8,21 @@ import BlogPage from '../../pages/BlogPage';
 
 import AdminDashboard from '../../pages/Admin';
 
+import Login from '../../pages/Login';
+import ProtectedRoute from '../ProtectedRoute';
+
 const WebRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/category/:category" element={<CategoryPage />} />
+            <Route path="/category/:category/:subcategory" element={<CategoryPage />} />
             <Route path="/blog" element={<BlogPage />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedRoute />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
         </Routes>
     );
 };

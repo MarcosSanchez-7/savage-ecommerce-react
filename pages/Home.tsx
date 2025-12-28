@@ -52,7 +52,7 @@ const Home: React.FC = () => {
                 {/* Dynamic Category Sections */}
                 {categories.map(categoryObj => {
                     const category = categoryObj.id;
-                    const categoryProducts = products.filter(p => p.category === category);
+                    const categoryProducts = products.filter(p => p.category.toLowerCase() === category.toLowerCase());
                     if (categoryProducts.length === 0 && category !== 'huerfanos') return null; // Logic to skip empty unless needed
                     if (categoryProducts.length === 0) return null; // Safe check
 

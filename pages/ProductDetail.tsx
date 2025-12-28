@@ -25,12 +25,14 @@ const ProductDetail: React.FC = () => {
         return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">Producto no encontrado</div>;
     }
 
+    const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
+
     const handleAddToCart = () => {
-        if (!selectedSize && product.sizes.length > 0) {
+        if (!selectedSize && product.sizes.length > 0 && !isAccessory) {
             alert('Por favor selecciona un talle');
             return;
         }
-        addToCart(product, selectedSize || 'One Size');
+        addToCart(product, selectedSize || (isAccessory ? 'Talle Único' : 'One Size'));
     };
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -108,25 +110,27 @@ const ProductDetail: React.FC = () => {
                             </p>
                         )}
 
-                        {/* Size Selector */}
-                        <div className="mb-10">
-                            <div className="flex justify-between items-center mb-4">
-                                <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
-                                {/* <button className="text-xs text-primary underline">Guía de talles</button> */}
+                        {/* Size Selector - Hidden for Accessories */}
+                        {!isAccessory && (
+                            <div className="mb-10">
+                                <div className="flex justify-between items-center mb-4">
+                                    <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
+                                    {/* <button className="text-xs text-primary underline">Guía de talles</button> */}
+                                </div>
+                                <div className="flex flex-wrap gap-3">
+                                    {product.sizes.map(size => (
+                                        <button
+                                            key={size}
+                                            onClick={() => setSelectedSize(size)}
+                                            className={`h-12 w-20 flex items-center justify-center border rounded font-mono font-medium transition-all ${selectedSize === size ? 'bg-white text-black border-white' : 'border-gray-800 text-gray-400 hover:border-gray-600'}`}
+                                        >
+                                            {size}
+                                        </button>
+                                    ))}
+                                </div>
+                                {product.fit && <p className="mt-4 text-sm text-gray-500">Fit: <span className="text-white font-medium">{product.fit}</span></p>}
                             </div>
-                            <div className="flex flex-wrap gap-3">
-                                {product.sizes.map(size => (
-                                    <button
-                                        key={size}
-                                        onClick={() => setSelectedSize(size)}
-                                        className={`h-12 w-20 flex items-center justify-center border rounded font-mono font-medium transition-all ${selectedSize === size ? 'bg-white text-black border-white' : 'border-gray-800 text-gray-400 hover:border-gray-600'}`}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
-                            </div>
-                            {product.fit && <p className="mt-4 text-sm text-gray-500">Fit: <span className="text-white font-medium">{product.fit}</span></p>}
-                        </div>
+                        )}
 
                         {/* Actions */}
                         <div className="mt-auto space-y-4">

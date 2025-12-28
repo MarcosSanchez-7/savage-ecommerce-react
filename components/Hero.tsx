@@ -64,9 +64,7 @@ const Hero: React.FC = () => {
           >
             {current.buttonText || 'EXPLORAR AHORA'}
           </Link>
-          <button className="bg-transparent border border-white/30 hover:border-white text-white h-12 px-8 rounded font-bold text-sm tracking-[0.1em] uppercase transition-all hover:bg-white/5 active:scale-95">
-            Ver Lookbook
-          </button>
+
         </div>
       </div>
 

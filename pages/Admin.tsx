@@ -138,8 +138,19 @@ const AdminDashboard: React.FC = () => {
     const handleEditProduct = (product: Product) => {
         setNewProduct({
             name: product.name,
-            price: product.price.toString(),
-            originalPrice: product.originalPrice?.toString() || '',
+            // Logic Fix 2.0: Correct mapping to inputs 
+            // newProduct.price -> "Precio Oferta" Input
+            // newProduct.originalPrice -> "Precio Regular" Input
+
+            // If Offer (original > price):
+            // Regular Input = Original (High)
+            // Offer Input = Price (Low)
+
+            // If No Offer:
+            // Regular Input = Price (Current)
+            // Offer Input = Empty
+            price: (product.originalPrice && product.originalPrice > product.price) ? product.price.toString() : '',
+            originalPrice: (product.originalPrice && product.originalPrice > product.price) ? product.originalPrice.toString() : product.price.toString(),
             category: product.category,
             subcategory: product.subcategory || '',
             type: product.type || 'clothing',
