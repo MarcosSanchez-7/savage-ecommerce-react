@@ -76,9 +76,9 @@ const DEFAULT_SOCIAL_CONFIG: SocialConfig = {
     instagram: 'https://instagram.com/savage',
     tiktok: 'https://tiktok.com/@savage',
     email: 'contacto@savagebrand.com',
-    whatsapp: '5491112345678',
+    whatsapp: '595983840235',
     address: 'Palermo Soho, Buenos Aires',
-    shippingText: 'Envío gratis en compras mayores a $200',
+    shippingText: 'Envío gratis en compras mayores a 500.000 Gs',
     extraShippingInfo: 'Devoluciones gratis hasta 30 días',
     topHeaderText: 'ENVÍOS GRATIS A TODO EL PAÍS 🇵🇾'
 };
