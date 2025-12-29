@@ -525,9 +525,8 @@ const DeliveryZoneMap: React.FC = () => {
             const payload = {
                 name: zoneName,
                 price: priceNum,
-                coordinates: currentPoints, // Se guarda como JSON automáticamente
-                color: zoneColor,
-                active: true
+                points: currentPoints, // Se guarda como JSON automáticamente
+                color: zoneColor
             };
 
             let savedData;
@@ -561,7 +560,7 @@ const DeliveryZoneMap: React.FC = () => {
                 id: savedData.id, // Usamos el ID real de la base de datos (UUID)
                 name: savedData.name,
                 price: savedData.price,
-                points: savedData.coordinates, // Supabase devuelve JSON, JS lo lee como objeto
+                points: savedData.points, // Supabase devuelve JSON, JS lo lee como objeto
                 color: savedData.color || zoneColor
             };
 
