@@ -131,10 +131,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     // Delivery Zones
-    const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>(() => {
-        const saved = localStorage.getItem('savage_delivery_zones');
-        return saved ? JSON.parse(saved) : [];
-    });
+    // Delivery Zones
+    const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
 
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -178,6 +176,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setCategories(categoriesData);
             }
 
+            // Fetch Delivery Zones
+            const { data: zonesData, error: zonesError } = await supabase
+                .from('delivery_zones')
+                .select('*');
+
+            if (zonesError) {
+                console.error('Error fetching delivery zones:', zonesError);
+            } else if (zonesData) {
+                setDeliveryZones(zonesData.map(z => ({
+                    ...z,
+                    price: Number(z.price),
+                    // Points is JSONB, Supabase returns it as object/array automatically
+                    points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points
+                })));
+            }
+
         } catch (error) {
             console.error('Exception fetching data:', error);
         } finally {
@@ -197,7 +211,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
     useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
     useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
-    useEffect(() => { localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones)); }, [deliveryZones]);
+    useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
+    // useEffect(() => { localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones)); }, [deliveryZones]);
 
 
     // Cart Logic
@@ -475,16 +490,81 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     // Delivery Zone Logic
-    const addDeliveryZone = (zone: DeliveryZone) => {
+    // Delivery Zone Logic - SUPABASE SYNCED
+    const addDeliveryZone = async (zone: DeliveryZone) => {
+        // Optimistic UI
         setDeliveryZones(prev => [...prev, zone]);
+
+        try {
+            console.log('Sending zone to DB:', zone);
+            const { data, error } = await supabase
+                .from('delivery_zones')
+                .insert([{
+                    name: zone.name,
+                    price: Number(zone.price), // Ensure number
+                    points: zone.points,
+                    color: zone.color
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error adding zone:', error);
+                alert(`Error guardando zona en la nube: ${error.message} (${error.details || ''})`);
+                setDeliveryZones(prev => prev.filter(z => z.id !== zone.id)); // Revert
+            } else if (data) {
+                console.log('Zone saved, DB ID:', data.id);
+                // Update temp ID with real DB ID
+                setDeliveryZones(prev => prev.map(z => z.id === zone.id ? { ...z, id: data.id } : z));
+            }
+        } catch (e) {
+            console.error('Exception adding zone:', e);
+            alert('Error inesperado al guardar zona.');
+        }
     };
 
-    const deleteDeliveryZone = (id: string) => {
+    const deleteDeliveryZone = async (id: string) => {
+        // Optimistic
         setDeliveryZones(prev => prev.filter(z => z.id !== id));
+
+        try {
+            const { error } = await supabase
+                .from('delivery_zones')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting zone:', error);
+                alert('No se pudo eliminar la zona de la base de datos.');
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const updateDeliveryZone = (zone: DeliveryZone) => {
+    const updateDeliveryZone = async (zone: DeliveryZone) => {
+        // Optimistic
         setDeliveryZones(prev => prev.map(z => z.id === zone.id ? zone : z));
+
+        try {
+            const { error } = await supabase
+                .from('delivery_zones')
+                .update({
+                    name: zone.name,
+                    price: Number(zone.price), // Ensure number
+                    points: zone.points,
+                    color: zone.color
+                })
+                .eq('id', zone.id);
+
+            if (error) {
+                console.error('Error updating zone:', error);
+                alert(`Error actualizando zona: ${error.message}`);
+                // Revert logic could be complex here, assuming simple success usually.
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     // --- Web Layout Config ---

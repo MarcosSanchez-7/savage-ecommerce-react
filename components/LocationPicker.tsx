@@ -20,14 +20,24 @@ interface LocationPickerProps {
     onClose: () => void;
 }
 
-const LocationMarker: React.FC<{ onSelect: (lat: number, lng: number) => void }> = ({ onSelect }) => {
-    const [position, setPosition] = useState<L.LatLng | null>(null);
+const LocationMarker: React.FC<{ onSelect: (lat: number, lng: number) => void; initialPosition?: { lat: number, lng: number } }> = ({ onSelect, initialPosition }) => {
+    const [position, setPosition] = useState<L.LatLng | null>(
+        initialPosition ? new L.LatLng(initialPosition.lat, initialPosition.lng) : null
+    );
+
+    // Sync if prop changes
+    useEffect(() => {
+        if (initialPosition) {
+            setPosition(new L.LatLng(initialPosition.lat, initialPosition.lng));
+        }
+    }, [initialPosition]);
 
     const map = useMapEvents({
         click(e) {
             setPosition(e.latlng);
             onSelect(e.latlng.lat, e.latlng.lng);
-            map.flyTo(e.latlng, map.getZoom());
+            // Don't flyTo on every click, it's annoying, just maybe pan
+            // map.flyTo(e.latlng, map.getZoom()); 
         },
         locationfound(e) {
             setPosition(e.latlng);
@@ -163,7 +173,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({ onLocationSelect, initi
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
-                        <LocationMarker onSelect={onLocationSelect} />
+                        <LocationMarker onSelect={onLocationSelect} initialPosition={initialLocation} />
                         <MapFixer />
                         <MapController setMap={setMapInstance} />
                     </MapContainer>

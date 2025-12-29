@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../supabase/client';
 import { MapContainer, TileLayer, Polygon, Marker, useMapEvents, useMap, Polyline } from 'react-leaflet';
 import { useShop } from '../context/ShopContext';
 import { DeliveryZone } from '../types';
@@ -508,27 +509,76 @@ const DeliveryZoneMap: React.FC = () => {
         }
     };
 
-    const handleSave = () => {
+    // --- FUNCIÓN DE GUARDADO CONECTADA A SUPABASE ---
+    const handleSave = async () => {
+        // 1. Validaciones básicas
         if (!zoneName || !zonePrice || currentPoints.length < 3) {
-            alert('Completa los campos y dibuja una zona válida.');
+            alert('⚠️ Completa el nombre, el precio y dibuja una zona válida (mínimo 3 puntos).');
             return;
         }
 
-        const zoneData: DeliveryZone = {
-            id: editingId || Date.now().toString(),
-            name: zoneName,
-            price: Number(zonePrice),
-            points: currentPoints,
-            color: zoneColor
-        };
+        const isNew = !editingId;
+        const priceNum = Number(zonePrice);
 
-        if (mode === 'create' || mode === 'import') {
-            addDeliveryZone(zoneData);
-        } else {
-            updateDeliveryZone(zoneData);
+        try {
+            // 2. Preparar los datos para la base de datos
+            const payload = {
+                name: zoneName,
+                price: priceNum,
+                coordinates: currentPoints, // Se guarda como JSON automáticamente
+                color: zoneColor,
+                active: true
+            };
+
+            let savedData;
+
+            if (isNew) {
+                // A) CREAR NUEVA ZONA (INSERT)
+                const { data, error } = await supabase
+                    .from('shipping_zones')
+                    .insert([payload])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                savedData = data;
+
+            } else {
+                // B) ACTUALIZAR ZONA EXISTENTE (UPDATE)
+                const { data, error } = await supabase
+                    .from('shipping_zones')
+                    .update(payload)
+                    .eq('id', editingId)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                savedData = data;
+            }
+
+            // 3. Actualizar la interfaz visual (Contexto)
+            const zoneForState: DeliveryZone = {
+                id: savedData.id, // Usamos el ID real de la base de datos (UUID)
+                name: savedData.name,
+                price: savedData.price,
+                points: savedData.coordinates, // Supabase devuelve JSON, JS lo lee como objeto
+                color: savedData.color || zoneColor
+            };
+
+            if (isNew) {
+                addDeliveryZone(zoneForState);
+            } else {
+                updateDeliveryZone(zoneForState);
+            }
+
+            // 4. Éxito
+            alert("✅ ¡Zona guardada en la Nube correctamente!");
+            reset();
+
+        } catch (error: any) {
+            console.error("Error crítico al guardar:", error);
+            alert("❌ Error al guardar en base de datos: " + (error.message || error));
         }
-
-        reset();
     };
 
     const reset = () => {
