@@ -235,6 +235,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (conf.key === 'navbar_links') setNavbarLinks(conf.value);
                     if (conf.key === 'banner_bento') setBannerBento(conf.value);
                     if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
+                    if (conf.key === 'hero_slides') setHeroSlides(conf.value);
                 });
             }
 
@@ -253,8 +254,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Persistence Effects (Legacy LocalStorage for non-critical stuff or backup)
     useEffect(() => { localStorage.setItem('savage_cart', JSON.stringify(cart)); }, [cart]);
-    useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
-    useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
+    // useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
     // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
     // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
     useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
@@ -435,8 +435,19 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const updateHeroSlides = (slides: HeroSlide[]) => {
+    const updateHeroSlides = async (slides: HeroSlide[]) => {
         setHeroSlides(slides);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'hero_slides',
+                value: slides,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
     };
 
     // Order Logic

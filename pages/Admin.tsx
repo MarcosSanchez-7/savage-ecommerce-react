@@ -344,9 +344,14 @@ const AdminDashboard: React.FC = () => {
 
 
     // --- Hero Handlers ---
-    const handleHeroSave = () => {
-        updateHeroSlides(heroForm);
-        alert('Banners actualizados!');
+    const handleHeroSave = async () => {
+        try {
+            await updateHeroSlides(heroForm);
+            alert('Añadido correctamente a la base de datos');
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un error guardando en la base de datos.');
+        }
     };
 
     const addSlide = () => {
@@ -437,10 +442,10 @@ const AdminDashboard: React.FC = () => {
                 updateSocialConfig(configForm),
                 updateLifestyleConfig(lifestyleForm)
             ]);
-            alert('Configuración guardada correctamente en la nube!');
+            alert('Añadido correctamente a la base de datos');
         } catch (error) {
             console.error(error);
-            alert('Hubo un problema guardando. Revisa la consola o tu conexión.');
+            alert('Hubo un error guardando en la base de datos.');
         }
     };
 
@@ -506,9 +511,14 @@ const AdminDashboard: React.FC = () => {
     }, {} as Record<string, Product[]>);
 
     // --- Web Design Handlers ---
-    const handleNavSave = () => {
-        updateNavbarLinks(navForm);
-        alert('Menú de navegación actualizado!');
+    const handleNavSave = async () => {
+        try {
+            await updateNavbarLinks(navForm);
+            alert('Añadido correctamente a la base de datos');
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un error guardando en la base de datos.');
+        }
     };
 
     const addNavLink = () => {
@@ -524,9 +534,14 @@ const AdminDashboard: React.FC = () => {
         setNavForm(navForm.map(l => l.id === id ? { ...l, [field]: value } : l));
     };
 
-    const handleBentoSave = () => {
-        updateBannerBento(bentoForm);
-        alert('Banners de categoría actualizados!');
+    const handleBentoSave = async () => {
+        try {
+            await updateBannerBento(bentoForm);
+            alert('Añadido correctamente a la base de datos');
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un error guardando en la base de datos.');
+        }
     };
 
     const updateBentoItem = (id: string, field: keyof BannerBento, value: string) => {
