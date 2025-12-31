@@ -222,20 +222,20 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setBlogPosts(blogData);
             }
 
-            // Fetch Store Config (Social, etc)
-            const { data: configData, error: configError } = await supabase
+            // Fetch Any Store Config
+            const { data: allConfigs, error: anyConfigError } = await supabase
                 .from('store_config')
-                .select('*')
-                .eq('key', 'social_config')
-                .single();
+                .select('*');
 
-            if (configError) {
-                // It's okay if not found initially, we use defaults. But log other errors.
-                if (configError.code !== 'PGRST116') { // PGRST116 is "The result contains 0 rows"
-                    console.error('Error fetching social config:', configError);
-                }
-            } else if (configData && configData.value) {
-                setSocialConfig(configData.value);
+            if (anyConfigError) {
+                console.error('Error fetching store configs:', anyConfigError);
+            } else if (allConfigs) {
+                allConfigs.forEach(conf => {
+                    if (conf.key === 'social_config') setSocialConfig(conf.value);
+                    if (conf.key === 'navbar_links') setNavbarLinks(conf.value);
+                    if (conf.key === 'banner_bento') setBannerBento(conf.value);
+                    if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
+                });
             }
 
         } catch (error) {
@@ -792,11 +792,32 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return saved ? JSON.parse(saved) : DEFAULT_BANNERS;
     });
 
-    useEffect(() => { localStorage.setItem('savage_navbar', JSON.stringify(navbarLinks)); }, [navbarLinks]);
-    useEffect(() => { localStorage.setItem('savage_banners_bento', JSON.stringify(bannerBento)); }, [bannerBento]);
+    const updateNavbarLinks = async (links: NavbarLink[]) => {
+        setNavbarLinks(links);
+        try {
+            await supabase.from('store_config').upsert({
+                key: 'navbar_links',
+                value: links,
+                updated_at: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
-    const updateNavbarLinks = (links: NavbarLink[]) => setNavbarLinks(links);
-    const updateBannerBento = (banners: BannerBento[]) => setBannerBento(banners);
+    const updateBannerBento = async (banners: BannerBento[]) => {
+        setBannerBento(banners);
+        try {
+            await supabase.from('store_config').upsert({
+                key: 'banner_bento',
+                value: banners,
+                updated_at: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
 
     // --- Lifestyle Config ---
     const DEFAULT_LIFESTYLE: LifestyleConfig = {
@@ -811,22 +832,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return saved ? JSON.parse(saved) : DEFAULT_LIFESTYLE;
     });
 
-    useEffect(() => { localStorage.setItem('savage_lifestyle_config', JSON.stringify(lifestyleConfig)); }, [lifestyleConfig]);
 
-    const updateLifestyleConfig = (config: LifestyleConfig) => setLifestyleConfig(config);
+    const updateLifestyleConfig = async (config: LifestyleConfig) => {
+        setLifestyleConfig(config);
+        try {
+            await supabase.from('store_config').upsert({
+                key: 'lifestyle_config',
+                value: config,
+                updated_at: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const saveAllData = () => {
-        localStorage.setItem('savage_products', JSON.stringify(products));
-        localStorage.setItem('savage_categories', JSON.stringify(categories));
-        localStorage.setItem('savage_cart', JSON.stringify(cart));
-        localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides));
-        localStorage.setItem('savage_orders', JSON.stringify(orders));
-        localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts));
-        localStorage.setItem('savage_social_config', JSON.stringify(socialConfig));
-        localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones));
-        localStorage.setItem('savage_navbar_links', JSON.stringify(navbarLinks));
-        localStorage.setItem('savage_banner_bento', JSON.stringify(bannerBento));
-        localStorage.setItem('savage_lifestyle_config', JSON.stringify(lifestyleConfig));
+        // Deprecated manual save, but kept for legacy manual triggers if any
     };
 
     return (

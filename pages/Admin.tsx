@@ -105,9 +105,18 @@ const AdminDashboard: React.FC = () => {
         buttonLink: '/blog'
     });
 
+    React.useEffect(() => {
+        if (lifestyleConfig) {
+            setLifestyleForm(lifestyleConfig);
+        }
+    }, [lifestyleConfig]);
+
     // Web Design Form State
     const [navForm, setNavForm] = useState<NavbarLink[]>(navbarLinks || []);
     const [bentoForm, setBentoForm] = useState<BannerBento[]>(bannerBento || []);
+
+    React.useEffect(() => { if (navbarLinks) setNavForm(navbarLinks); }, [navbarLinks]);
+    React.useEffect(() => { if (bannerBento) setBentoForm(bannerBento); }, [bannerBento]);
 
     // Categories Form State
     const [newCategoryName, setNewCategoryName] = useState('');
