@@ -137,3 +137,14 @@ export interface LifestyleConfig {
   buttonText: string;
   buttonLink: string;
 }
+export interface FooterLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface FooterColumn {
+  id: string;
+  title: string;
+  links: FooterLink[];
+}

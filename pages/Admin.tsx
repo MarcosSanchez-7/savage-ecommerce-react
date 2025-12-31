@@ -20,7 +20,7 @@ import {
     Edit
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento } from '../types';
+import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import { uploadProductImage } from '../services/uploadService';
 import { openGooglePicker } from '../services/googlePickerService';
@@ -37,6 +37,7 @@ const AdminDashboard: React.FC = () => {
         navbarLinks, updateNavbarLinks,
         bannerBento, updateBannerBento,
         lifestyleConfig, updateLifestyleConfig,
+        footerColumns, updateFooterColumns,
         saveAllData
     } = useShop();
 
@@ -140,9 +141,11 @@ const AdminDashboard: React.FC = () => {
     // Web Design Form State
     const [navForm, setNavForm] = useState<NavbarLink[]>(navbarLinks || []);
     const [bentoForm, setBentoForm] = useState<BannerBento[]>(bannerBento || []);
+    const [footerForm, setFooterForm] = useState<FooterColumn[]>(footerColumns || []);
 
     React.useEffect(() => { if (navbarLinks) setNavForm(navbarLinks); }, [navbarLinks]);
     React.useEffect(() => { if (bannerBento) setBentoForm(bannerBento); }, [bannerBento]);
+    React.useEffect(() => { if (footerColumns) setFooterForm(footerColumns); }, [footerColumns]);
 
     // Categories Form State
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -581,6 +584,50 @@ const AdminDashboard: React.FC = () => {
             case 'bottom_right': return 'Bloque Medio (Abajo Derecha)';
             default: return id;
         }
+    };
+
+    // --- Footer Handlers ---
+    const handleFooterSave = async () => {
+        try {
+            await updateFooterColumns(footerForm);
+            alert('Añadido correctamente a la base de datos');
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un error guardando en la base de datos.');
+        }
+    };
+
+    const updateFooterColumnTitle = (colId: string, title: string) => {
+        setFooterForm(prev => prev.map(col => col.id === colId ? { ...col, title } : col));
+    };
+
+    const addFooterLink = (colId: string) => {
+        const newId = 'l' + Date.now();
+        setFooterForm(prev => prev.map(col => {
+            if (col.id === colId) {
+                return { ...col, links: [...col.links, { id: newId, label: 'NUEVO LINK', url: '#' }] };
+            }
+            return col;
+        }));
+    };
+
+    const removeFooterLink = (colId: string, linkId: string) => {
+        setFooterForm(prev => prev.map(col => {
+            if (col.id === colId) {
+                return { ...col, links: col.links.filter(l => l.id !== linkId) };
+            }
+            return col;
+        }));
+    };
+
+    const updateFooterLink = (colId: string, linkId: string, field: 'label' | 'url', value: string) => {
+        setFooterForm(prev => prev.map(col => {
+            if (col.id === colId) {
+                const newLinks = col.links.map(l => l.id === linkId ? { ...l, [field]: value } : l);
+                return { ...col, links: newLinks };
+            }
+            return col;
+        }));
     };
 
 
@@ -1140,10 +1187,7 @@ const AdminDashboard: React.FC = () => {
                                     <label className="text-xs font-bold text-gray-500 uppercase">TikTok URL</label>
                                     <input type="text" value={configForm.tiktok} onChange={e => setConfigForm({ ...configForm, tiktok: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Email de Contacto</label>
-                                    <input type="text" value={configForm.email} onChange={e => setConfigForm({ ...configForm, email: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />
-                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase">WhatsApp (Número sin +)</label>
                                     <input type="text" value={configForm.whatsapp} onChange={e => setConfigForm({ ...configForm, whatsapp: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />
@@ -1559,6 +1603,68 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* FOOTER SECTION */}
+                            <div className="space-y-6 pt-6 border-t border-gray-800">
+                                <div className="flex justify-between items-end">
+                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                        <Layout size={20} /> FOOTER (Enlaces)
+                                    </h3>
+                                    <button onClick={handleFooterSave} className="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                                        <Save size={16} /> Guardar Footer
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                                    {footerForm.map((col) => (
+                                        <div key={col.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6">
+                                            <div className="mb-6">
+                                                <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Título de Columna</label>
+                                                <input
+                                                    type="text"
+                                                    value={col.title}
+                                                    onChange={(e) => updateFooterColumnTitle(col.id, e.target.value)}
+                                                    className="w-full bg-black border border-gray-700 rounded p-3 text-lg font-bold text-white focus:border-primary focus:outline-none"
+                                                />
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {col.links.map((link) => (
+                                                    <div key={link.id} className="flex gap-2 items-center bg-black/50 p-3 rounded-lg border border-gray-800">
+                                                        <div className="flex-1 grid grid-cols-2 gap-2">
+                                                            <div>
+                                                                <input
+                                                                    type="text"
+                                                                    value={link.label}
+                                                                    onChange={(e) => updateFooterLink(col.id, link.id, 'label', e.target.value)}
+                                                                    className="w-full bg-transparent border-b border-gray-700 text-sm text-gray-300 focus:border-primary focus:outline-none pb-1"
+                                                                    placeholder="Texto Enlace"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <input
+                                                                    type="text"
+                                                                    value={link.url}
+                                                                    onChange={(e) => updateFooterLink(col.id, link.id, 'url', e.target.value)}
+                                                                    className="w-full bg-transparent border-b border-gray-700 text-sm text-gray-500 font-mono focus:border-primary focus:outline-none pb-1"
+                                                                    placeholder="/ruta..."
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => removeFooterLink(col.id, link.id)} className="text-gray-600 hover:text-red-500 p-1">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <button onClick={() => addFooterLink(col.id)} className="mt-4 w-full py-3 border border-dashed border-gray-800 text-gray-500 hover:text-white hover:border-gray-600 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                                                <Plus size={14} /> Agregar Enlace
+                                            </button>
                                         </div>
                                     ))}
                                 </div>

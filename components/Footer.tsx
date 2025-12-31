@@ -2,7 +2,7 @@ import React from 'react';
 import { useShop } from '../context/ShopContext';
 
 const Footer: React.FC = () => {
-  const { socialConfig } = useShop();
+  const { socialConfig, footerColumns } = useShop();
 
   return (
     <footer className="bg-[#050505] border-t border-gray-900 pt-16 pb-8">
@@ -25,29 +25,20 @@ const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Links 1 */}
-          <div>
-            <h3 className="text-white font-bold uppercase tracking-widest mb-6 text-sm">Comprar</h3>
-            <ul className="flex flex-col gap-3 text-sm text-gray-400">
-              <li><a className="hover:text-primary transition-colors" href="#">Novedades</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Ropa</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Accesorios</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Rebajas</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Gift Cards</a></li>
-            </ul>
-          </div>
 
-          {/* Links 2 */}
-          <div>
-            <h3 className="text-white font-bold uppercase tracking-widest mb-6 text-sm">Ayuda</h3>
-            <ul className="flex flex-col gap-3 text-sm text-gray-400">
-              <li><a className="hover:text-primary transition-colors" href="#">Envíos y Devoluciones</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Guía de Tallas</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Preguntas Frecuentes</a></li>
-              <li><a className="hover:text-primary transition-colors" href="#">Términos Mayoristas</a></li>
-              <li><a className="hover:text-primary transition-colors" href={`mailto:${socialConfig.email}`}>Contacto</a></li>
-            </ul>
-          </div>
+          {/* Dynamic Links Columns */}
+          {footerColumns && footerColumns.map(col => (
+            <div key={col.id}>
+              <h3 className="text-white font-bold uppercase tracking-widest mb-6 text-sm">{col.title}</h3>
+              <ul className="flex flex-col gap-3 text-sm text-gray-400">
+                {col.links.map(link => (
+                  <li key={link.id}>
+                    <a className="hover:text-primary transition-colors" href={link.url}>{link.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           {/* Newsletter */}
           <div>

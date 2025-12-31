@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -49,6 +49,8 @@ interface ShopContextType {
     updateBannerBento: (banners: BannerBento[]) => void;
     lifestyleConfig: LifestyleConfig;
     updateLifestyleConfig: (config: LifestyleConfig) => void;
+    footerColumns: FooterColumn[];
+    updateFooterColumns: (columns: FooterColumn[]) => void;
     saveAllData: () => void;
 }
 
@@ -236,6 +238,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (conf.key === 'banner_bento') setBannerBento(conf.value);
                     if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
                     if (conf.key === 'hero_slides') setHeroSlides(conf.value);
+                    if (conf.key === 'footer_columns') setFooterColumns(conf.value);
                 });
             }
 
@@ -688,6 +691,49 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return saved ? JSON.parse(saved) : DEFAULT_LIFESTYLE;
     });
 
+    // --- Footer Config ---
+    const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
+        {
+            id: 'col1',
+            title: 'Comprar',
+            links: [
+                { id: 'l1', label: 'Novedades', url: '#' },
+                { id: 'l2', label: 'Ropa', url: '#' },
+                { id: 'l3', label: 'Accesorios', url: '#' },
+                { id: 'l4', label: 'Rebajas', url: '#' },
+                { id: 'l5', label: 'Gift Cards', url: '#' }
+            ]
+        },
+        {
+            id: 'col2',
+            title: 'Ayuda',
+            links: [
+                { id: 'l6', label: 'Envíos y Devoluciones', url: '#' },
+                { id: 'l7', label: 'Guía de Tallas', url: '#' },
+                { id: 'l8', label: 'Preguntas Frecuentes', url: '#' },
+                { id: 'l9', label: 'Términos Mayoristas', url: '#' },
+                { id: 'l10', label: 'Contacto', url: '/contact' }
+            ]
+        }
+    ];
+
+    const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(DEFAULT_FOOTER_COLUMNS);
+
+    const updateFooterColumns = async (columns: FooterColumn[]) => {
+        setFooterColumns(columns);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'footer_columns',
+                value: columns,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
 
     const updateLifestyleConfig = async (config: LifestyleConfig) => {
         setLifestyleConfig(config);
@@ -914,6 +960,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             lifestyleConfig,
             updateLifestyleConfig,
+            footerColumns,
+            updateFooterColumns,
             saveAllData
 
         }}>
