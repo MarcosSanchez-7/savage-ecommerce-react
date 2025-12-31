@@ -35,6 +35,15 @@ const Hero: React.FC = () => {
 
   const current = heroSlides[currentSlide];
 
+  // Safety check to prevent crashes if slides change and index is out of bounds
+  useEffect(() => {
+    if (currentSlide >= heroSlides.length) {
+      setCurrentSlide(0);
+    }
+  }, [heroSlides.length]);
+
+  if (!current) return null;
+
   return (
     <header className="relative w-full h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden bg-black">
       {/* Background Image with Overlay */}
