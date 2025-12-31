@@ -1,8 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
+import { supabase } from '../services/supabase';
 
 const Footer: React.FC = () => {
   const { socialConfig, footerColumns } = useShop();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('subscribers').insert([{ email }]);
+      if (error) {
+        if (error.code === '23505') {
+          alert('Este email ya está suscrito.');
+        } else {
+          console.error(error);
+          alert('Error al suscribirse. Intenta nuevamente.');
+        }
+      } else {
+        alert('¡Suscripción exitosa!');
+        setEmail('');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error al conectar.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <footer className="bg-[#050505] border-t border-gray-900 pt-16 pb-8">
@@ -44,14 +72,17 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-white font-bold uppercase tracking-widest mb-6 text-sm">Newsletter</h3>
             <p className="text-gray-500 text-sm mb-4">Suscríbete para acceso anticipado a drops exclusivos.</p>
-            <form className="flex flex-col gap-2" onSubmit={(e) => e.preventDefault()}>
+            <form className="flex flex-col gap-2" onSubmit={handleSubscribe}>
               <input
                 className="bg-surface-dark border border-gray-800 text-white px-4 py-3 rounded text-sm focus:outline-none focus:border-primary transition-colors placeholder:text-gray-600"
                 placeholder="Tu email"
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
               />
-              <button className="bg-white text-black font-bold uppercase tracking-widest text-xs py-3 rounded hover:bg-primary hover:text-white transition-all transform active:scale-95">
-                Suscribirse
+              <button disabled={loading} className="bg-white text-black font-bold uppercase tracking-widest text-xs py-3 rounded hover:bg-primary hover:text-white transition-all transform active:scale-95 disabled:opacity-50">
+                {loading ? '...' : 'Suscribirse'}
               </button>
             </form>
           </div>
