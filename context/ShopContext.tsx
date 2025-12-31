@@ -495,17 +495,30 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
     };
 
-    const deleteOrder = (orderId: string) => {
+    const deleteOrder = async (orderId: string) => {
         const targetId = String(orderId);
         setOrders(prev => {
             const filtered = prev.filter(o => String(o.id) !== targetId);
             return filtered;
         });
+
+        try {
+            const { error } = await supabase.from('orders').delete().eq('id', targetId);
+            if (error) console.error('Error deleting order:', error);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const clearOrders = () => {
+    const clearOrders = async () => {
         setOrders([]);
         localStorage.removeItem('savage_orders');
+        try {
+            const { error } = await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (error) console.error('Error clearing all orders:', error);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     // Blog Logic

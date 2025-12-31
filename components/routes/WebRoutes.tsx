@@ -7,6 +7,7 @@ import CategoryPage from '../../pages/CategoryPage';
 import BlogPage from '../../pages/BlogPage';
 
 import ShippingPolicy from '../../pages/ShippingPolicy';
+import ExchangePolicy from '../../pages/ExchangePolicy';
 
 import AdminDashboard from '../../pages/Admin';
 
@@ -22,6 +23,7 @@ const WebRoutes: React.FC = () => {
             <Route path="/category/:category/:subcategory" element={<CategoryPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/shipping-policy" element={<ShippingPolicy />} />
+            <Route path="/exchange-policy" element={<ExchangePolicy />} />
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
