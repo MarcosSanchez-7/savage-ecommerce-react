@@ -497,24 +497,58 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
 
         try {
-            // 2. DB Update (Order Status)
-            const { error } = await supabase
-                .from('orders')
-                .update({ status })
-                .eq('id', orderId);
+            // 2. DB Update (Order Status) with Retry Logic for Enum Casing
+            let confirmedStatus = status;
+            let dbSuccess = false;
+            let errorDetails = null;
+
+            // Helper to attempt update
+            const attemptUpdate = async (statusToUse: string) => {
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: statusToUse })
+                    .eq('id', orderId);
+                return error;
+            };
+
+            // Attempt 1: As provided (PascalCase usually)
+            let error = await attemptUpdate(status);
+
+            if (error && error.code === '22P02') {
+                console.warn(`Status '${status}' rejected. Trying UPPERCASE...`);
+                // Attempt 2: UPPERCASE
+                const upperStatus = status.toUpperCase();
+                error = await attemptUpdate(upperStatus);
+                if (!error) confirmedStatus = upperStatus as any;
+            }
+
+            if (error && error.code === '22P02') {
+                console.warn(`Status '${status.toUpperCase()}' rejected. Trying lowercase...`);
+                // Attempt 3: lowercase
+                const lowerStatus = status.toLowerCase();
+                error = await attemptUpdate(lowerStatus);
+                if (!error) confirmedStatus = lowerStatus as any;
+            }
 
             if (error) {
-                console.error('Error updating order status in Supabase:', error);
-                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCódigo: ${error.code}\nDetalles: ${error.details || 'N/A'}\nHint: ${error.hint || 'N/A'}\n\nVerifica que el usuario tenga permisos (RLS) y que el valor 'Entregado' sea válido en la columna enum.`);
-                return; // Stop if status update failed
+                // If all attempts failed
+                console.error('Error updating order status in Supabase (All formats failed):', error);
+                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum.`);
+                return;
             }
+
+            // Success! Proceed with Stock Logic using the confirmed status semantics
+            // We map confirmedStatus back to our logical types for the IF checks
+            // (Assumes logical 'Entregado' maps to 'ENTREGADO'/'entregado'/'Entregado')
+            const isDelivered = confirmedStatus.toLowerCase() === 'entregado';
+            const isPending = confirmedStatus.toLowerCase() === 'pendiente';
 
             // 3. Stock Management Logic
             const order = orders.find(o => o.id === orderId);
             if (!order || !order.items) return;
 
             // Only act if we are transitioning to/from 'Entregado' (Finalized)
-            if (status === 'Entregado') {
+            if (isDelivered) {
                 // Deduct Stock
                 let updatedCount = 0;
                 for (const item of order.items as any[]) {
@@ -539,7 +573,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             .from('products')
                             .update({ stock_quantity: newStock })
                             .eq('id', product.id)
-                            .select(); // <--- CRITICAL: Return the updated row to verify
+                            .select();
 
                         if (stockError) {
                             console.error('Error updating stock in DB:', stockError);
@@ -549,11 +583,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             alert(`ERROR SILENCIOSO: El sistema intentó descontar stock de "${product.name}" pero la base de datos no confirmó el cambio. Verifique permisos o IDs.`);
                         } else {
                             // Success confirmed by DB
-                            const confirmedStock = updatedData[0].stock_quantity;
-                            console.log(`DB Confirmed Stock for ${product.name}: ${confirmedStock}`);
+                            const finalRowStock = updatedData[0].stock_quantity;
 
                             // Local State Update
-                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: confirmedStock } : p));
+                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: finalRowStock } : p));
                             updatedCount++;
                         }
                     } else {
@@ -562,12 +595,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
                 }
                 if (updatedCount > 0) {
-                    alert(`ÉXITO TOTAL: Stock descontado y verificado en la Nube para ${updatedCount} productos.`);
+                    alert(`ÉXITO TOTAL: Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
                 }
-            } else if (status === 'Pendiente') {
+            } else if (isPending) {
                 // Restoration Logic (Re-opening order)
                 const oldStatus = order.status;
-                if (oldStatus === 'Entregado') {
+                if (oldStatus.toLowerCase() === 'entregado') {
                     for (const item of order.items as any[]) {
                         let product = products.find(p => p.id === item.id);
                         if (!product) product = products.find(p => p.name === item.name);
