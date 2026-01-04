@@ -533,9 +533,8 @@ const AdminDashboard: React.FC = () => {
 
 
     const productsByCategory = products.reduce((acc, product) => {
-        // Find category name by ID
-        const catObj = categories.find(c => c.id === product.category);
-        const catName = catObj ? catObj.name : (product.category === 'huerfanos' ? 'Huérfanos' : 'Sin Categoría');
+        // Use raw columns from database as requested, mirroring Stock App
+        const catName = product.category ? product.category.trim().toUpperCase() : 'SIN CATEGORÍA';
 
         if (!acc[catName]) acc[catName] = [];
         acc[catName].push(product);
@@ -727,35 +726,44 @@ const AdminDashboard: React.FC = () => {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <label className="text-xs font-bold text-gray-500 uppercase">Categoría</label>
-                                                <select value={newProduct.category} onChange={e => setNewProduct({ ...newProduct, category: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors text-gray-300">
-                                                    <option value="">Seleccionar...</option>
-                                                    {categories.map(cat => (
-                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                <input
+                                                    type="text"
+                                                    list="categories-list"
+                                                    value={newProduct.category}
+                                                    onChange={e => setNewProduct({ ...newProduct, category: e.target.value.toUpperCase() })}
+                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors text-white uppercase placeholder-gray-700"
+                                                    placeholder="Escribe o selecciona..."
+                                                />
+                                                <datalist id="categories-list">
+                                                    {Array.from(new Set(products.map(p => p.category?.trim().toUpperCase()).filter(Boolean))).sort().map(cat => (
+                                                        <option key={cat} value={cat} />
                                                     ))}
-                                                </select>
+                                                </datalist>
                                             </div>
-                                            {/* SUBCATEGORY UI */}
-                                            {(() => {
-                                                const activeCategory = categories.find(c => c.id === newProduct.category);
-                                                if (activeCategory && activeCategory.subcategories && activeCategory.subcategories.length > 0) {
-                                                    return (
-                                                        <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                                                            <label className="text-xs font-bold text-gray-500 uppercase">Sub-Categoría</label>
-                                                            <select
-                                                                value={newProduct.subcategory}
-                                                                onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value })}
-                                                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors text-gray-300"
-                                                            >
-                                                                <option value="">Seleccionar...</option>
-                                                                {activeCategory.subcategories.map(sub => (
-                                                                    <option key={sub} value={sub}>{sub}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
+
+                                            {/* Dynamic Subcategory UI */}
+                                            <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                                                <label className="text-xs font-bold text-gray-500 uppercase">Sub-Categoría</label>
+                                                <input
+                                                    type="text"
+                                                    list="subcategories-list"
+                                                    value={newProduct.subcategory}
+                                                    onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value.toUpperCase() })}
+                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors text-white uppercase placeholder-gray-700"
+                                                    placeholder="Escribe o selecciona..."
+                                                />
+                                                <datalist id="subcategories-list">
+                                                    {/* Filter subcategories appearing in the currently typed category */}
+                                                    {Array.from(new Set(
+                                                        products
+                                                            .filter(p => p.category?.trim().toUpperCase() === newProduct.category?.trim().toUpperCase())
+                                                            .map(p => p.subcategory?.trim().toUpperCase())
+                                                            .filter(Boolean)
+                                                    )).sort().map(sub => (
+                                                        <option key={sub} value={sub} />
+                                                    ))}
+                                                </datalist>
+                                            </div>
                                             <div className="space-y-2">
                                                 <label className="text-xs font-bold text-gray-500 uppercase">Tipo de Producto</label>
                                                 <div className="flex gap-2">
@@ -910,7 +918,8 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
                                                 ))}
                                             </div>
-                                            <p className="text-[10px] text-gray-500">* La imagen #1 será la portada. Usa las flechas para reordenar.</p>
+                                            <p className="text-[10px] text-gray-500 italic">
+                                                * La imagen #1 será la portada. Usa las flechas para reordenar.</p>
                                         </div>
                                     </div>
                                     <div className="md:col-span-2 pt-4 border-t border-gray-800">
@@ -929,49 +938,74 @@ const AdminDashboard: React.FC = () => {
                         <div className="space-y-6">
                             <h3 className="text-2xl font-bold border-b border-gray-800 pb-2">Inventario</h3>
                             <div className="space-y-4">
-                                {Object.entries(productsByCategory).map(([category, items]: [string, Product[]]) => (
-                                    <div key={category} className="border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a]">
-                                        <button onClick={() => setExpandedCategory(expandedCategory === category ? null : category)} className="w-full flex justify-between items-center p-4 bg-white/5 hover:bg-white/10 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <span className={`transition-transform duration-300 ${expandedCategory === category ? 'rotate-180' : ''}`}><ChevronDown size={20} /></span>
-                                                <h4 className="font-bold text-lg uppercase tracking-wide">{category}</h4>
-                                                <span className="bg-gray-800 text-xs px-2 py-1 rounded-full text-gray-300">{items.length} productos</span>
-                                            </div>
-                                        </button>
-                                        {expandedCategory === category && (
-                                            <div className="p-4 space-y-2 bg-black animate-in slide-in-from-top-2 duration-300">
-                                                {items.map(p => (
-                                                    <div key={p.id} className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg border border-transparent hover:border-gray-800 group transition-all">
-                                                        <div className="flex items-center gap-4">
-                                                            <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded object-cover bg-gray-900" />
-                                                            <div>
-                                                                <h5 className="font-bold text-sm text-white">{p.name}</h5>
-                                                                <div className="flex gap-2 text-xs text-gray-500">
-                                                                    <span>Gs. {p.price.toLocaleString()}</span>
-                                                                    {p.originalPrice && <span className="line-through">Gs. {p.originalPrice.toLocaleString()}</span>}
-                                                                    <span className="text-gray-600">•</span>
-                                                                    <span>{p.sizes.join(', ')}</span>
-                                                                </div>
+                                {Object.entries(productsByCategory).map(([category, catItems]: [string, Product[]]) => {
+                                    // Group by Subcategory dynamically
+                                    const subcats = catItems.reduce((acc, item) => {
+                                        const sub = item.subcategory ? item.subcategory.trim().toUpperCase() : 'OTROS';
+                                        if (!acc[sub]) acc[sub] = [];
+                                        acc[sub].push(item);
+                                        return acc;
+                                    }, {} as Record<string, Product[]>);
+
+                                    // Sort subcategories (Optional: Custom order if needed, otherwise alphabetical)
+                                    // We want 'OTROS' last usually, but simple keys is fine for now.
+                                    const subcatKeys = Object.keys(subcats).sort();
+
+                                    return (
+                                        <div key={category} className="border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a]">
+                                            <button onClick={() => setExpandedCategory(expandedCategory === category ? null : category)} className="w-full flex justify-between items-center p-4 bg-white/5 hover:bg-white/10 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`transition-transform duration-300 ${expandedCategory === category ? 'rotate-180' : ''}`}><ChevronDown size={20} /></span>
+                                                    <h4 className="font-bold text-lg uppercase tracking-wide">{category}</h4>
+                                                    <span className="bg-gray-800 text-xs px-2 py-1 rounded-full text-gray-300">{catItems.length} productos</span>
+                                                </div>
+                                            </button>
+
+                                            {expandedCategory === category && (
+                                                <div className="p-4 bg-black animate-in slide-in-from-top-2 duration-300 flex flex-col gap-6">
+                                                    {subcatKeys.map(subKey => (
+                                                        <div key={subKey} className="space-y-2">
+                                                            <h5 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] border-b border-gray-900 pb-2 mb-2 pl-2 border-l-4 border-l-primary/50">
+                                                                {subKey}
+                                                            </h5>
+                                                            <div className="space-y-2">
+                                                                {subcats[subKey].map(p => (
+                                                                    <div key={p.id} className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg border border-transparent hover:border-gray-800 group transition-all">
+                                                                        <div className="flex items-center gap-4">
+                                                                            <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded object-cover bg-gray-900" />
+                                                                            <div>
+                                                                                <h5 className="font-bold text-sm text-white">{p.name}</h5>
+                                                                                <div className="flex gap-2 text-xs text-gray-500">
+                                                                                    <span>Gs. {p.price.toLocaleString()}</span>
+                                                                                    {p.originalPrice && <span className="line-through">Gs. {p.originalPrice.toLocaleString()}</span>}
+                                                                                    {p.stock === 0 && <span className="text-red-500 font-bold uppercase">Agotado</span>}
+                                                                                    <span className="text-gray-600">•</span>
+                                                                                    <span>{p.sizes.join(', ')}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            <button onClick={() => handleEditProduct(p)} className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-500/10 rounded-lg transition-all" title="Editar">
+                                                                                <Edit size={18} />
+                                                                            </button>
+                                                                            <button onClick={() => deleteProduct(p.id)} className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all" title="Eliminar">
+                                                                                <Trash2 size={18} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
                                                             </div>
                                                         </div>
-                                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button onClick={() => handleEditProduct(p)} className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-500/10 rounded-lg transition-all" title="Editar">
-                                                                <Edit size={18} />
-                                                            </button>
-                                                            <button onClick={() => deleteProduct(p.id)} className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all" title="Eliminar">
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {items.length === 0 && <p className="text-center text-gray-500 py-4">No hay productos en esta categoría.</p>}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                                    ))}
+                                                    {catItems.length === 0 && <p className="text-center text-gray-500 py-4">No hay productos en esta categoría.</p>}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
-                    </div >
+                    </div>
                 )}
 
 

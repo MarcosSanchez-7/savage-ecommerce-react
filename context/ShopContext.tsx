@@ -173,7 +173,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     isFeatured: p.is_featured,
                     isCategoryFeatured: p.is_category_featured,
                     isNew: p.is_new,
-                    subcategory: p.subcategory || '', // Handle nulls gracefully
+                    // Robust Category Mapping: Check standard lower, Title Case, and potential ID/name columns
+                    category: p.category || p.Category || p.category_id || p.category_name || '',
+                    subcategory: p.subcategory || p.Subcategory || p.sub_category || '',
                     stock: p.stock_quantity,
                     inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
                 })));
