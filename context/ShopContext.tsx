@@ -177,6 +177,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     category: p.category || p.Category || p.category_id || p.category_name || '',
                     subcategory: p.subcategory || p.Subcategory || p.sub_category || '',
                     stock: p.stock_quantity,
+                    costPrice: Number(p.cost_price || p.unit_cost || 0),
                     inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
                 })));
             }
@@ -598,6 +599,41 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                             // Local State Update
                             setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: finalRowStock } : p));
+
+                            // 4. Register Sale in 'sales' table
+                            try {
+
+                                // Determinar precio unitario:
+                                // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
+                                // Si no, usar el precio actual del producto.
+                                // Nota: item.price podría no existir si items es un array simple. Asumimos que createOrder guarda precio.
+                                const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
+
+                                const saleRecord = {
+                                    product_id: product.id,
+                                    quantity: qtyToDeduct,
+                                    size: item.selectedSize || 'Standard',
+                                    unit_price: saleUnitPrice,
+                                    cost_price: product.costPrice || 0,
+                                    origin: 'web',
+                                    created_at: new Date().toISOString() // Optional, DB usually handles it
+                                };
+
+                                const { error: salesError } = await supabase
+                                    .from('sales')
+                                    .insert([saleRecord]);
+
+                                if (salesError) {
+                                    console.error('Error inserting into sales table:', salesError);
+                                    // Non-blocking error alert
+                                    // alert(`Atención: Stock descontado pero error al registrar venta en tabla 'sales': ${salesError.message}`);
+                                } else {
+                                    console.log('Sale registered successfully for', product.name);
+                                }
+
+                            } catch (saleErr) {
+                                console.error('Exception registering sale:', saleErr);
+                            }
                             updatedCount++;
                         }
                     } else {
