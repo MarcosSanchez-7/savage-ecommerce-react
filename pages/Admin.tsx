@@ -17,7 +17,8 @@ import {
     MessageSquare,
     Layers,
     Map,
-    Edit
+    Edit,
+    Menu
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
@@ -42,6 +43,7 @@ const AdminDashboard: React.FC = () => {
     } = useShop();
 
     const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign'>('products');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Product Form State
     const [newProduct, setNewProduct] = useState({
@@ -634,10 +636,37 @@ const AdminDashboard: React.FC = () => {
 
 
     return (
-        <div className="min-h-screen bg-[#050505] text-white flex">
+        <div className="min-h-screen bg-[#050505] text-white flex flex-col md:flex-row relative">
+
+            {/* Mobile Header */}
+            <div className="md:hidden bg-black border-b border-gray-800 p-4 flex justify-between items-center sticky top-0 z-50">
+                <h1 className="text-xl font-black tracking-tighter text-primary">SAVAGE<span className="text-white">ADMIN</span></h1>
+                <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-white p-2">
+                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+            </div>
+
+            {/* Sidebar Overlay */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/80 z-40 md:hidden backdrop-blur-sm"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
+            )}
+
             {/* Sidebar */}
-            <aside className="w-64 border-r border-gray-800 p-6 flex flex-col h-screen sticky top-0">
-                <h1 className="text-2xl font-black tracking-tighter text-primary mb-10">SAVAGE<span className="text-white">ADMIN</span></h1>
+            <aside className={`
+                fixed inset-y-0 left-0 z-50 w-72 bg-[#050505] border-r border-gray-800 p-6 flex flex-col h-screen
+                transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
+                md:translate-x-0 md:static md:w-64 md:sticky md:top-0
+                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+            `}>
+                <div className="flex justify-between items-center mb-10">
+                    <h1 className="text-2xl font-black tracking-tighter text-primary">SAVAGE<span className="text-white">ADMIN</span></h1>
+                    <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-gray-500 hover:text-white">
+                        <X size={24} />
+                    </button>
+                </div>
 
                 <nav className="flex-1 space-y-2">
                     <button onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'products' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
@@ -680,12 +709,13 @@ const AdminDashboard: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 p-10 overflow-y-auto h-screen">
+            {/* Main Content */}
+            <main className="flex-1 p-4 md:p-10 overflow-y-auto h-[calc(100vh-73px)] md:h-screen">
 
                 {/* PRODUCTS TAB */}
                 {activeTab === 'products' && (
                     <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header className="flex justify-between items-end border-b border-gray-800 pb-6">
+                        <header className="flex flex-col md:flex-row justify-between md:items-end border-b border-gray-800 pb-6 gap-4">
                             <div>
                                 <h2 className="text-3xl font-bold mb-2">Gestión de Productos</h2>
                                 <p className="text-gray-400">Administra el inventario, precios y detalles.</p>
@@ -970,7 +1000,7 @@ const AdminDashboard: React.FC = () => {
                                                             </h5>
                                                             <div className="space-y-2">
                                                                 {subcats[subKey].map(p => (
-                                                                    <div key={p.id} className="flex justify-between items-center p-3 hover:bg-white/5 rounded-lg border border-transparent hover:border-gray-800 group transition-all">
+                                                                    <div key={p.id} className="flex flex-col md:flex-row justify-between md:items-center p-3 hover:bg-white/5 rounded-lg border border-transparent hover:border-gray-800 group transition-all gap-4">
                                                                         <div className="flex items-center gap-4">
                                                                             <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded object-cover bg-gray-900" />
                                                                             <div>
@@ -1013,7 +1043,7 @@ const AdminDashboard: React.FC = () => {
                 {
                     activeTab === 'orders' && (
                         <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <header className="border-b border-gray-800 pb-6 flex justify-between items-end">
+                            <header className="border-b border-gray-800 pb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
                                 <div>
                                     <h2 className="text-3xl font-bold mb-2">Pedidos y Ventas</h2>
                                     <p className="text-gray-400">Control de pedidos iniciados via WhatsApp.</p>
