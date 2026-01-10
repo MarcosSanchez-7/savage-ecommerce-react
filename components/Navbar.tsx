@@ -67,7 +67,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="size-10 flex items-center justify-center transition-transform group-hover:scale-110">
-              <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_5px_rgba(212,175,55,0.5)]" />
+              <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.6)] filter brightness-110" />
             </div>
             <h2 className="text-white text-2xl font-black leading-none tracking-widest uppercase transition-colors group-hover:text-primary pt-1">
               SAVAGE

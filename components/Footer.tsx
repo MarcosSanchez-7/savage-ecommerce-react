@@ -40,7 +40,7 @@ const Footer: React.FC = () => {
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-2 text-white">
               <div className="size-6 text-primary">
-                <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_5px_rgba(212,175,55,0.5)]" />
+                <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.6)] filter brightness-110" />
               </div>
               <h2 className="text-xl font-bold uppercase tracking-wider">SAVAGE</h2>
             </div>
