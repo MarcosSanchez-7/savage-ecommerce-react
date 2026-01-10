@@ -142,6 +142,10 @@ export interface BannerBento {
   link: string;
 }
 
+export interface HeroCarouselConfig {
+  interval: number; // milliseconds
+}
+
 export interface LifestyleConfig {
   sectionTitle: string;
   sectionSubtitle: string;

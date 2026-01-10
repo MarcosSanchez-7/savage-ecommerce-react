@@ -38,6 +38,8 @@ const AdminDashboard: React.FC = () => {
         navbarLinks, updateNavbarLinks,
         bannerBento, updateBannerBento,
         lifestyleConfig, updateLifestyleConfig,
+        heroCarouselConfig,
+        updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
         saveAllData
     } = useShop();
@@ -78,6 +80,8 @@ const AdminDashboard: React.FC = () => {
 
     // Hero Form State
     const [heroForm, setHeroForm] = useState<HeroSlide[]>(heroSlides);
+    const [heroInterval, setHeroInterval] = useState(5); // Seconds
+
     const [uploadingSlideId, setUploadingSlideId] = useState<string | null>(null);
     const heroFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -85,7 +89,10 @@ const AdminDashboard: React.FC = () => {
         if (heroSlides && heroSlides.length > 0) {
             setHeroForm(heroSlides);
         }
-    }, [heroSlides]);
+        if (heroCarouselConfig) {
+            setHeroInterval(heroCarouselConfig.interval / 1000);
+        }
+    }, [heroSlides, heroCarouselConfig]);
 
     const handleHeroFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && uploadingSlideId) {
@@ -400,6 +407,9 @@ const AdminDashboard: React.FC = () => {
     const handleHeroSave = async () => {
         try {
             await updateHeroSlides(heroForm);
+            if (updateHeroCarouselConfig) {
+                await updateHeroCarouselConfig({ interval: heroInterval * 1000 });
+            }
             alert('Añadido correctamente a la base de datos');
         } catch (error) {
             console.error(error);
@@ -586,6 +596,32 @@ const AdminDashboard: React.FC = () => {
         setNavForm(navForm.map(l => l.id === id ? { ...l, [field]: value } : l));
     };
 
+    const addBentoItem = () => {
+        const newId = `bento-${Date.now()}`;
+        setBentoForm(prev => [...prev, {
+            id: newId,
+            title: 'NUEVO BANNER',
+            image: '',
+            link: '/',
+            buttonText: 'Ver Más'
+        }]);
+    };
+
+    const removeBentoItem = (id: string) => {
+        setBentoForm(prev => prev.filter(b => b.id !== id));
+    };
+
+    const updateBentoItem = (id: string, field: keyof BannerBento, value: string) => {
+        setBentoForm(prev => prev.map(b => b.id === id ? { ...b, [field]: value } : b));
+    };
+
+    const getBentoLabel = (index: number) => {
+        if (index === 0) return 'Bloque Grande (Izquierda)';
+        if (index === 1) return 'Bloque Medio (Arriba Derecha)';
+        if (index === 2) return 'Bloque Medio (Abajo Derecha)';
+        return `Banner Adicional #${index + 1}`;
+    };
+
     const handleBentoSave = async () => {
         try {
             await updateBannerBento(bentoForm);
@@ -596,18 +632,7 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    const updateBentoItem = (id: string, field: keyof BannerBento, value: string) => {
-        setBentoForm(bentoForm.map(b => b.id === id ? { ...b, [field]: value } : b));
-    };
 
-    const getBentoLabel = (id: string) => {
-        switch (id) {
-            case 'large': return 'Bloque Grande (Izquierda)';
-            case 'top_right': return 'Bloque Medio (Arriba Derecha)';
-            case 'bottom_right': return 'Bloque Medio (Abajo Derecha)';
-            default: return id;
-        }
-    };
 
     // --- Footer Handlers ---
     const handleFooterSave = async () => {
@@ -1513,9 +1538,21 @@ const AdminDashboard: React.FC = () => {
                                     <h2 className="text-3xl font-bold mb-2">Carrusel Hero</h2>
                                     <p className="text-gray-400">Personaliza el carrusel principal.</p>
                                 </div>
-                                <button onClick={handleHeroSave} className="bg-primary hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
-                                    <Save size={18} /> GUARDAR CAMBIOS
-                                </button>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex flex-col items-end">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1">Intervalo (seg)</label>
+                                        <input
+                                            type="number"
+                                            value={heroInterval}
+                                            onChange={e => setHeroInterval(Number(e.target.value))}
+                                            className="bg-black border border-gray-800 rounded p-2 text-sm w-20 text-center font-bold text-white focus:border-primary focus:outline-none"
+                                            min="1"
+                                        />
+                                    </div>
+                                    <button onClick={handleHeroSave} className="bg-primary hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
+                                        <Save size={18} /> GUARDAR CAMBIOS
+                                    </button>
+                                </div>
                             </header>
 
                             <input type="file" ref={heroFileInputRef} onChange={handleHeroFileSelect} className="hidden" accept="image/*" />
@@ -1665,11 +1702,16 @@ const AdminDashboard: React.FC = () => {
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6">
-                                    {bentoForm.map((banner) => (
+                                    {bentoForm.map((banner, idx) => (
                                         <div key={banner.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 group">
-                                            <h4 className="text-lg font-bold text-white mb-4 border-b border-gray-800 pb-2">
-                                                {getBentoLabel(banner.id)}
-                                            </h4>
+                                            <div className="flex justify-between items-start mb-4 border-b border-gray-800 pb-2">
+                                                <h4 className="text-lg font-bold text-white">
+                                                    {getBentoLabel(idx)}
+                                                </h4>
+                                                <button onClick={() => removeBentoItem(banner.id)} className="text-gray-500 hover:text-red-500 p-1 transition-colors">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                 {/* Preview */}
                                                 <div className="relative aspect-video bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
@@ -1695,7 +1737,7 @@ const AdminDashboard: React.FC = () => {
                                                             className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white focus:border-primary focus:outline-none"
                                                         />
                                                     </div>
-                                                    {banner.id === 'large' && (
+                                                    {idx === 0 && (
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-bold text-gray-500 uppercase">Subtítulo</label>
                                                             <input
@@ -1740,6 +1782,9 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         </div>
                                     ))}
+                                    <button onClick={addBentoItem} className="w-full py-4 border border-dashed border-gray-800 text-gray-500 hover:text-white hover:border-gray-600 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                                        <Plus size={16} /> Agregar Nuevo Banner
+                                    </button>
                                 </div>
                             </div>
 

@@ -7,20 +7,24 @@ const CategoryBento: React.FC = () => {
   const { bannerBento } = useShop();
 
   // Fallback defaults in case context is empty (shouldn't happen with default state)
-  const large = bannerBento.find(b => b.id === 'large') || {
+  // Fallback defaults or use array indices
+  const large = bannerBento[0] || {
+    id: 'bento-1',
     title: 'Joyas',
     subtitle: '',
     buttonText: 'Ver Colección',
     image: '',
     link: '/category/Joyas'
   };
-  const topRight = bannerBento.find(b => b.id === 'top_right') || {
+  const topRight = bannerBento[1] || {
+    id: 'bento-2',
     title: 'Ropa',
     buttonText: 'Explorar',
     image: '',
     link: '/category/Ropa'
   };
-  const bottomRight = bannerBento.find(b => b.id === 'bottom_right') || {
+  const bottomRight = bannerBento[2] || {
+    id: 'bento-3',
     title: 'Nuevos Ingresos',
     subtitle: '',
     image: '',
@@ -75,6 +79,32 @@ const CategoryBento: React.FC = () => {
           </div>
         </Link>
       </div>
+
+      {/* Extra Banners (if any) */}
+      {bannerBento.length > 3 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          {bannerBento.slice(3).map((banner) => (
+            <Link key={banner.id} to={banner.link} className="group relative h-64 overflow-hidden block">
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors z-10" />
+              <img
+                src={banner.image}
+                alt={banner.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-20 text-center p-4">
+                <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-lg">
+                  {banner.title}
+                </h3>
+                {banner.buttonText && (
+                  <span className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all">
+                    {banner.buttonText}
+                  </span>
+                )}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </section>
   );
 };

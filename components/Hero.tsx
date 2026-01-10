@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 const Hero: React.FC = () => {
-  const { heroSlides } = useShop();
+  const { heroSlides, heroCarouselConfig } = useShop();
   const [currentSlide, setCurrentSlide] = useState(0);
   const timeoutRef = useRef<number | null>(null);
 
@@ -23,13 +23,13 @@ const Hero: React.FC = () => {
   useEffect(() => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     timeoutRef.current = window.setTimeout(() => {
-      // nextSlide(); // Optional: Auto-play
-    }, 5000);
+      nextSlide();
+    }, heroCarouselConfig?.interval || 5000);
 
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
-  }, [currentSlide, heroSlides.length]);
+  }, [currentSlide, heroSlides.length, heroCarouselConfig]);
 
   if (heroSlides.length === 0) return null;
 

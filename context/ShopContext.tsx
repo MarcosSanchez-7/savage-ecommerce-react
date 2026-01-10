@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -49,6 +49,8 @@ interface ShopContextType {
     updateBannerBento: (banners: BannerBento[]) => void;
     lifestyleConfig: LifestyleConfig;
     updateLifestyleConfig: (config: LifestyleConfig) => void;
+    heroCarouselConfig: HeroCarouselConfig;
+    updateHeroCarouselConfig: (config: HeroCarouselConfig) => void;
     footerColumns: FooterColumn[];
     updateFooterColumns: (columns: FooterColumn[]) => void;
     saveAllData: () => void;
@@ -133,8 +135,25 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return saved ? JSON.parse(saved) : DEFAULT_SOCIAL_CONFIG;
     });
 
-    // Delivery Zones
-    // Delivery Zones
+    // Lifestyle Config
+    const [lifestyleConfig, setLifestyleConfig] = useState<LifestyleConfig>(() => {
+        const saved = localStorage.getItem('savage_lifestyle_config');
+        return saved ? JSON.parse(saved) : {
+            sectionTitle: 'THE SAVAGE LIFESTYLE',
+            sectionSubtitle: 'Únete a la comunidad...',
+            buttonText: 'LEER EL BLOG',
+            buttonLink: '/blog'
+        };
+    });
+
+    // Hero Carousel Config
+    const [heroCarouselConfig, setHeroCarouselConfig] = useState<HeroCarouselConfig>({ interval: 5000 });
+
+    const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(() => {
+        const saved = localStorage.getItem('savage_footer_columns');
+        return saved ? JSON.parse(saved) : [];
+    });
+
     const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
 
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -164,8 +183,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     alert(`Error cargando productos: ${productsError.message}`);
                 }
             } else if (productsData) {
-                // Transform Supabase data if needed to match frontend Product type
-                // Assuming Database columns match Product interface closely
                 setProducts(productsData.map(p => ({
                     ...p,
                     price: Number(p.price),
@@ -173,7 +190,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     isFeatured: p.is_featured,
                     isCategoryFeatured: p.is_category_featured,
                     isNew: p.is_new,
-                    // Robust Category Mapping: Check standard lower, Title Case, and potential ID/name columns
                     category: p.category || p.Category || p.category_id || p.category_name || '',
                     subcategory: p.subcategory || p.Subcategory || p.sub_category || '',
                     stock: p.stock_quantity,
@@ -182,7 +198,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 })));
             }
 
-            // Fetch Categories (if you plan to store them in DB too, otherwise keep default)
+            // Fetch Categories
             const { data: categoriesData, error: catError } = await supabase
                 .from('categories')
                 .select('*');
@@ -202,7 +218,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setDeliveryZones(zonesData.map(z => ({
                     ...z,
                     price: Number(z.price),
-                    // Points is JSONB, Supabase returns it as object/array automatically
                     points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points
                 })));
             }
@@ -220,7 +235,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     ...o,
                     total_amount: Number(o.total_amount),
                     delivery_cost: Number(o.delivery_cost),
-                    // JSONB columns come as objects already
                 })));
             }
 
@@ -251,6 +265,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
                     if (conf.key === 'hero_slides') setHeroSlides(conf.value);
                     if (conf.key === 'footer_columns') setFooterColumns(conf.value);
+                    if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
                 });
             }
 
@@ -879,49 +894,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
 
-    // --- Lifestyle Config ---
-    const DEFAULT_LIFESTYLE: LifestyleConfig = {
-        sectionTitle: 'THE SAVAGE LIFESTYLE',
-        sectionSubtitle: 'Únete a la comunidad que redefine las reglas. Historias reales, estilo sin filtros.',
-        buttonText: 'LEER EL BLOG',
-        buttonLink: '/blog'
-    };
-
-    const [lifestyleConfig, setLifestyleConfig] = useState<LifestyleConfig>(() => {
-        const saved = localStorage.getItem('savage_lifestyle_config');
-        return saved ? JSON.parse(saved) : DEFAULT_LIFESTYLE;
-    });
-
     // --- Footer Config ---
-    const DEFAULT_FOOTER_COLUMNS: FooterColumn[] = [
-        {
-            id: 'col1',
-            title: 'Comprar',
-            links: [
-                { id: 'l1', label: 'Novedades', url: '#' },
-                { id: 'l2', label: 'Ropa', url: '#' },
-                { id: 'l3', label: 'Accesorios', url: '#' },
-                { id: 'l4', label: 'Rebajas', url: '#' },
-                { id: 'l5', label: 'Gift Cards', url: '#' }
-            ]
-        },
-        {
-            id: 'col2',
-            title: 'Ayuda',
-            links: [
-                { id: 'l6', label: 'Envíos y Devoluciones', url: '#' },
-                { id: 'l7', label: 'Guía de Tallas', url: '#' },
-                { id: 'l8', label: 'Preguntas Frecuentes', url: '#' },
-                { id: 'l9', label: 'Términos Mayoristas', url: '#' },
-                { id: 'l10', label: 'Contacto', url: '/contact' },
-                { id: 'l11', label: 'Términos de Envío', url: '#' },
-                { id: 'l12', label: 'Cambios', url: '#' },
-                { id: 'l13', label: 'Sistemas de Pago', url: '#' }
-            ]
-        }
-    ];
 
-    const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(DEFAULT_FOOTER_COLUMNS);
 
     const updateFooterColumns = async (columns: FooterColumn[]) => {
         setFooterColumns(columns);
@@ -944,6 +918,21 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const { error } = await supabase.from('store_config').upsert({
                 key: 'lifestyle_config',
+                value: config,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
+    const updateHeroCarouselConfig = async (config: HeroCarouselConfig) => {
+        setHeroCarouselConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'hero_carousel_config',
                 value: config,
                 updated_at: new Date().toISOString()
             });

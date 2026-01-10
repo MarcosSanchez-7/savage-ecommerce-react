@@ -127,7 +127,10 @@ const CartDrawer: React.FC = () => {
                         <div className="text-center text-gray-500 mt-20">
                             <p>Tu carrito está vacío.</p>
                             <button
-                                onClick={toggleCart}
+                                onClick={() => {
+                                    toggleCart();
+                                    navigate('/');
+                                }}
                                 className="mt-4 text-primary hover:underline text-sm font-bold"
                             >
                                 IR A COMPRAR
