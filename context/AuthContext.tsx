@@ -66,7 +66,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // Default to OTP if no password provided (optional feature)
-        const { error } = await supabase.auth.signInWithOtp({ email });
+        const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+                emailRedirectTo: 'https://www.savageeepy.com'
+            }
+        });
         return { error };
     };
 
