@@ -19,17 +19,6 @@ const LifestyleSection: React.FC = () => {
     ];
   }, [blogPosts]);
 
-  // Auto Slider Effect
-  React.useEffect(() => {
-    if (displayItems.length <= 4) return; // No need to slide if few items
-
-    const interval = setInterval(() => {
-      setActiveIndex(prev => (prev + 1) % (displayItems.length - 3));
-    }, 10000); // 10 seconds
-
-    return () => clearInterval(interval);
-  }, [displayItems.length]);
-
   // Responsive items to show
   const [itemsToShow, setItemsToShow] = React.useState(4);
 
@@ -40,14 +29,18 @@ const LifestyleSection: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Adjust display window based on activeIndex
-  const visibleItems = displayItems.length > itemsToShow
-    ? displayItems.slice(activeIndex, activeIndex + itemsToShow)
-    : displayItems.slice(0, itemsToShow);
+  // Auto Slider Effect
+  React.useEffect(() => {
+    if (displayItems.length <= itemsToShow) return;
 
-  // If we are at the end, and we have enough items, we wrap around manually for the slice?
-  // Actually, for infinite carousel feel, standard slice might run out.
-  // Let's implement wrap-around slice logic.
+    const interval = setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % displayItems.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [displayItems.length, itemsToShow]);
+
+  // Adjust visibility
   const getWrappedItems = () => {
     let items = [];
     for (let i = 0; i < itemsToShow; i++) {
