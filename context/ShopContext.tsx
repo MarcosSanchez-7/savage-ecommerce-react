@@ -137,6 +137,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [drops, setDrops] = useState<Drop[]>([]);
 
     const addDrop = async (drop: Omit<Drop, 'id'>) => {
+        console.log("ShopContext: Adding drop:", drop);
         try {
             const { data, error } = await supabase.from('drops').insert(drop).select().single();
             if (error) throw error;
