@@ -186,7 +186,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [heroCarouselConfig, setHeroCarouselConfig] = useState<HeroCarouselConfig>({ interval: 5000 });
 
     // Drops Config
-    const [dropsConfig, setDropsConfig] = useState<DropsConfig>({ isEnabled: true });
+    const [dropsConfig, setDropsConfig] = useState<DropsConfig>(() => {
+        const saved = localStorage.getItem('savage_drops_config');
+        return saved ? JSON.parse(saved) : { isEnabled: false };
+    });
+
+    useEffect(() => {
+        localStorage.setItem('savage_drops_config', JSON.stringify(dropsConfig));
+    }, [dropsConfig]);
 
     const updateDropsConfig = async (config: DropsConfig) => {
         setDropsConfig(config);
