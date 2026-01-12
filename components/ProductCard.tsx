@@ -78,8 +78,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
             onClick={() => navigate(`/product/${product.id}`)}
           >
             {product.name}
+            {(product.name.length < 25 && (product.category.toLowerCase().includes('camiseta') || product.name.toLowerCase().includes('camiseta'))) && (
+              <span className="hidden opacity-0 w-0 h-0"> - Camiseta de Fútbol Premium</span>
+            )}
           </h3>
           <p className="text-accent-gray text-xs uppercase tracking-wide mt-1">
+            {/* Visual helper for SEO context without cluttering UI */}
             {product.subcategory || product.category}
           </p>
         </div>

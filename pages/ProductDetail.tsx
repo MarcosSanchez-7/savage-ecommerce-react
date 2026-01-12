@@ -46,6 +46,29 @@ const ProductDetail: React.FC = () => {
         <div className="min-h-screen bg-background-dark text-white">
             <Navbar cartCount={cartCount} />
 
+            {/* Structured Data for SEO */}
+            <script type="application/ld+json">
+                {JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "Product",
+                    "name": product.name,
+                    "image": product.images,
+                    "description": product.description || `Compra ${product.name} en Savage Store Paraguay.`,
+                    "brand": {
+                        "@type": "Brand",
+                        "name": "Savage Store"
+                    },
+                    "offers": {
+                        "@type": "Offer",
+                        "url": window.location.href,
+                        "priceCurrency": "PYG",
+                        "price": product.price,
+                        "availability": isTotallyOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+                        "itemCondition": "https://schema.org/NewCondition"
+                    }
+                })}
+            </script>
+
             <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
                 <button
                     onClick={() => navigate(-1)}

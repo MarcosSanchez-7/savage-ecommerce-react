@@ -11,6 +11,8 @@ import { useShop } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
+import UpcomingDrops from '../components/UpcomingDrops';
+
 const Home: React.FC = () => {
     const { products, addToCart, cart, categories } = useShop();
 
@@ -24,6 +26,7 @@ const Home: React.FC = () => {
 
             <main>
                 <Hero />
+                <UpcomingDrops />
 
                 {/* Featured Products Section (Max 8) */}
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">

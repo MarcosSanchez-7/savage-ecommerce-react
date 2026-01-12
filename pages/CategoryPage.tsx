@@ -33,6 +33,36 @@ const CategoryPage: React.FC = () => {
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+    const getSEOInfo = (cat: string | undefined) => {
+        const c = cat?.toLowerCase();
+        if (c?.includes('camisetas') || c === 'ropa') return {
+            title: 'Camisetas de Fútbol Premium',
+            desc: 'La mejor selección de camisetas de fútbol retro y actuales en Paraguay.',
+            docTitle: 'Camisetas de Fútbol - Savage Store Paraguay'
+        };
+        if (c?.includes('calzado')) return {
+            title: 'Calzado Urbano & Sneakers',
+            desc: 'Zapatillas y sneakers exclusivos para completar tu outfit Savage.',
+            docTitle: 'Calzado Urbano - Savage Store Paraguay'
+        };
+        if (c?.includes('relojes') || c?.includes('accesorios') || c?.includes('joyas')) return {
+            title: 'Relojes y Accesorios Premium',
+            desc: 'Complementos de lujo: Relojes, cadenas y accesorios para destacar.',
+            docTitle: 'Accesorios y Relojes - Savage Store Paraguay'
+        };
+        return {
+            title: category,
+            desc: `${categoryProducts.length} productos disponibles`,
+            docTitle: `${category} - Savage Store Paraguay`
+        };
+    };
+
+    const seoInfo = getSEOInfo(category);
+
+    React.useEffect(() => {
+        document.title = seoInfo.docTitle;
+    }, [category, seoInfo.docTitle]);
+
     return (
         <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
             <Navbar cartCount={cartCount} />
@@ -43,8 +73,8 @@ const CategoryPage: React.FC = () => {
                         <ArrowLeft size={24} />
                     </Link>
                     <div>
-                        <h1 className="text-4xl font-black uppercase tracking-tight">{category}</h1>
-                        <p className="text-accent-gray text-sm mt-1">{categoryProducts.length} productos</p>
+                        <h1 className="text-4xl font-black uppercase tracking-tight">{seoInfo.title}</h1>
+                        <p className="text-accent-gray text-sm mt-1">{seoInfo.desc}</p>
                     </div>
                 </div>
 
