@@ -41,10 +41,10 @@ const AdminDashboard: React.FC = () => {
         heroCarouselConfig,
         updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
-        saveAllData
+        saveAllData, drops, addDrop, deleteDrop, loading
     } = useShop();
 
-    const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Product Form State
@@ -123,6 +123,11 @@ const AdminDashboard: React.FC = () => {
     });
 
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
+
+    // Drop Form State
+    const [dropTitle, setDropTitle] = useState('');
+    const [isDropUploading, setIsDropUploading] = useState(false);
+    const dropFileInputRef = React.useRef<HTMLInputElement>(null);
 
     // Config Form State
     const [configForm, setConfigForm] = useState({
@@ -678,6 +683,36 @@ const AdminDashboard: React.FC = () => {
         }));
     };
 
+    // --- Drop Handlers ---
+    const handleAddDrop = async (imageUrl: string) => {
+        if (!imageUrl) return;
+
+        await addDrop({
+            id: Date.now().toString(),
+            title: dropTitle,
+            image: imageUrl,
+            created_at: new Date().toISOString()
+        });
+
+        setDropTitle('');
+        alert('Drop Agregado!');
+    };
+
+    const handleDropFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setIsDropUploading(true);
+            const file = e.target.files[0];
+            const url = await uploadProductImage(file, 'drops');
+
+            if (url) {
+                await handleAddDrop(url);
+            }
+
+            setIsDropUploading(false);
+            if (dropFileInputRef.current) dropFileInputRef.current.value = '';
+        }
+    };
+
 
     return (
         <div className="min-h-screen bg-[#050505] text-white flex flex-col md:flex-row relative">
@@ -725,6 +760,9 @@ const AdminDashboard: React.FC = () => {
                     <button onClick={() => setActiveTab('hero')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'hero' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <ImageIcon size={20} /> <span className="font-bold text-sm">Carrusel Hero</span>
                     </button>
+                    <button onClick={() => setActiveTab('drops')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'drops' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                        <Layers size={20} /> <span className="font-bold text-sm">Próximos Drops (Hype)</span>
+                    </button>
                     <button onClick={() => setActiveTab('categories')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'categories' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Layers size={20} /> <span className="font-bold text-sm">Categorías</span>
                     </button>
@@ -755,6 +793,82 @@ const AdminDashboard: React.FC = () => {
             {/* Main Content */}
             {/* Main Content */}
             <main className="flex-1 p-4 md:p-10 overflow-y-auto h-[calc(100vh-73px)] md:h-screen">
+
+                {/* DROPS TAB */}
+                {activeTab === 'drops' && (
+                    <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <header>
+                            <h2 className="text-3xl font-bold mb-2">Próximos Drops (Hype)</h2>
+                            <p className="text-gray-400">Gestiona la sección de lanzamientos exclusivos. Se mostrarán los 6 más recientes.</p>
+                        </header>
+
+                        <div className="bg-[#0a0a0a] border border-gray-800 p-8 rounded-xl shadow-lg">
+                            <div className="flex flex-col md:flex-row gap-4 items-end mb-8">
+                                <div className="flex-1 space-y-2 w-full">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Título (Opcional - ej: "Nike Nocta")</label>
+                                    <input
+                                        type="text"
+                                        value={dropTitle}
+                                        onChange={(e) => setDropTitle(e.target.value)}
+                                        className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
+                                        placeholder="Nombre del Drop..."
+                                    />
+                                </div>
+                                <div className="w-full md:w-auto">
+                                    <input
+                                        type="file"
+                                        ref={dropFileInputRef}
+                                        onChange={handleDropFileSelect}
+                                        className="hidden"
+                                        accept="image/*"
+                                    />
+                                    <button
+                                        onClick={() => dropFileInputRef.current?.click()}
+                                        disabled={isDropUploading}
+                                        className="w-full bg-white text-black font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-200 transition-all uppercase text-sm tracking-widest"
+                                    >
+                                        {isDropUploading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
+                                        {isDropUploading ? 'SUBIENDO...' : 'SUBIR IMAGEN Y CREAR'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <span className="text-primary">•</span> Drops Activos
+                            </h3>
+
+                            {loading ? (
+                                <div className="text-center py-10 text-gray-500">Cargando...</div>
+                            ) : (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    {drops.map((drop) => (
+                                        <div key={drop.id} className="group relative aspect-[3/4] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
+                                            <img src={drop.image} alt="Drop" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4">
+                                                <button
+                                                    onClick={() => deleteDrop(drop.id)}
+                                                    className="bg-red-500/20 text-red-500 p-2 rounded-full hover:bg-red-500 hover:text-white transition-colors mb-2"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
+                                                <p className="text-xs text-white font-bold uppercase text-center">{drop.title || 'Sin Título'}</p>
+                                            </div>
+                                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur rounded text-[10px] font-mono text-gray-300">
+                                                {new Date(drop.created_at || '').toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {drops.length === 0 && (
+                                        <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-800 rounded-lg text-gray-500">
+                                            No hay drops activos. Sube una imagen para comenzar.
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                )}
 
                 {/* PRODUCTS TAB */}
                 {activeTab === 'products' && (

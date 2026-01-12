@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -15,6 +15,7 @@ interface ShopContextType {
     heroSlides: HeroSlide[];
     orders: Order[];
     blogPosts: BlogPost[];
+    drops: Drop[];
     socialConfig: SocialConfig;
     isCartOpen: boolean;
     toggleCart: () => void;
@@ -33,6 +34,8 @@ interface ShopContextType {
     addBlogPost: (post: BlogPost) => void;
     updateBlogPost: (post: BlogPost) => void;
     deleteBlogPost: (id: string) => void;
+    addDrop: (drop: Drop) => void;
+    deleteDrop: (id: string) => void;
     updateSocialConfig: (config: SocialConfig) => void;
     cartTotal: number;
     categories: Category[];
@@ -129,6 +132,33 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const saved = localStorage.getItem('savage_blog_posts');
         return saved ? JSON.parse(saved) : [];
     });
+
+    // Drops
+    const [drops, setDrops] = useState<Drop[]>([]);
+
+    const addDrop = async (drop: Drop) => {
+        try {
+            const { data, error } = await supabase.from('drops').insert(drop).select().single();
+            if (error) throw error;
+            if (data) {
+                setDrops(prev => [data, ...prev]);
+            }
+        } catch (error) {
+            console.error('Error adding drop:', error);
+            alert('Error al guardar drop');
+        }
+    };
+
+    const deleteDrop = async (id: string) => {
+        try {
+            const { error } = await supabase.from('drops').delete().match({ id });
+            if (error) throw error;
+            setDrops(prev => prev.filter(d => d.id !== id));
+        } catch (error) {
+            console.error('Error deleting drop:', error);
+            alert('Error eliminando drop');
+        }
+    };
 
     // Social Config
     const [socialConfig, setSocialConfig] = useState<SocialConfig>(() => {
@@ -249,6 +279,18 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 console.error('Error fetching blog posts:', blogError);
             } else if (blogData) {
                 setBlogPosts(blogData);
+            }
+
+            // Fetch Drops
+            const { data: dropsData, error: dropsError } = await supabase
+                .from('drops')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (dropsError) {
+                console.error('Error fetching drops:', dropsError);
+            } else if (dropsData) {
+                setDrops(dropsData);
             }
 
             // Fetch Any Store Config
@@ -1135,6 +1177,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addBlogPost,
             updateBlogPost,
             deleteBlogPost,
+            drops,
+            addDrop,
+            deleteDrop,
             updateSocialConfig,
 
             cartTotal,

@@ -163,3 +163,10 @@ export interface FooterColumn {
   title: string;
   links: FooterLink[];
 }
+
+export interface Drop {
+  id: string;
+  title?: string;
+  image: string;
+  created_at?: string;
+}
