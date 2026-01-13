@@ -464,7 +464,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_featured: product.isFeatured,
                 is_category_featured: product.isCategoryFeatured,
                 description: product.description,
-                stock_quantity: null
+                stock_quantity: product.stock || 0,
+                // inventory: product.inventory, // Uncomment if DB has inventory column
+                // cost_price: product.costPrice // Uncomment if DB has cost_price column
             };
 
             const { data, error } = await supabase
@@ -516,7 +518,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_new: updatedProduct.isNew,
                 is_featured: updatedProduct.isFeatured,
                 is_category_featured: updatedProduct.isCategoryFeatured,
-                description: updatedProduct.description
+                description: updatedProduct.description,
+                stock_quantity: updatedProduct.stock || 0
             };
 
             const { error } = await supabase
