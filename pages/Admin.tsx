@@ -46,6 +46,7 @@ const AdminDashboard: React.FC = () => {
     } = useShop();
 
     const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
+    const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Product Form State
@@ -53,6 +54,7 @@ const AdminDashboard: React.FC = () => {
         name: '',
         price: '',
         originalPrice: '',
+        costPrice: '',
         category: '',
         subcategory: '',
         type: 'clothing' as 'clothing' | 'footwear',
@@ -911,157 +913,183 @@ const AdminDashboard: React.FC = () => {
                                     {editingProductId ? <Edit size={24} /> : <Plus size={24} />}
                                     {editingProductId ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}
                                 </h3>
-                                <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-6">
+                                <form onSubmit={handleAddProduct} className="space-y-8">
+                                    {/* Form Tabs (Stock App Style) */}
+                                    <div className="flex gap-1 bg-black p-1 rounded-xl border border-gray-800 w-fit mb-4">
+                                        {['ESTÁNDAR', 'INFANTIL', 'ACCESORIOS'].map(tab => (
+                                            <button
+                                                key={tab}
+                                                type="button"
+                                                onClick={() => setActiveFormTab(tab as any)}
+                                                className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
+                                            >
+                                                {tab}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="space-y-8">
+                                        {/* Name Line */}
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Nombre</label>
-                                            <input type="text" value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" placeholder="Ej. Oversized Hoodie" />
+                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Nombre del Producto</label>
+                                            <input
+                                                type="text"
+                                                value={newProduct.name}
+                                                onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                                                className="w-full bg-transparent border-b border-gray-800 text-xl font-bold text-white placeholder-gray-800 focus:border-white focus:outline-none transition-colors py-2"
+                                                placeholder="Ej. Camiseta Titular 2024"
+                                            />
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
+
+                                        {/* Categories Grid */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Precio Regular (Gs.)</label>
-                                                <input type="number" value={newProduct.originalPrice} onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" placeholder="0" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-primary uppercase">Precio Oferta (Gs.)</label>
-                                                <input type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} className="w-full bg-black border border-primary/50 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors font-bold" placeholder="0" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Categoría</label>
+                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Categoría</label>
                                                 <input
                                                     type="text"
                                                     list="categories-list"
                                                     value={newProduct.category}
                                                     onChange={e => setNewProduct({ ...newProduct, category: e.target.value.toUpperCase() })}
-                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors text-white uppercase placeholder-gray-700"
-                                                    placeholder="Escribe o selecciona..."
+                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
+                                                    placeholder="Seleccionar..."
                                                 />
                                                 <datalist id="categories-list">
-                                                    {Array.from(new Set(products.map(p => p.category?.trim().toUpperCase()).filter(Boolean))).sort().map(cat => (
-                                                        <option key={cat} value={cat} />
-                                                    ))}
+                                                    {categories
+                                                        .filter(c => {
+                                                            const name = c.name.toUpperCase();
+                                                            if (activeFormTab === 'INFANTIL') return name === 'INFANTIL';
+                                                            if (activeFormTab === 'ACCESORIOS') return ['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS'].some(k => name.includes(k));
+                                                            return name !== 'INFANTIL' && !['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS'].some(k => name.includes(k));
+                                                        })
+                                                        .map(cat => (
+                                                            <option key={cat.id} value={cat.name.toUpperCase()} />
+                                                        ))}
                                                 </datalist>
                                             </div>
 
-                                            {/* Dynamic Subcategory UI */}
-                                            <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Sub-Categoría</label>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Subcategoría</label>
                                                 <input
                                                     type="text"
                                                     list="subcategories-list"
                                                     value={newProduct.subcategory}
                                                     onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value.toUpperCase() })}
-                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors text-white uppercase placeholder-gray-700"
-                                                    placeholder="Escribe o selecciona..."
+                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
+                                                    placeholder="Seleccionar..."
                                                 />
                                                 <datalist id="subcategories-list">
-                                                    {/* Filter subcategories appearing in the currently typed category */}
-                                                    {Array.from(new Set(
-                                                        products
-                                                            .filter(p => p.category?.trim().toUpperCase() === newProduct.category?.trim().toUpperCase())
-                                                            .map(p => p.subcategory?.trim().toUpperCase())
-                                                            .filter(Boolean)
-                                                    )).sort().map(sub => (
-                                                        <option key={sub} value={sub} />
+                                                    {categories.find(c => c.name.toUpperCase() === newProduct.category)?.subcategories?.map(sub => (
+                                                        <option key={sub} value={sub.toUpperCase()} />
                                                     ))}
                                                 </datalist>
                                             </div>
+                                        </div>
+
+                                        {/* Pricing Section */}
+                                        <div className="space-y-6 pt-4 border-t border-gray-900">
                                             <div className="space-y-2">
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Tipo de Producto</label>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, type: 'clothing' })}
-                                                        className={`flex-1 py-3 px-2 text-xs font-bold uppercase rounded-lg border transition-all ${newProduct.type === 'clothing' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-gray-800'}`}
-                                                    >
-                                                        ROPA (Fit)
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, type: 'footwear' })}
-                                                        className={`flex-1 py-3 px-2 text-xs font-bold uppercase rounded-lg border transition-all ${newProduct.type === 'footwear' ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-gray-800'}`}
-                                                    >
-                                                        CALZADO
-                                                    </button>
+                                                <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Costo Proveedor (Gs.)</label>
+                                                <input
+                                                    type="number"
+                                                    value={newProduct.costPrice || ''}
+                                                    onChange={e => setNewProduct({ ...newProduct, costPrice: e.target.value })}
+                                                    className="w-full bg-[#050510] border border-blue-900/30 rounded-lg p-4 text-sm focus:border-blue-500 focus:outline-none transition-colors text-blue-200 font-mono"
+                                                    placeholder="Costo de adquisición"
+                                                />
+                                                <p className="text-[9px] text-gray-600">* Solo visible para administración.</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-8">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Precio Regular (Gs.)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newProduct.originalPrice}
+                                                        onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                                                        className="w-full bg-black border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors font-mono text-gray-300"
+                                                        placeholder="0"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Precio Oferta (Gs.)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newProduct.price}
+                                                        onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                        className="w-full bg-black border border-red-900/50 rounded-lg p-4 text-sm focus:border-red-500 focus:outline-none transition-colors font-bold font-mono text-white"
+                                                        placeholder="0"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Estado de Importación</label>
-                                            <button
-                                                type="button"
-                                                onClick={() => setIsImported(prev => !prev)}
-                                                className={`w-full py-3 px-4 rounded-lg border transition-all flex items-center justify-between group ${isImported ? 'bg-purple-900/20 border-purple-500 text-purple-400' : 'bg-black border-gray-800 text-gray-400 hover:border-gray-600'}`}
-                                            >
-                                                <span className="font-bold uppercase text-xs">Es Producto Importado?</span>
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center ${isImported ? 'bg-purple-500 border-purple-500 text-black' : 'border-gray-600'}`}>
-                                                    {isImported && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
-                                                </div>
-                                            </button>
+                                        {/* Settings Section (Imported / Featured) - Row Layout */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-900">
 
-                                            {isImported && (
-                                                <div className="mt-2 text-[10px] text-purple-400 bg-purple-900/10 p-3 rounded border border-purple-500/20 animate-in fade-in slide-in-from-top-1">
-                                                    <p className="font-bold mb-1">INFO IMPORTACIÓN (A configurar):</p>
-                                                    <ul className="list-disc pl-4 space-y-1 opacity-80">
-                                                        <li>Tiempo de espera estimado: 25 a 30 días.</li>
-                                                        <li>Seña mínima requerida: 50%.</li>
-                                                        <li>Se añadirá la etiqueta "25 a 30 dias" automáticamente.</li>
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-4 border border-gray-800 rounded-lg p-4 bg-[#0F0F0F]">
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-yellow-500 uppercase flex items-center gap-2">
-                                                    <span className="material-symbols-outlined text-sm">star</span> Destacados Home
-                                                </label>
+                                            <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
+                                                <span className="text-xs font-bold text-gray-400 uppercase">¿Es Producto Importado?</span>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setNewProduct({ ...newProduct, isFeatured: !newProduct.isFeatured })}
-                                                    className={`w-full py-3 px-4 rounded-lg border transition-all flex items-center justify-between group ${newProduct.isFeatured ? 'bg-yellow-500/10 border-yellow-500 text-yellow-500' : 'bg-black border-gray-800 text-gray-400 hover:border-gray-600'}`}
+                                                    onClick={() => setIsImported(prev => !prev)}
+                                                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${isImported ? 'bg-purple-600' : 'bg-gray-800'}`}
                                                 >
-                                                    <span className="font-bold uppercase text-xs">DESTACAR EN HOME (TOP 8)</span>
-                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${newProduct.isFeatured ? 'bg-yellow-500 border-yellow-500 text-black' : 'border-gray-600'}`}>
+                                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isImported ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+
+                                            {/* Featured Toggles */}
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
+                                                    <span className="text-xs font-bold text-yellow-500 uppercase flex items-center gap-2">
+                                                        <span className="material-symbols-outlined text-xs">star</span> Destacar en Home
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setNewProduct({ ...newProduct, isFeatured: !newProduct.isFeatured })}
+                                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isFeatured ? 'bg-yellow-500 border-yellow-500 text-black' : 'border-gray-600 bg-transparent'}`}
+                                                    >
                                                         {newProduct.isFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
-                                                    </div>
-                                                </button>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-blue-500 uppercase flex items-center gap-2">
-                                                    <span className="material-symbols-outlined text-sm">category</span> Destacado en Categoría
-                                                </label>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setNewProduct({ ...newProduct, isCategoryFeatured: !newProduct.isCategoryFeatured })}
-                                                    className={`w-full py-3 px-4 rounded-lg border transition-all flex items-center justify-between group ${newProduct.isCategoryFeatured ? 'bg-blue-500/10 border-blue-500 text-blue-500' : 'bg-black border-gray-800 text-gray-400 hover:border-gray-600'}`}
-                                                >
-                                                    <span className="font-bold uppercase text-xs">DESTACAR EN CATEGORÍA</span>
-                                                    <div className={`w-5 h-5 rounded border flex items-center justify-center ${newProduct.isCategoryFeatured ? 'bg-blue-500 border-blue-500 text-black' : 'border-gray-600'}`}>
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
+                                                    <span className="text-xs font-bold text-blue-500 uppercase flex items-center gap-2">
+                                                        <span className="material-symbols-outlined text-xs">category</span> Destacar en Categoría
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setNewProduct({ ...newProduct, isCategoryFeatured: !newProduct.isCategoryFeatured })}
+                                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isCategoryFeatured ? 'bg-blue-500 border-blue-500 text-black' : 'border-gray-600 bg-transparent'}`}
+                                                    >
                                                         {newProduct.isCategoryFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
-                                                    </div>
-                                                </button>
+                                                    </button>
+                                                </div>
                                             </div>
 
-                                            <p className="text-[10px] text-gray-500 italic">
-                                                * "Home" aparece en la página principal. "Categoría" aparece primero en su lista específica.
-                                            </p>
                                         </div>
-
-                                        {newProduct.type === 'clothing' && (
-                                            <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Fit / Calce</label>
-                                                <input type="text" value={newProduct.fit} onChange={e => setNewProduct({ ...newProduct, fit: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" placeholder="Ej. Oversize, Regular, Slim..." />
+                                        {isImported && (
+                                            <div className="mt-2 text-[10px] text-purple-400 bg-purple-900/10 p-3 rounded border border-purple-500/20 animate-in fade-in slide-in-from-top-1">
+                                                <p className="font-bold mb-1">INFO IMPORTACIÓN:</p>
+                                                <ul className="list-disc pl-4 space-y-1 opacity-80">
+                                                    <li>Se mostrará la etiqueta "25 a 30 días".</li>
+                                                    <li>Requiere seña mínima del 50%.</li>
+                                                </ul>
                                             </div>
                                         )}
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Descripción</label>
-                                            <textarea value={newProduct.description} onChange={e => setNewProduct({ ...newProduct, description: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors h-24 resize-none" placeholder="Descripción detallada del producto..." />
+
+                                        {/* Keep Type (Clothing/Footwear) but hidden if possible or discreet? 
+                                            Image 2 didn't show it but it affects logic. 
+                                            Let's keep it very minimal or infer it. 
+                                            Actually, let's infer it! 
+                                            If Category is 'CALZADOS', set type='footwear'. Else 'clothing'.
+                                            I'll add a useEffect for this in a separate step or leave the visual toggle for now but cleaner.
+                                        */}
+                                        <div className="flex justify-center pt-2">
+                                            <div className="inline-flex bg-gray-900 rounded-lg p-1">
+                                                <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'clothing' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'clothing' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Ropa (Talles)</button>
+                                                <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'footwear' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'footwear' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Calzado (Num)</button>
+                                            </div>
                                         </div>
+
                                     </div>
                                     <div className="space-y-6">
                                         <div className="space-y-2">
