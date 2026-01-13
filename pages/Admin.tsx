@@ -62,8 +62,13 @@ const AdminDashboard: React.FC = () => {
         fit: '',
         description: '',
         isFeatured: false,
-        isCategoryFeatured: false
+        isCategoryFeatured: false,
+        // Added simplified 'stock' property if needed, but better to use separate state
     });
+
+    // NEW: Stock Management State
+    const [sizeStocks, setSizeStocks] = useState<Record<string, number>>({});
+
 
     const [editingProductId, setEditingProductId] = useState<string | null>(null);
     const [isImported, setIsImported] = useState(false);
@@ -201,6 +206,7 @@ const AdminDashboard: React.FC = () => {
         });
         setEditingProductId(null);
         setIsImported(false);
+        setSizeStocks({});
         setShowProductForm(false);
     };
 
