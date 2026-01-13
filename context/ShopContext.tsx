@@ -120,10 +120,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     // Hero List
-    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
-        const saved = localStorage.getItem('savage_hero_slides');
-        return saved ? JSON.parse(saved) : DEFAULT_HERO_SLIDES;
-    });
+    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
 
     // Orders
     const [orders, setOrders] = useState<Order[]>(() => {

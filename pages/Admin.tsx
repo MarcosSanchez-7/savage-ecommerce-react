@@ -939,8 +939,8 @@ const AdminDashboard: React.FC = () => {
                                                     placeholder="Escribe o selecciona..."
                                                 />
                                                 <datalist id="categories-list">
-                                                    {Array.from(new Set(products.map(p => p.category?.trim().toUpperCase()).filter(Boolean))).sort().map(cat => (
-                                                        <option key={cat} value={cat} />
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.name.toUpperCase()} />
                                                     ))}
                                                 </datalist>
                                             </div>
@@ -957,15 +957,15 @@ const AdminDashboard: React.FC = () => {
                                                     placeholder="Escribe o selecciona..."
                                                 />
                                                 <datalist id="subcategories-list">
-                                                    {/* Filter subcategories appearing in the currently typed category */}
-                                                    {Array.from(new Set(
-                                                        products
-                                                            .filter(p => p.category?.trim().toUpperCase() === newProduct.category?.trim().toUpperCase())
-                                                            .map(p => p.subcategory?.trim().toUpperCase())
-                                                            .filter(Boolean)
-                                                    )).sort().map(sub => (
-                                                        <option key={sub} value={sub} />
-                                                    ))}
+                                                    {(() => {
+                                                        const selectedCat = categories.find(
+                                                            c => c.name.toUpperCase() === newProduct.category.toUpperCase() ||
+                                                                c.id.toUpperCase() === newProduct.category.toUpperCase()
+                                                        );
+                                                        return selectedCat?.subcategories?.map(sub => (
+                                                            <option key={sub} value={sub.toUpperCase()} />
+                                                        ));
+                                                    })()}
                                                 </datalist>
                                             </div>
                                             <div className="space-y-2">
