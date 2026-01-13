@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import {
     Plus,
@@ -46,7 +46,7 @@ const AdminDashboard: React.FC = () => {
     } = useShop();
 
     const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
-    const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS'>('ESTÁNDAR');
+    const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Product Form State
@@ -66,6 +66,22 @@ const AdminDashboard: React.FC = () => {
         isFeatured: false,
         isCategoryFeatured: false
     });
+
+    // Stock Matrix State
+    const [stockMatrix, setStockMatrix] = useState<{ size: string; quantity: number }[]>([]);
+
+    useEffect(() => {
+        // Initialize matrix based on tab
+        if (activeFormTab === 'ESTÁNDAR') {
+            setStockMatrix(['P', 'M', 'G', 'XL', 'XXL'].map(s => ({ size: s, quantity: 0 })));
+        } else if (activeFormTab === 'INFANTIL') {
+            setStockMatrix(['4', '6', '8', '10', '12', '14', '16'].map(s => ({ size: s, quantity: 0 })));
+        } else if (activeFormTab === 'CALZADOS') {
+            setStockMatrix(['37', '38', '39', '40', '41', '42', '43', '44'].map(s => ({ size: s, quantity: 0 })));
+        } else if (activeFormTab === 'ACCESORIOS') {
+            setStockMatrix([{ size: 'Único', quantity: 0 }]);
+        }
+    }, [activeFormTab]);
 
     const [editingProductId, setEditingProductId] = useState<string | null>(null);
     const [isImported, setIsImported] = useState(false);
@@ -185,11 +201,13 @@ const AdminDashboard: React.FC = () => {
 
     // --- Product Handlers ---
     // --- Product Handlers ---
+    // --- Product Handlers ---
     const resetForm = () => {
         setNewProduct({
             name: '',
             price: '',
             originalPrice: '',
+            costPrice: '',
             category: '',
             subcategory: '',
             type: 'clothing',
@@ -201,27 +219,44 @@ const AdminDashboard: React.FC = () => {
             isFeatured: false,
             isCategoryFeatured: false
         });
+        setStockMatrix([]); // Reset matrix 
+        // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
+        // but if we close the form it's fine. 
+        // If we stay on form, `activeFormTab` is still set so it might re-populate or we need to respect the clean state.
+        // Actually the useEffect depends on [activeFormTab]. If we don't change default it won't trigger re-set.
+        // So we should manually setting it to default 'ESTÁNDAR' behavior or cleared. 
+        // Let's rely on the useEffect logic by resetting activeFormTab too.
+        setActiveFormTab('ESTÁNDAR');
+
         setEditingProductId(null);
         setIsImported(false);
         setShowProductForm(false);
     };
 
     const handleEditProduct = (product: Product) => {
+        // Map Inventory to Stock Matrix
+        let initialMatrix: { size: string; quantity: number }[] = [];
+
+        if (product.inventory && product.inventory.length > 0) {
+            initialMatrix = product.inventory.map(inv => ({ size: inv.size, quantity: inv.quantity }));
+        } else if (product.sizes && product.sizes.length > 0) {
+            // Fallback for old products (sizes only)
+            initialMatrix = product.sizes.map(s => ({ size: s, quantity: Math.floor((product.stock || 0) / product.sizes.length) }));
+            // Distribute stock or just 0? User asked for 0 default but for editing we should show something.
+            // Let's just set 0 if no inventory record.
+            initialMatrix = product.sizes.map(s => ({ size: s, quantity: 0 }));
+        }
+
+        // Set active tab based on category/type to load correct defaults if needed
+        // but since we are editing, we just load the existing matrix.
+        setStockMatrix(initialMatrix);
+
         setNewProduct({
             name: product.name,
             // Logic Fix 2.0: Correct mapping to inputs 
-            // newProduct.price -> "Precio Oferta" Input
-            // newProduct.originalPrice -> "Precio Regular" Input
-
-            // If Offer (original > price):
-            // Regular Input = Original (High)
-            // Offer Input = Price (Low)
-
-            // If No Offer:
-            // Regular Input = Price (Current)
-            // Offer Input = Empty
             price: (product.originalPrice && product.originalPrice > product.price) ? product.price.toString() : '',
             originalPrice: (product.originalPrice && product.originalPrice > product.price) ? product.originalPrice.toString() : product.price.toString(),
+            costPrice: product.costPrice ? product.costPrice.toString() : '',
             category: product.category,
             subcategory: product.subcategory || '',
             type: product.type || 'clothing',
@@ -233,16 +268,19 @@ const AdminDashboard: React.FC = () => {
             isFeatured: product.isFeatured || false,
             isCategoryFeatured: product.isCategoryFeatured || false
         });
-        setEditingProductId(product.id);
-        setIsImported(product.tags.includes('25 a 30 dias'));
-        setShowProductForm(true);
 
-        // Scroll main container to top
-        const mainElement = document.querySelector('main');
-        if (mainElement) {
-            mainElement.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        // Infer Form Tab from Category for correct visuals if user switches tabs
+        if (product.category === 'INFANTIL') setActiveFormTab('INFANTIL');
+        else if (product.category === 'CALZADOS' || product.type === 'footwear') setActiveFormTab('CALZADOS');
+        else if (['ACCESORIOS', 'RELOJES', 'HUÉRFANOS'].includes(product.category)) setActiveFormTab('ACCESORIOS');
+        else setActiveFormTab('ESTÁNDAR');
+
+        setEditingProductId(product.id);
+        setIsImported(product.tags.includes('Importado'));
+        setShowProductForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
+
 
     const handleAddProduct = (e: React.FormEvent) => {
         e.preventDefault();
@@ -282,16 +320,24 @@ const AdminDashboard: React.FC = () => {
             finalTags = finalTags.filter(t => t !== 'Oferta');
         }
 
+        // Calculate Inventory and Stock
+        const inventory = stockMatrix.map(item => ({ size: item.size, quantity: item.quantity }));
+        const totalStock = inventory.reduce((acc, item) => acc + item.quantity, 0);
+        const matrixSizes = inventory.map(item => item.size);
+
         const productData: Product = {
             id: editingProductId || Date.now().toString(),
             name: newProduct.name,
             price: price,
             originalPrice: originalPrice > price ? originalPrice : undefined,
+            costPrice: Number(newProduct.costPrice) || 0,
             category: newProduct.category || categories[0]?.id || 'Uncategorized',
             subcategory: newProduct.subcategory,
             type: newProduct.type,
             images: validImages.length > 0 ? validImages : ['https://via.placeholder.com/300'],
-            sizes: newProduct.sizes,
+            sizes: matrixSizes,
+            stock: totalStock,
+            inventory: inventory,
             tags: finalTags,
             fit: newProduct.fit,
             isNew: finalTags.includes('Nuevo'),
@@ -311,12 +357,7 @@ const AdminDashboard: React.FC = () => {
         resetForm();
     };
 
-    const toggleSize = (size: string) => {
-        setNewProduct(prev => ({
-            ...prev,
-            sizes: prev.sizes.includes(size) ? prev.sizes.filter(s => s !== size) : [...prev.sizes, size]
-        }));
-    };
+
 
     const toggleTag = (tag: string) => {
         setNewProduct(prev => ({
@@ -915,13 +956,13 @@ const AdminDashboard: React.FC = () => {
                                 </h3>
                                 <form onSubmit={handleAddProduct} className="space-y-8">
                                     {/* Form Tabs (Stock App Style) */}
-                                    <div className="flex gap-1 bg-black p-1 rounded-xl border border-gray-800 w-fit mb-4">
-                                        {['ESTÁNDAR', 'INFANTIL', 'ACCESORIOS'].map(tab => (
+                                    <div className="flex gap-1 bg-black p-1 rounded-xl border border-gray-800 w-fit mb-4 overflow-x-auto max-w-full">
+                                        {['ESTÁNDAR', 'INFANTIL', 'CALZADOS', 'ACCESORIOS'].map(tab => (
                                             <button
                                                 key={tab}
                                                 type="button"
                                                 onClick={() => setActiveFormTab(tab as any)}
-                                                className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
+                                                className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
                                             >
                                                 {tab}
                                             </button>
@@ -957,9 +998,11 @@ const AdminDashboard: React.FC = () => {
                                                     {categories
                                                         .filter(c => {
                                                             const name = c.name.toUpperCase();
-                                                            if (activeFormTab === 'INFANTIL') return name === 'INFANTIL';
-                                                            if (activeFormTab === 'ACCESORIOS') return ['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS'].some(k => name.includes(k));
-                                                            return name !== 'INFANTIL' && !['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS'].some(k => name.includes(k));
+                                                            if (activeFormTab === 'INFANTIL') return name.includes('INFANTIL') || name.includes('KIDS');
+                                                            if (activeFormTab === 'CALZADOS') return name.includes('CALZAD') || name.includes('ZAPATILLAS') || name.includes('FOOTWEAR');
+                                                            if (activeFormTab === 'ACCESORIOS') return ['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS', 'GORRAS'].some(k => name.includes(k));
+                                                            // Estándar
+                                                            return !name.includes('INFANTIL') && !name.includes('KIDS') && !name.includes('CALZAD') && !name.includes('ZAPATILLAS') && !name.includes('FOOTWEAR') && !['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS', 'GORRAS'].some(k => name.includes(k));
                                                         })
                                                         .map(cat => (
                                                             <option key={cat.id} value={cat.name.toUpperCase()} />
@@ -1092,14 +1135,56 @@ const AdminDashboard: React.FC = () => {
 
                                     </div>
                                     <div className="space-y-6">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Talles Disponibles</label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableSizes.map(size => (
-                                                    <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${newProduct.sizes.includes(size) ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-500'}`}>
-                                                        {size}
-                                                    </button>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Matriz de Stock</label>
+                                                <button type="button" onClick={() => {
+                                                    const newSize = prompt("Ingrese el nuevo talle:");
+                                                    if (newSize) setStockMatrix([...stockMatrix, { size: newSize.toUpperCase(), quantity: 0 }]);
+                                                }} className="text-xs font-bold text-white hover:text-gray-300 transition-colors">
+                                                    + Añadir
+                                                </button>
+                                            </div>
+
+                                            <div className="bg-black rounded-xl border border-gray-800 overflow-hidden">
+                                                {stockMatrix.map((item, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-4 border-b border-gray-900 last:border-0 hover:bg-white/5 transition-colors group">
+                                                        <span className="font-bold text-lg text-white w-16">{item.size}</span>
+
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    value={item.quantity}
+                                                                    onChange={(e) => {
+                                                                        const val = parseInt(e.target.value) || 0;
+                                                                        const newMatrix = [...stockMatrix];
+                                                                        newMatrix[index].quantity = val;
+                                                                        setStockMatrix(newMatrix);
+                                                                    }}
+                                                                    className="w-16 bg-transparent text-right font-mono text-white text-lg font-bold focus:outline-none"
+                                                                />
+                                                                <span className="text-xs text-gray-600 font-bold uppercase">unid.</span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newMatrix = [...stockMatrix];
+                                                                    newMatrix.splice(index, 1);
+                                                                    setStockMatrix(newMatrix);
+                                                                }}
+                                                                className="p-2 text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 ))}
+                                                {stockMatrix.length === 0 && (
+                                                    <div className="p-8 text-center text-gray-600 text-xs">
+                                                        No hay talles configurados.
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="space-y-2">
