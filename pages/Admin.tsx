@@ -1155,53 +1155,91 @@ const AdminDashboard: React.FC = () => {
                                     // We want 'OTROS' last usually, but simple keys is fine for now.
                                     const subcatKeys = Object.keys(subcats).sort();
 
+                                    // Determine Matrix Columns based on Category
+                                    const isFootwear = category === 'CALZADOS';
+                                    const matrixColumns = isFootwear
+                                        ? ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
+                                        : ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
                                     return (
-                                        <div key={category} className="border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a]">
+                                        <div key={category} className="border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-sm">
                                             <button onClick={() => setExpandedCategory(expandedCategory === category ? null : category)} className="w-full flex justify-between items-center p-4 bg-white/5 hover:bg-white/10 transition-colors">
                                                 <div className="flex items-center gap-3">
                                                     <span className={`transition-transform duration-300 ${expandedCategory === category ? 'rotate-180' : ''}`}><ChevronDown size={20} /></span>
                                                     <h4 className="font-bold text-lg uppercase tracking-wide">{category}</h4>
-                                                    <span className="bg-gray-800 text-xs px-2 py-1 rounded-full text-gray-300">{catItems.length} productos</span>
+                                                    <span className="bg-gray-800 text-xs px-2 py-1 rounded-full text-gray-300 border border-gray-700">{catItems.length} items</span>
                                                 </div>
                                             </button>
 
                                             {expandedCategory === category && (
-                                                <div className="p-4 bg-black animate-in slide-in-from-top-2 duration-300 flex flex-col gap-6">
+                                                <div className="bg-black animate-in slide-in-from-top-2 duration-300">
                                                     {subcatKeys.map(subKey => (
-                                                        <div key={subKey} className="space-y-2">
-                                                            <h5 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em] border-b border-gray-900 pb-2 mb-2 pl-2 border-l-4 border-l-primary/50">
-                                                                {subKey}
-                                                            </h5>
-                                                            <div className="space-y-2">
-                                                                {subcats[subKey].map(p => (
-                                                                    <div key={p.id} className="flex flex-col md:flex-row justify-between md:items-center p-3 hover:bg-white/5 rounded-lg border border-transparent hover:border-gray-800 group transition-all gap-4">
-                                                                        <div className="flex items-center gap-4">
-                                                                            <img src={p.images[0]} alt={p.name} className="w-12 h-12 rounded object-cover bg-gray-900" />
-                                                                            <div>
-                                                                                <h5 className="font-bold text-sm text-white">{p.name}</h5>
-                                                                                <div className="flex gap-2 text-xs text-gray-500">
-                                                                                    <span>Gs. {p.price.toLocaleString()}</span>
-                                                                                    {p.originalPrice && <span className="line-through">Gs. {p.originalPrice.toLocaleString()}</span>}
-                                                                                    {p.stock === 0 && <span className="text-red-500 font-bold uppercase">Agotado</span>}
-                                                                                    <span className="text-gray-600">•</span>
-                                                                                    <span>{p.sizes.join(', ')}</span>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                            <button onClick={() => handleEditProduct(p)} className="p-2 text-gray-400 hover:text-yellow-500 hover:bg-yellow-500/10 rounded-lg transition-all" title="Editar">
-                                                                                <Edit size={18} />
-                                                                            </button>
-                                                                            <button onClick={() => deleteProduct(p.id)} className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all" title="Eliminar">
-                                                                                <Trash2 size={18} />
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
+                                                        <div key={subKey} className="border-b border-gray-900 last:border-0">
+                                                            <div className="bg-gray-900/30 px-4 py-2 flex items-center gap-2">
+                                                                <span className="w-2 h-2 rounded-full bg-primary/50"></span>
+                                                                <h5 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">{subKey}</h5>
+                                                            </div>
+
+                                                            <div className="overflow-x-auto">
+                                                                <table className="w-full text-left text-xs border-collapse">
+                                                                    <thead>
+                                                                        <tr className="text-gray-500 uppercase tracking-wider border-b border-gray-800">
+                                                                            <th className="p-3 font-bold w-[40%]">Producto</th>
+                                                                            <th className="p-3 font-bold text-center">Precio</th>
+                                                                            {matrixColumns.map(sz => (
+                                                                                <th key={sz} className="p-2 font-bold text-center w-8 border-l border-gray-800/30">{sz}</th>
+                                                                            ))}
+                                                                            <th className="p-3 font-bold text-right">Acciones</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {subcats[subKey].map(p => (
+                                                                            <tr key={p.id} className="border-b border-gray-800/50 hover:bg-white/5 transition-colors group">
+                                                                                <td className="p-3">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <div className="w-10 h-10 rounded bg-gray-900 overflow-hidden shrink-0 border border-gray-800 relative group/img">
+                                                                                            <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                                                                                            <div className="absolute inset-0 bg-black/50 hidden group-hover/img:flex items-center justify-center text-[8px] text-gray-300">
+                                                                                                {p.images.length}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div className="min-w-0">
+                                                                                            <div className="font-bold text-white text-xs truncate max-w-[150px] md:max-w-xs">{p.name}</div>
+                                                                                            {p.stock === 0 && <span className="text-[9px] text-red-500 font-bold uppercase border border-red-500/30 px-1 rounded bg-red-500/10">AGOTADO</span>}
+                                                                                            {p.isNew && <span className="ml-1 text-[9px] text-blue-400 font-bold uppercase border border-blue-500/30 px-1 rounded bg-blue-500/10">NEW</span>}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td className="p-3 text-center font-mono text-gray-400">
+                                                                                    {parseInt(p.price.toString()).toLocaleString()}
+                                                                                </td>
+                                                                                {matrixColumns.map(sz => {
+                                                                                    // Simple check: does the size array include this size?
+                                                                                    // Normalize for comparison (trim)
+                                                                                    const hasSize = p.sizes.some(s => s.trim() === sz);
+                                                                                    return (
+                                                                                        <td key={sz} className="p-0 text-center border-l border-gray-800/30 h-full relative">
+                                                                                            {hasSize && (
+                                                                                                <div className="w-full h-full py-4 flex items-center justify-center">
+                                                                                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)] animate-pulse-slow"></div>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </td>
+                                                                                    );
+                                                                                })}
+                                                                                <td className="p-3 text-right">
+                                                                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                        <button onClick={() => handleEditProduct(p)} className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-white" title="Editar"><Edit size={16} /></button>
+                                                                                        <button onClick={() => deleteProduct(p.id)} className="p-1.5 hover:bg-red-900/30 rounded text-gray-400 hover:text-red-500" title="Eliminar"><Trash2 size={16} /></button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
                                                             </div>
                                                         </div>
                                                     ))}
-                                                    {catItems.length === 0 && <p className="text-center text-gray-500 py-4">No hay productos en esta categoría.</p>}
                                                 </div>
                                             )}
                                         </div>
