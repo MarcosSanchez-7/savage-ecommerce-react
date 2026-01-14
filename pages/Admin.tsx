@@ -1003,18 +1003,9 @@ const AdminDashboard: React.FC = () => {
                                                     placeholder="Seleccionar..."
                                                 />
                                                 <datalist id="categories-list">
-                                                    {categories
-                                                        .filter(c => {
-                                                            const name = c.name.toUpperCase();
-                                                            if (activeFormTab === 'INFANTIL') return name.includes('INFANTIL') || name.includes('KIDS');
-                                                            if (activeFormTab === 'CALZADOS') return name.includes('CALZAD') || name.includes('ZAPATILLAS') || name.includes('FOOTWEAR');
-                                                            if (activeFormTab === 'ACCESORIOS') return ['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS', 'GORRAS'].some(k => name.includes(k));
-                                                            // Estándar
-                                                            return !name.includes('INFANTIL') && !name.includes('KIDS') && !name.includes('CALZAD') && !name.includes('ZAPATILLAS') && !name.includes('FOOTWEAR') && !['ACCESORIOS', 'RELOJES', 'JOYAS', 'HUÉRFANOS', 'GORRAS'].some(k => name.includes(k));
-                                                        })
-                                                        .map(cat => (
-                                                            <option key={cat.id} value={cat.name.toUpperCase()} />
-                                                        ))}
+                                                    {categories.map(cat => (
+                                                        <option key={cat.id} value={cat.name.toUpperCase()} />
+                                                    ))}
                                                 </datalist>
                                             </div>
 
