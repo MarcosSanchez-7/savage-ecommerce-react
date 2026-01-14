@@ -10,6 +10,8 @@ import ShippingPolicy from '../../pages/ShippingPolicy';
 import ExchangePolicy from '../../pages/ExchangePolicy';
 import PaymentMethods from '../../pages/PaymentMethods';
 import Contact from '../../pages/Contact';
+import PrivacyPolicy from '../../pages/PrivacyPolicy';
+import TermsOfUse from '../../pages/TermsOfUse';
 
 import AdminDashboard from '../../pages/Admin';
 
@@ -28,6 +30,8 @@ const WebRoutes: React.FC = () => {
             <Route path="/exchange-policy" element={<ExchangePolicy />} />
             <Route path="/payment-methods" element={<PaymentMethods />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-use" element={<TermsOfUse />} />
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />

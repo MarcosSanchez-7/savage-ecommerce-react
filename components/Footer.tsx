@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { supabase } from '../services/supabase';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const { socialConfig, footerColumns } = useShop();
@@ -91,8 +92,8 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-600 text-xs">© 2026 SAVAGE BRAND. Todos los derechos reservados.</p>
           <div className="flex gap-6 text-xs text-gray-600">
-            <a className="hover:text-gray-400" href="#">Política de Privacidad</a>
-            <a className="hover:text-gray-400" href="#">Términos de Uso</a>
+            <Link className="hover:text-gray-400" to="/privacy-policy">Política de Privacidad</Link>
+            <Link className="hover:text-gray-400" to="/terms-of-use">Términos de Uso</Link>
           </div>
         </div>
       </div>
