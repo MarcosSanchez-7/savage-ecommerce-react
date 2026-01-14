@@ -4,28 +4,39 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import StockRoutes from './components/routes/StockRoutes';
 import WebRoutes from './components/routes/WebRoutes';
 import CartDrawer from './components/CartDrawer';
-import { ShopProvider } from './context/ShopContext';
+import { ShopProvider, useShop } from './context/ShopContext';
 import { AuthProvider } from './context/AuthContext';
-
-
 import SEO from './components/SEO';
+import LoadingScreen from './components/LoadingScreen';
+
+const MainContent: React.FC = () => {
+  const { loading } = useShop();
+  const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <BrowserRouter>
+      <SEO />
+      {/* Only show CartDrawer on Web App, not Stock App, unless requested otherwise. Keeping it separate is cleaner. */}
+      {!isStockApp && <CartDrawer />}
+
+      {isStockApp ? (
+        <StockRoutes />
+      ) : (
+        <WebRoutes />
+      )}
+    </BrowserRouter>
+  );
+};
 
 const App: React.FC = () => {
-  const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
   return (
     <AuthProvider>
       <ShopProvider>
-        <BrowserRouter>
-          <SEO />
-          {/* Only show CartDrawer on Web App, not Stock App, unless requested otherwise. Keeping it separate is cleaner. */}
-          {!isStockApp && <CartDrawer />}
-
-          {isStockApp ? (
-            <StockRoutes />
-          ) : (
-            <WebRoutes />
-          )}
-        </BrowserRouter>
+        <MainContent />
       </ShopProvider>
     </AuthProvider>
   );
