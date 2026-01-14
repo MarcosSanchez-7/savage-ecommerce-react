@@ -1301,48 +1301,74 @@ const AdminDashboard: React.FC = () => {
                                                                 <h5 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">{subKey}</h5>
                                                             </div>
 
-                                                            <div className="overflow-x-auto">
-                                                                <table className="w-full text-left text-xs border-collapse">
-                                                                    <thead>
-                                                                        <tr className="text-gray-500 uppercase tracking-wider border-b border-gray-800">
-                                                                            <th className="p-3 font-bold w-[40%]">Producto</th>
-                                                                            <th className="p-3 font-bold text-center">Precio</th>
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                                                                {subcats[subKey].map(p => {
+                                                                    // Sort inventory for display (S, M, L, etc.)
+                                                                    const sortedInventory = p.inventory && p.inventory.length > 0
+                                                                        ? [...p.inventory].sort((a, b) => {
+                                                                            const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+                                                                            const aIdx = sizes.indexOf(a.size);
+                                                                            const bIdx = sizes.indexOf(b.size);
+                                                                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                                                                            return a.size.localeCompare(b.size);
+                                                                        })
+                                                                        : [];
 
-                                                                            <th className="p-3 font-bold text-right">Acciones</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {subcats[subKey].map(p => (
-                                                                            <tr key={p.id} className="border-b border-gray-800/50 hover:bg-white/5 transition-colors group">
-                                                                                <td className="p-3">
-                                                                                    <div className="flex items-center gap-3">
-                                                                                        <div className="w-10 h-10 rounded bg-gray-900 overflow-hidden shrink-0 border border-gray-800 relative group/img">
-                                                                                            <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                                                                                            <div className="absolute inset-0 bg-black/50 hidden group-hover/img:flex items-center justify-center text-[8px] text-gray-300">
-                                                                                                {p.images.length}
+                                                                    return (
+                                                                        <div key={p.id} className="bg-[#0F0F0F] rounded-lg p-3 flex gap-3 border border-gray-800 shadow-sm relative group hover:border-gray-600 transition-all hover:translate-y-[-2px]">
+                                                                            {/* Image */}
+                                                                            <div className="w-20 h-24 bg-gray-900 rounded overflow-hidden shrink-0 border border-gray-800">
+                                                                                <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                                                                            </div>
+
+                                                                            {/* Content */}
+                                                                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                                                                <div>
+                                                                                    <div className="flex justify-between items-start">
+                                                                                        <h4 className="font-bold text-sm text-white leading-tight truncate pr-6" title={p.name}>{p.name}</h4>
+                                                                                    </div>
+
+                                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                                        <span className="text-[9px] font-black text-blue-500 uppercase">ADMIN</span>
+                                                                                        <span className="text-[9px] font-bold text-green-500 bg-green-900/10 px-1.5 py-0.5 rounded border border-green-900/30">ACTIVE</span>
+                                                                                        {p.isNew && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/10 px-1.5 py-0.5 rounded border border-purple-900/30">NEW</span>}
+                                                                                    </div>
+
+                                                                                    <p className="text-[9px] text-gray-600 font-mono mt-1 truncate">ID: {p.id.slice(-6).toUpperCase()}</p>
+                                                                                </div>
+
+                                                                                {/* Stock Pills */}
+                                                                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                                    {sortedInventory.length > 0 ? (
+                                                                                        sortedInventory.map(inv => (
+                                                                                            <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
+                                                                                                <span className="text-[10px] font-bold">{inv.size}</span>
+                                                                                                <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
                                                                                             </div>
+                                                                                        ))
+                                                                                    ) : (
+                                                                                        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border bg-gray-800 border-gray-700 text-gray-300">
+                                                                                            <span className="text-[10px] font-bold">Total</span>
+                                                                                            <span className={`text-[10px] font-mono ${p.stock && p.stock > 0 ? 'text-green-400' : 'text-red-500'}`}>{p.stock || 0}</span>
                                                                                         </div>
-                                                                                        <div className="min-w-0">
-                                                                                            <div className="font-bold text-white text-xs truncate max-w-[150px] md:max-w-xs">{p.name}</div>
-                                                                                            {p.stock === 0 && <span className="text-[9px] text-red-500 font-bold uppercase border border-red-500/30 px-1 rounded bg-red-500/10">AGOTADO</span>}
-                                                                                            {p.isNew && <span className="ml-1 text-[9px] text-blue-400 font-bold uppercase border border-blue-500/30 px-1 rounded bg-blue-500/10">NEW</span>}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td className="p-3 text-center font-mono text-gray-400">
-                                                                                    {parseInt(p.price.toString()).toLocaleString()}
-                                                                                </td>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
 
-                                                                                <td className="p-3 text-right">
-                                                                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                                        <button onClick={() => handleEditProduct(p)} className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-white" title="Editar"><Edit size={16} /></button>
-                                                                                        <button onClick={() => deleteProduct(p.id)} className="p-1.5 hover:bg-red-900/30 rounded text-gray-400 hover:text-red-500" title="Eliminar"><Trash2 size={16} /></button>
-                                                                                    </div>
-                                                                                </td>
-                                                                            </tr>
-                                                                        ))}
-                                                                    </tbody>
-                                                                </table>
+                                                                            {/* Actions & Price */}
+                                                                            <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+                                                                                <span className="bg-gray-900 text-gray-300 text-[10px] font-mono px-2 py-1 rounded border border-gray-800 font-bold">
+                                                                                    Gs. {(p.price).toLocaleString('es-PY')}
+                                                                                </span>
+
+                                                                                <div className="flex gap-1 mt-auto pt-4 md:pt-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0F0F0F]/80 backdrop-blur-sm rounded-lg p-1">
+                                                                                    <button onClick={() => handleEditProduct(p)} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
+                                                                                    <button onClick={() => deleteProduct(p.id)} className="p-1.5 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-full transition-colors"><Trash2 size={12} /></button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
                                                         </div>
                                                     ))}

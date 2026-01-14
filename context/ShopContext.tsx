@@ -689,31 +689,56 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const isPending = confirmedStatus.toLowerCase() === 'pendiente';
 
             // 3. Stock Management Logic
-            const order = orders.find(o => o.id === orderId);
-            if (!order || !order.items) return;
+            // FIX: Deduct stock when Order is CONFIRMED or DELIVERED (and not before)
+            const currentOrder = orders.find(o => o.id === orderId);
+            const oldStatusNormalized = currentOrder?.status?.toLowerCase() || '';
+            const newStatusNormalized = confirmedStatus.toLowerCase();
 
-            // Only act if we are transitioning to/from 'Entregado' (Finalized)
-            if (isDelivered) {
-                // Deduct Stock
+            // States that imply stock has been deducted
+            const deductedStates = ['confirmado en mercado', 'en camino', 'entregado', 'finalizado'];
+            const wasDeducted = deductedStates.includes(oldStatusNormalized);
+            const isTargetState = deductedStates.includes(newStatusNormalized);
+
+            // Trigger deduction only if we are moving TO a deducted state FROM a non-deducted state (e.g. Pendiente)
+            if (isTargetState && !wasDeducted && currentOrder && currentOrder.items) {
+                console.log(`Deducting stock for Order #${currentOrder.display_id} (Status: ${confirmedStatus})`);
+
                 let updatedCount = 0;
-                for (const item of order.items as any[]) {
+
+                for (const item of currentOrder.items as any[]) {
                     // 1. Try to find by ID (Standard)
                     let product = products.find(p => p.id === item.id);
 
-                    // 2. Fallback: Try to find by Name (Legacy/Migration compatibility)
+                    // 2. Fallback: Try to find by Name
                     if (!product) {
-                        console.warn(`Product ID mismatch for ${item.name} (Items ID: ${item.id}). Trying by name...`);
                         product = products.find(p => p.name === item.name);
                     }
 
                     if (product) {
-                        const currentStock = product.stock || 0;
                         const qtyToDeduct = item.quantity || 1;
+                        const sizeToDeduct = item.selectedSize;
+
+                        // A. Deduct from Total Stock
+                        const currentStock = product.stock || 0;
                         const newStock = Math.max(0, currentStock - qtyToDeduct);
 
-                        console.log(`Updating stock for ${product.name}: ${currentStock} -> ${newStock}`);
+                        // B. Deduct from Inventory (Size Matrix)
+                        if (sizeToDeduct && product.inventory) {
+                            const invItem = product.inventory.find(i => i.size === sizeToDeduct);
+                            if (invItem) {
+                                const newQty = Math.max(0, invItem.quantity - qtyToDeduct);
 
-                        // DB Update with Verification
+                                // Update Inventory Table
+                                const { error: invError } = await supabase
+                                    .from('inventory')
+                                    .update({ quantity: newQty })
+                                    .eq('id', invItem.id);
+
+                                if (invError) console.error(`Error updating inventory size ${sizeToDeduct} for ${product.name}:`, invError);
+                            }
+                        }
+
+                        // Update Product Table (Total Stock)
                         const { data: updatedData, error: stockError } = await supabase
                             .from('products')
                             .update({ stock_quantity: newStock })
@@ -722,53 +747,58 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                         if (stockError) {
                             console.error('Error updating stock in DB:', stockError);
-                            alert(`Error al descontar stock de ${product.name}: ${stockError.message}`);
-                        } else if (!updatedData || updatedData.length === 0) {
-                            console.error('Update succeeded but no rows returned. Possible ID mismatch or RLS policy.');
-                            alert(`ERROR SILENCIOSO: El sistema intentó descontar stock de "${product.name}" pero la base de datos no confirmó el cambio. Verifique permisos o IDs.`);
                         } else {
-                            // Success confirmed by DB
-                            const finalRowStock = updatedData[0].stock_quantity;
-
-                            // Local State Update
-                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: finalRowStock } : p));
-
-                            // 4. Register Sale in 'sales' table
-                            try {
-
-                                // Determinar precio unitario:
-                                // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
-                                // Si no, usar el precio actual del producto.
-                                // Nota: item.price podría no existir si items es un array simple. Asumimos que createOrder guarda precio.
-                                const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
-
-                                const saleRecord = {
-                                    product_id: product.id,
-                                    quantity: qtyToDeduct,
-                                    size: item.selectedSize || 'Standard',
-                                    unit_price: saleUnitPrice,
-                                    cost_price: product.costPrice || 0,
-                                    origin: 'web',
-                                    created_at: new Date().toISOString() // Optional, DB usually handles it
-                                };
-
-                                const { error: salesError } = await supabase
-                                    .from('sales')
-                                    .insert([saleRecord]);
-
-                                if (salesError) {
-                                    console.error('Error inserting into sales table:', salesError);
-                                    // Non-blocking error alert
-                                    // alert(`Atención: Stock descontado pero error al registrar venta en tabla 'sales': ${salesError.message}`);
-                                } else {
-                                    console.log('Sale registered successfully for', product.name);
+                            // Local State Update (Complex: Update total stock AND inventory array)
+                            setProducts(prev => prev.map(p => {
+                                if (p.id === product!.id) {
+                                    const updatedInventory = p.inventory?.map(inv =>
+                                        inv.size === sizeToDeduct ? { ...inv, quantity: Math.max(0, inv.quantity - qtyToDeduct) } : inv
+                                    );
+                                    return {
+                                        ...p,
+                                        stock: updatedData[0].stock_quantity,
+                                        inventory: updatedInventory
+                                    };
                                 }
-
-                            } catch (saleErr) {
-                                console.error('Exception registering sale:', saleErr);
-                            }
-                            updatedCount++;
+                                return p;
+                            }));
                         }
+
+                        // 4. Register Sale in 'sales' table
+                        try {
+
+                            // Determinar precio unitario:
+                            // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
+                            // Si no, usar el precio actual del producto.
+                            // Nota: item.price podría no existir si items es un array simple. Asumimos que createOrder guarda precio.
+                            const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
+
+                            const saleRecord = {
+                                product_id: product.id,
+                                quantity: qtyToDeduct,
+                                size: item.selectedSize || 'Standard',
+                                unit_price: saleUnitPrice,
+                                cost_price: product.costPrice || 0,
+                                origin: 'web',
+                                created_at: new Date().toISOString() // Optional, DB usually handles it
+                            };
+
+                            const { error: salesError } = await supabase
+                                .from('sales')
+                                .insert([saleRecord]);
+
+                            if (salesError) {
+                                console.error('Error inserting into sales table:', salesError);
+                                // Non-blocking error alert
+                                // alert(`Atención: Stock descontado pero error al registrar venta en tabla 'sales': ${salesError.message}`);
+                            } else {
+                                console.log('Sale registered successfully for', product.name);
+                            }
+
+                        } catch (saleErr) {
+                            console.error('Exception registering sale:', saleErr);
+                        }
+                        updatedCount++;
                     } else {
                         console.error(`CRITICO: No se encontró producto para descontar stock: ${item.name} (${item.id})`);
                         alert(`ATENCIÓN: No se pudo descontar el stock de "${item.name}". No se encontró en la base de datos de productos.`);
@@ -777,26 +807,49 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (updatedCount > 0) {
                     alert(`ÉXITO TOTAL: Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
                 }
-            } else if (isPending) {
+            } else if (newStatusNormalized === 'pendiente' && currentOrder) {
                 // Restoration Logic (Re-opening order)
-                const oldStatus = order.status;
-                if (oldStatus.toLowerCase() === 'entregado') {
-                    for (const item of order.items as any[]) {
+                // Restore if coming from a deducted state
+                // We re-calculate because we are in a different block scope if I don't lift vars
+                // reusing 'currentOrder' and 'oldStatusNormalized' from outer scope
+
+                const wasDeducted = ['confirmado en mercado', 'en camino', 'entregado', 'finalizado'].includes(oldStatusNormalized);
+
+                if (wasDeducted) {
+                    for (const item of currentOrder.items as any[]) {
                         let product = products.find(p => p.id === item.id);
                         if (!product) product = products.find(p => p.name === item.name);
 
                         if (product) {
-                            const currentStock = product.stock || 0;
                             const qtyToAdd = item.quantity || 1;
-                            const newStock = currentStock + qtyToAdd;
+                            const sizeToAdd = item.selectedSize;
+                            const newStock = (product.stock || 0) + qtyToAdd;
 
+                            // Restore Inventory Size
+                            if (sizeToAdd && product.inventory) {
+                                const invItem = product.inventory.find(i => i.size === sizeToAdd);
+                                if (invItem) {
+                                    await supabase.from('inventory').update({ quantity: invItem.quantity + qtyToAdd }).eq('id', invItem.id);
+                                }
+                            }
+
+                            // Restore Product Table
                             const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+
                             if (!stockError) {
-                                setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: newStock } : p));
+                                setProducts(prev => prev.map(p => {
+                                    if (p.id === product!.id) {
+                                        const updatedInventory = p.inventory?.map(inv =>
+                                            inv.size === sizeToAdd ? { ...inv, quantity: inv.quantity + qtyToAdd } : inv
+                                        );
+                                        return { ...p, stock: newStock, inventory: updatedInventory };
+                                    }
+                                    return p;
+                                }));
                             }
                         }
                     }
-                    alert('Stock restaurado porque se reabrió el pedido.');
+                    alert('Stock restaurado porque se reabrió el pedido (Volvió a Pendiente).');
                 }
             }
 
