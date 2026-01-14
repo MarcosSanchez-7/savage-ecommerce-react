@@ -441,6 +441,26 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
     // Admin Logic - SUPABASE SYNCED
+    const saveInventory = async (productId: string, inventory: { size: string; quantity: number }[]) => {
+        if (!inventory || inventory.length === 0) return;
+        try {
+            // Delete old inventory for this product
+            await supabase.from('inventory').delete().eq('product_id', productId);
+
+            // Insert new inventory
+            const inserts = inventory.map(item => ({
+                product_id: productId,
+                size: item.size,
+                quantity: item.quantity
+            }));
+
+            const { error } = await supabase.from('inventory').insert(inserts);
+            if (error) console.error('Error saving inventory:', error);
+        } catch (e) {
+            console.error('Exception saving inventory:', e);
+        }
+    };
+
     const addProduct = async (product: Product) => {
         // Optimistic UI update (using the temporary ID passed from Admin)
         setProducts(prev => [...prev, product]);
@@ -465,8 +485,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_category_featured: product.isCategoryFeatured,
                 description: product.description,
                 stock_quantity: product.stock || 0,
-                // inventory: product.inventory, // Uncomment if DB has inventory column
-                // cost_price: product.costPrice // Uncomment if DB has cost_price column
+                cost_price: product.costPrice || 0
             };
 
             const { data, error } = await supabase
@@ -488,6 +507,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // Revert optimistic update on error
                 setProducts(prev => prev.filter(p => p.id !== product.id));
             } else if (data) {
+                // Save Inventory
+                if (product.inventory) {
+                    await saveInventory(data.id, product.inventory);
+                }
+
                 // Success! Update the local state with the REAL UUID from the DB
                 // This replaces the temporary timestamp ID with the valid UUID
                 setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
@@ -519,7 +543,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_featured: updatedProduct.isFeatured,
                 is_category_featured: updatedProduct.isCategoryFeatured,
                 description: updatedProduct.description,
-                stock_quantity: updatedProduct.stock || 0
+                stock_quantity: updatedProduct.stock || 0,
+                cost_price: updatedProduct.costPrice || 0
             };
 
             const { error } = await supabase
@@ -529,6 +554,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error updating product in Supabase:', error);
+            } else {
+                // Update Inventory
+                if (updatedProduct.inventory) {
+                    await saveInventory(updatedProduct.id, updatedProduct.inventory);
+                }
             }
         } catch (err) {
             console.error(err);

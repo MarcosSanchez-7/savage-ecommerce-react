@@ -57,11 +57,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
               Nuevo
             </div>
           )}
-          {product.tags && product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA', 'Nuevo', 'NUEVO'].includes(t.toUpperCase()) && !(product.isNew && t.toUpperCase() === 'NUEVO')).map(tag => (
-            <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
-              {tag}
-            </div>
-          ))}
+          {product.tags && product.tags
+            .filter(tag => {
+              const t = tag.trim().toUpperCase();
+              return !['SIN CATEGORIA', 'SIN CATEGORÍA', 'NUEVO', 'NEW'].includes(t);
+            })
+            .map(tag => (
+              <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+                {tag}
+              </div>
+            ))}
         </div>
 
         {product.originalPrice && product.originalPrice > product.price && (
