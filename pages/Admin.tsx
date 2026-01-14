@@ -71,6 +71,12 @@ const AdminDashboard: React.FC = () => {
     const [stockMatrix, setStockMatrix] = useState<{ size: string; quantity: number }[]>([]);
 
     useEffect(() => {
+        // Prevent reset if loading a product for edit
+        if (isLoadingProductRef.current) {
+            isLoadingProductRef.current = false;
+            return;
+        }
+
         // Initialize matrix based on tab
         if (activeFormTab === 'ESTÁNDAR') {
             setStockMatrix(['P', 'M', 'G', 'XL', 'XXL'].map(s => ({ size: s, quantity: 0 })));
@@ -88,6 +94,7 @@ const AdminDashboard: React.FC = () => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const blogFileInputRef = React.useRef<HTMLInputElement>(null);
+    const isLoadingProductRef = React.useRef(false); // Flag to prevent matrix reset on edit load
     const [isBlogUploading, setIsBlogUploading] = useState(false);
 
     // Favicon Upload State
@@ -250,6 +257,7 @@ const AdminDashboard: React.FC = () => {
         // Set active tab based on category/type to load correct defaults if needed
         // but since we are editing, we just load the existing matrix.
         setStockMatrix(initialMatrix);
+        isLoadingProductRef.current = true; // Signal to useEffect to ignore the next tab change
 
         setNewProduct({
             name: product.name,
