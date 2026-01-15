@@ -101,9 +101,13 @@ const CategoryBento: React.FC = () => {
 
       {/* Extra Banners (if any) */}
       {bannerBento.length > 3 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div className={`grid grid-cols-1 ${bannerBento.length === 4 ? '' : bannerBento.length === 5 ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mt-4`}>
           {bannerBento.slice(3).map((banner) => (
-            <Link key={banner.id} to={banner.link} className="group relative h-64 overflow-hidden block">
+            <Link
+              key={banner.id}
+              to={banner.link}
+              className={`group relative overflow-hidden block rounded-xl ${bannerBento.length === 4 ? 'h-[300px] md:h-[450px]' : 'h-64'}`}
+            >
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors z-10" />
               <img
                 src={banner.image}
@@ -111,11 +115,11 @@ const CategoryBento: React.FC = () => {
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center z-20 text-center p-4">
-                <h3 className="text-2xl font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-lg">
+                <h3 className={`font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-lg ${bannerBento.length === 4 ? 'text-4xl md:text-5xl' : 'text-2xl'}`}>
                   {banner.title}
                 </h3>
                 {banner.buttonText && (
-                  <span className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-4 py-2 text-xs font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all">
+                  <span className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all rounded-full">
                     {banner.buttonText}
                   </span>
                 )}
