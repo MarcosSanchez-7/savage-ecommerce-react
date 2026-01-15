@@ -21,15 +21,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         className="relative w-full aspect-[3/4] overflow-hidden rounded bg-surface-dark group cursor-pointer"
         onClick={() => navigate(`/product/${product.id}`)}
       >
-        <img
-          src={product.images[0]}
-          alt={
-            (product.name.toLowerCase().includes('camiseta') || product.category.toLowerCase().includes('ropa'))
-              ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
-              : `${product.name} - Savage Store Paraguay`
-          }
-          className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${product.type === 'footwear' ? 'object-contain' : 'object-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
-        />
+        <div className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110">
+          <img
+            src={product.images[0]}
+            alt={
+              (product.name.toLowerCase().includes('camiseta') || product.category.toLowerCase().includes('ropa'))
+                ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
+                : `${product.name} - Savage Store Paraguay`
+            }
+            className={`w-full h-full ${product.type === 'footwear' ? 'object-contain' : 'object-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
+          />
+          {product.images[1] && (
+            <img
+              src={product.images[1]}
+              alt={`${product.name} vista alternativa`}
+              className={`absolute inset-0 w-full h-full transition-opacity duration-500 opacity-0 group-hover:opacity-100 ${product.type === 'footwear' ? 'object-contain' : 'object-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
+            />
+          )}
+        </div>
         {/* Sold Out Overlay */}
         {isTotallyOutOfStock && (
           <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center">

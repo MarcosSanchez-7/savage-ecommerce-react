@@ -43,15 +43,22 @@ const ProductDetail: React.FC = () => {
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     // Related Products for Recommendations
-    const relatedProducts = products
-        .filter(p => p.id !== product.id && p.category === product.category)
-        .sort((a, b) => {
-            // Prioritize same subcategory
-            if (a.subcategory === product.subcategory && b.subcategory !== product.subcategory) return -1;
-            if (a.subcategory !== product.subcategory && b.subcategory === product.subcategory) return 1;
-            return 0;
-        })
-        .slice(0, 3);
+    // Related Products for Recommendations
+    const relatedProducts = React.useMemo(() => {
+        if (!product) return [];
+
+        const candidates = products.filter(p => p.id !== product.id && p.category === product.category);
+
+        // Split by priority
+        const sameSub = candidates.filter(p => p.subcategory === product.subcategory);
+        const otherSub = candidates.filter(p => p.subcategory !== product.subcategory);
+
+        // Shuffle logic
+        const shuffle = (list: typeof products) => [...list].sort(() => 0.5 - Math.random());
+
+        // Combine: Prioritize same subcategory, then others
+        return [...shuffle(sameSub), ...shuffle(otherSub)].slice(0, 3);
+    }, [product, products]);
 
     return (
         <div className="min-h-screen bg-background-dark text-white">
