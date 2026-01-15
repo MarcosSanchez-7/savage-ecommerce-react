@@ -28,7 +28,7 @@ const CategoryPage: React.FC = () => {
         const matchesCategory = p.category.toLowerCase() === category?.toLowerCase();
         if (!matchesCategory) return false;
         if (activeSubcategory === 'ALL') return true;
-        return p.subcategory === activeSubcategory;
+        return p.subcategory?.toLowerCase() === activeSubcategory.toLowerCase();
     });
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
