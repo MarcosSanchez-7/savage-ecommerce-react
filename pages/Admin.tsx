@@ -1215,10 +1215,10 @@ const AdminDashboard: React.FC = () => {
                                                         {isUploading ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                         {isUploading ? 'SUBIENDO...' : 'SUBIR DESDE PC'}
                                                     </button>
-                                                    <button type="button" onClick={handleGooglePhotosSelect} className="text-xs text-white bg-green-600 hover:bg-green-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
+                                                    {/* <button type="button" onClick={handleGooglePhotosSelect} className="text-xs text-white bg-green-600 hover:bg-green-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
                                                         <GoogleIcon size={12} />
                                                         GOOGLE PHOTOS
-                                                    </button>
+                                                    </button> */}
                                                     <button type="button" onClick={addImageField} className="text-xs text-primary font-bold hover:underline">+ Agregar URL Manual</button>
                                                     <input
                                                         type="file"
