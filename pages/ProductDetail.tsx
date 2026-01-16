@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 import { ShoppingBag, ArrowLeft, Star, Share2 } from 'lucide-react';
 
 const ProductDetail: React.FC = () => {
@@ -67,6 +68,13 @@ const ProductDetail: React.FC = () => {
     return (
         <div className="min-h-screen bg-background-dark text-white">
             <Navbar cartCount={cartCount} />
+
+            <SEO
+                title={`${product.name} - Savage Store Paraguay`}
+                description={product.description || `Comprá ${product.name} en Savage Store. Calidad Premium.`}
+                image={product.images[0]}
+                product={true}
+            />
 
             {/* Structured Data for SEO */}
             <script type="application/ld+json">
