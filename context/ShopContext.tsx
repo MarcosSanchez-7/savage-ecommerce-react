@@ -60,6 +60,7 @@ interface ShopContextType {
     updateHeroCarouselConfig: (config: HeroCarouselConfig) => void;
     footerColumns: FooterColumn[];
     updateFooterColumns: (columns: FooterColumn[]) => void;
+    updateCategoryOrder: (orderedIds: string[]) => void;
     saveAllData: () => void;
     loading: boolean;
 }
@@ -112,6 +113,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Categories - Now synced with Supabase
     const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+    const [categorySortOrder, setCategorySortOrder] = useState<string[]>([]);
 
     // Cart - Stays in LocalStorage (Cart shouldn't be shared across devices usually unless logged in user, which we don't have yet)
     const [cart, setCart] = useState<CartItem[]>(() => {
@@ -265,7 +267,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .select('*');
 
             if (!catError && categoriesData && categoriesData.length > 0) {
-                setCategories(categoriesData);
+                // Don't set yet, wait for config to sort
+                // setCategories(categoriesData);
             }
 
             // Fetch Delivery Zones
@@ -340,7 +343,28 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (conf.key === 'footer_columns') setFooterColumns(conf.value);
                     if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
                     if (conf.key === 'drops_config') setDropsConfig(conf.value);
+                    if (conf.key === 'category_sort_order') {
+                        const order = conf.value as string[];
+                        setCategorySortOrder(order);
+                        // Sort categories if we already have them
+                        if (categoriesData) {
+                            const sorted = [...categoriesData].sort((a, b) => {
+                                const idxA = order.indexOf(a.id);
+                                const idxB = order.indexOf(b.id);
+                                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                                if (idxA !== -1) return -1;
+                                if (idxB !== -1) return 1;
+                                return 0;
+                            });
+                            setCategories(sorted);
+                        }
+                    }
                 });
+            }
+
+            // Fallback if no sort order in config, use basic categories
+            if (!allConfigs?.find(c => c.key === 'category_sort_order') && categoriesData) {
+                setCategories(categoriesData);
             }
 
         } catch (error) {
@@ -1104,9 +1128,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     // Category Logic - SUPABASE SYNCED
     const addCategory = async (category: Category) => {
+        // Optimistic: Append to end
         setCategories(prev => [...prev, category]);
 
+        // Also update sort order
+        const newOrder = [...categorySortOrder, category.id];
+        setCategorySortOrder(newOrder);
+
         try {
+            // 1. Insert Category
             const { error } = await supabase
                 .from('categories')
                 .insert([category]);
@@ -1114,7 +1144,18 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) {
                 console.error('Error adding category to DB:', error);
                 alert('Error al guardar categoría en la nube.');
+                // Revert
+                setCategories(prev => prev.filter(c => c.id !== category.id));
+                return;
             }
+
+            // 2. Update Sort Order Config
+            await supabase.from('store_config').upsert({
+                key: 'category_sort_order',
+                value: newOrder,
+                updated_at: new Date().toISOString()
+            });
+
         } catch (e) {
             console.error(e);
         }
@@ -1131,6 +1172,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 ? { ...p, category: 'huerfanos', tags: [...p.tags, 'Sin Categoría'] }
                 : p
         ));
+
+        // Update Sort Order
+        const newOrder = categorySortOrder.filter(id => id !== categoryId);
+        setCategorySortOrder(newOrder);
 
         try {
             // 1. Move products to 'huerfanos' in DB
@@ -1164,6 +1209,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // Rollback optimistic update
                 const { data: catData } = await supabase.from('categories').select('*');
                 if (catData) setCategories(catData);
+            } else {
+                // 3. Save new sort order
+                await supabase.from('store_config').upsert({
+                    key: 'category_sort_order',
+                    value: newOrder,
+                    updated_at: new Date().toISOString()
+                });
             }
         } catch (e) {
             console.error(e);
@@ -1182,6 +1234,33 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) console.error('Error updating category in DB:', error);
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const updateCategoryOrder = async (orderedIds: string[]) => {
+        setCategorySortOrder(orderedIds);
+        // Resort local categories
+        setCategories(prev => {
+            return [...prev].sort((a, b) => {
+                const idxA = orderedIds.indexOf(a.id);
+                const idxB = orderedIds.indexOf(b.id);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return 0;
+            });
+        });
+
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'category_sort_order',
+                value: orderedIds,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error('Error updating category order:', e);
+            alert('Error al guardar el orden de categorías');
         }
     };
 
@@ -1306,6 +1385,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addCategory,
             updateCategory,
             deleteCategory,
+            updateCategoryOrder,
             deliveryZones,
             addDeliveryZone,
             deleteDeliveryZone,

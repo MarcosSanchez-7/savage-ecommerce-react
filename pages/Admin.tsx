@@ -18,7 +18,9 @@ import {
     Layers,
     Map,
     Edit,
-    Menu
+    Menu,
+    ArrowUp,
+    ArrowDown
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
@@ -42,7 +44,7 @@ const AdminDashboard: React.FC = () => {
         updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
         saveAllData, drops, addDrop, deleteDrop, loading,
-        dropsConfig, updateDropsConfig
+        dropsConfig, updateDropsConfig, updateCategoryOrder
     } = useShop();
 
     const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
@@ -560,6 +562,23 @@ const AdminDashboard: React.FC = () => {
     const handleCancelEditBlog = () => {
         setEditingPostId(null);
         setBlogForm({ title: '', content: '', image: '', author: 'Admin', rating: 5, tag: 'LIFESTYLE' });
+    };
+
+    const handleMoveCategory = (index: number, direction: 'up' | 'down') => {
+        if (!categories) return;
+        if (direction === 'up' && index === 0) return;
+        if (direction === 'down' && index === categories.length - 1) return;
+
+        const newCats = [...categories];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+        // Swap locally to get the new order of IDs
+        const temp = newCats[index];
+        newCats[index] = newCats[targetIndex];
+        newCats[targetIndex] = temp;
+
+        const newOrderIds = newCats.map(c => c.id);
+        updateCategoryOrder(newOrderIds);
     };
 
     // --- Config Handlers ---
@@ -1780,12 +1799,31 @@ const AdminDashboard: React.FC = () => {
                             <div className="space-y-4">
                                 <h3 className="text-xl font-bold border-b border-gray-800 pb-2">Categorías Existentes</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {categories.map(cat => (
+                                    {categories.map((cat, index) => (
                                         <div key={cat.id} className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4 flex flex-col gap-4 group">
                                             <div className="flex justify-between items-center">
-                                                <div>
-                                                    <h4 className="font-bold text-white text-lg">{cat.name}</h4>
-                                                    <span className="text-xs text-gray-500 font-mono">ID: {cat.id}</span>
+                                                <div className="flex items-center gap-3">
+                                                    {/* Sort Controls */}
+                                                    <div className="flex flex-col gap-1">
+                                                        <button
+                                                            onClick={() => handleMoveCategory(index, 'up')}
+                                                            disabled={index === 0}
+                                                            className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 transition-colors"
+                                                        >
+                                                            <ArrowUp size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleMoveCategory(index, 'down')}
+                                                            disabled={index === categories.length - 1}
+                                                            className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 transition-colors"
+                                                        >
+                                                            <ArrowDown size={14} />
+                                                        </button>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-white text-lg">{cat.name}</h4>
+                                                        <span className="text-xs text-gray-500 font-mono">ID: {cat.id}</span>
+                                                    </div>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button
