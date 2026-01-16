@@ -102,6 +102,7 @@ const AdminDashboard: React.FC = () => {
     const [isFaviconUploading, setIsFaviconUploading] = useState(false);
 
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+    const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([]);
     const [showProductForm, setShowProductForm] = useState(false);
 
     // Hero Form State
@@ -288,7 +289,11 @@ const AdminDashboard: React.FC = () => {
         setShowProductForm(true);
         // Scroll main content to top
         const mainContent = document.getElementById('admin-main-content');
-        if (mainContent) mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+        if (mainContent) {
+            mainContent.scrollTo({ top: 0, behavior: 'instant' }); // Use instant for better mobile responsiveness
+            mainContent.scrollTop = 0;
+        }
+        window.scrollTo({ top: 0, behavior: 'instant' });
     };
 
 
@@ -1298,84 +1303,110 @@ const AdminDashboard: React.FC = () => {
 
                                             {expandedCategory === category && (
                                                 <div className="bg-black animate-in slide-in-from-top-2 duration-300">
-                                                    {subcatKeys.map(subKey => (
-                                                        <div key={subKey} className="border-b border-gray-900 last:border-0">
-                                                            <div className="bg-gray-900/30 px-4 py-2 flex items-center gap-2">
-                                                                <span className="w-2 h-2 rounded-full bg-primary/50"></span>
-                                                                <h5 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">{subKey}</h5>
-                                                            </div>
-
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                                                                {subcats[subKey].map(p => {
-                                                                    // Sort inventory for display (S, M, L, etc.)
-                                                                    const sortedInventory = p.inventory && p.inventory.length > 0
-                                                                        ? [...p.inventory].sort((a, b) => {
-                                                                            const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
-                                                                            const aIdx = sizes.indexOf(a.size);
-                                                                            const bIdx = sizes.indexOf(b.size);
-                                                                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-                                                                            return a.size.localeCompare(b.size);
-                                                                        })
-                                                                        : [];
-
-                                                                    return (
-                                                                        <div key={p.id} className="bg-[#0F0F0F] rounded-lg p-3 flex gap-3 border border-gray-800 shadow-sm relative group hover:border-gray-600 transition-all hover:translate-y-[-2px]">
-                                                                            {/* Image */}
-                                                                            <div className="w-20 h-24 bg-gray-900 rounded overflow-hidden shrink-0 border border-gray-800">
-                                                                                <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                                                                            </div>
-
-                                                                            {/* Content */}
-                                                                            <div className="flex-1 min-w-0 flex flex-col justify-between">
-                                                                                <div>
-                                                                                    <div className="flex justify-between items-start">
-                                                                                        <h4 className="font-bold text-sm text-white leading-tight truncate pr-6" title={p.name}>{p.name}</h4>
-                                                                                    </div>
-
-                                                                                    <div className="flex items-center gap-2 mt-1">
-                                                                                        <span className="text-[9px] font-black text-blue-500 uppercase">ADMIN</span>
-                                                                                        <span className="text-[9px] font-bold text-green-500 bg-green-900/10 px-1.5 py-0.5 rounded border border-green-900/30">ACTIVE</span>
-                                                                                        {p.isNew && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/10 px-1.5 py-0.5 rounded border border-purple-900/30">NEW</span>}
-                                                                                    </div>
-
-                                                                                    <p className="text-[9px] text-gray-600 font-mono mt-1 truncate">ID: {p.id.slice(-6).toUpperCase()}</p>
-                                                                                </div>
-
-                                                                                {/* Stock Pills */}
-                                                                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                                    {sortedInventory.length > 0 ? (
-                                                                                        sortedInventory.map(inv => (
-                                                                                            <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
-                                                                                                <span className="text-[10px] font-bold">{inv.size}</span>
-                                                                                                <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
-                                                                                            </div>
-                                                                                        ))
-                                                                                    ) : (
-                                                                                        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border bg-gray-800 border-gray-700 text-gray-300">
-                                                                                            <span className="text-[10px] font-bold">Total</span>
-                                                                                            <span className={`text-[10px] font-mono ${p.stock && p.stock > 0 ? 'text-green-400' : 'text-red-500'}`}>{p.stock || 0}</span>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {/* Actions & Price */}
-                                                                            <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
-                                                                                <span className="bg-gray-900 text-gray-300 text-[10px] font-mono px-2 py-1 rounded border border-gray-800 font-bold">
-                                                                                    Gs. {(p.price).toLocaleString('es-PY')}
-                                                                                </span>
-
-                                                                                <div className="flex gap-1 mt-auto pt-4 md:pt-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0F0F0F]/80 backdrop-blur-sm rounded-lg p-1">
-                                                                                    <button onClick={() => handleEditProduct(p)} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
-                                                                                    <button onClick={() => deleteProduct(p.id)} className="p-1.5 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-full transition-colors"><Trash2 size={12} /></button>
-                                                                                </div>
-                                                                            </div>
+                                                    {subcatKeys.map(subKey => {
+                                                        const isExpanded = expandedSubcategories.includes(`${category}-${subKey}`);
+                                                        return (
+                                                            <div key={subKey} className="border-b border-gray-900 last:border-0">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const key = `${category}-${subKey}`;
+                                                                        setExpandedSubcategories(prev =>
+                                                                            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+                                                                        );
+                                                                    }}
+                                                                    className="w-full bg-gray-900/30 px-4 py-3 flex items-center justify-between hover:bg-gray-900/50 transition-colors group/sub"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className={`transition-transform duration-200 text-gray-500 group-hover/sub:text-white ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
+                                                                            <ChevronDown size={16} />
+                                                                        </span>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="w-1.5 h-1.5 rounded-full bg-primary/50"></span>
+                                                                            <h5 className="text-xs font-black text-gray-400 group-hover/sub:text-white uppercase tracking-[0.2em] transition-colors">{subKey}</h5>
                                                                         </div>
-                                                                    );
-                                                                })}
+                                                                    </div>
+                                                                    <span className="text-[10px] text-gray-600 font-mono bg-black/20 px-2 py-1 rounded">
+                                                                        {subcats[subKey].length} items
+                                                                    </span>
+                                                                </button>
+
+                                                                {/* Grid of products - Only shown if expanded */}
+                                                                {isExpanded && (
+                                                                    <div className="p-4 bg-black/20 border-t border-gray-900/50 animate-in slide-in-from-top-1 duration-200">
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                                                                            {subcats[subKey].map(p => {
+                                                                                // Sort inventory for display (S, M, L, etc.)
+                                                                                const sortedInventory = p.inventory && p.inventory.length > 0
+                                                                                    ? [...p.inventory].sort((a, b) => {
+                                                                                        const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+                                                                                        const aIdx = sizes.indexOf(a.size);
+                                                                                        const bIdx = sizes.indexOf(b.size);
+                                                                                        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                                                                                        return a.size.localeCompare(b.size);
+                                                                                    })
+                                                                                    : [];
+
+                                                                                return (
+                                                                                    <div key={p.id} className="bg-[#0F0F0F] rounded-lg p-3 flex gap-3 border border-gray-800 shadow-sm relative group hover:border-gray-600 transition-all hover:translate-y-[-2px]">
+                                                                                        {/* Image */}
+                                                                                        <div className="w-20 h-24 bg-gray-900 rounded overflow-hidden shrink-0 border border-gray-800">
+                                                                                            <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                                                                                        </div>
+
+                                                                                        {/* Content */}
+                                                                                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                                                                            <div>
+                                                                                                <div className="flex justify-between items-start">
+                                                                                                    <h4 className="font-bold text-sm text-white leading-tight truncate pr-6" title={p.name}>{p.name}</h4>
+                                                                                                </div>
+
+                                                                                                <div className="flex items-center gap-2 mt-1">
+                                                                                                    <span className="text-[9px] font-black text-blue-500 uppercase">ADMIN</span>
+                                                                                                    <span className="text-[9px] font-bold text-green-500 bg-green-900/10 px-1.5 py-0.5 rounded border border-green-900/30">ACTIVE</span>
+                                                                                                    {p.isNew && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/10 px-1.5 py-0.5 rounded border border-purple-900/30">NEW</span>}
+                                                                                                </div>
+
+                                                                                                <p className="text-[9px] text-gray-600 font-mono mt-1 truncate">ID: {p.id.slice(-6).toUpperCase()}</p>
+                                                                                            </div>
+
+                                                                                            {/* Stock Pills */}
+                                                                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                                                {sortedInventory.length > 0 ? (
+                                                                                                    sortedInventory.map(inv => (
+                                                                                                        <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
+                                                                                                            <span className="text-[10px] font-bold">{inv.size}</span>
+                                                                                                            <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                                        </div>
+                                                                                                    ))
+                                                                                                ) : (
+                                                                                                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border bg-gray-800 border-gray-700 text-gray-300">
+                                                                                                        <span className="text-[10px] font-bold">Total</span>
+                                                                                                        <span className={`text-[10px] font-mono ${p.stock && p.stock > 0 ? 'text-green-400' : 'text-red-500'}`}>{p.stock || 0}</span>
+                                                                                                    </div>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+
+                                                                                        {/* Actions & Price */}
+                                                                                        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+                                                                                            <span className="bg-gray-900 text-gray-300 text-[10px] font-mono px-2 py-1 rounded border border-gray-800 font-bold">
+                                                                                                Gs. {(p.price).toLocaleString('es-PY')}
+                                                                                            </span>
+
+                                                                                            <div className="flex gap-1 mt-auto pt-4 md:pt-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0F0F0F]/80 backdrop-blur-sm rounded-lg p-1">
+                                                                                                <button onClick={() => handleEditProduct(p)} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
+                                                                                                <button onClick={() => deleteProduct(p.id)} className="p-1.5 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-full transition-colors"><Trash2 size={12} /></button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                        </div>
-                                                    ))}
+                                                        );
+                                                    })}
                                                 </div>
                                             )}
                                         </div>
