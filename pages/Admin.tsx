@@ -28,6 +28,7 @@ import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import { uploadProductImage } from '../services/uploadService';
 import { openGooglePicker } from '../services/googlePickerService';
 import { Loader2, UploadCloud, Image as GoogleIcon } from 'lucide-react';
+import { useImageOptimizer } from '../hooks/useImageOptimizer';
 
 const AdminDashboard: React.FC = () => {
     const {
@@ -46,6 +47,8 @@ const AdminDashboard: React.FC = () => {
         saveAllData, drops, addDrop, deleteDrop, loading,
         dropsConfig, updateDropsConfig, updateCategoryOrder
     } = useShop();
+
+    const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
     const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
@@ -408,15 +411,30 @@ const AdminDashboard: React.FC = () => {
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             setIsUploading(true);
-            const files = Array.from(e.target.files);
+            const files = Array.from(e.target.files) as File[];
             const uploadedUrls: string[] = [];
 
             for (const file of files) {
-                // Organize by category folder
-                const folder = newProduct.category ? newProduct.category : 'general';
-                const url = await uploadProductImage(file as File, folder);
-                if (url) {
-                    uploadedUrls.push(url);
+                try {
+                    // Optimize image using Web Worker (OffscreenCanvas)
+                    // This converts to WebP and resizes to max 1920px without blocking UI
+                    const optimizedFile = await optimizeImage(file, {
+                        maxWidth: 1920,
+                        maxHeight: 1920,
+                        quality: 0.8
+                    });
+
+                    // Organize by category folder
+                    const folder = newProduct.category ? newProduct.category : 'general';
+                    // Upload the optimized WebP file
+                    // uploadProductImage handles WebP smartly (skips re-compression)
+                    const url = await uploadProductImage(optimizedFile, folder);
+                    if (url) {
+                        uploadedUrls.push(url);
+                    }
+                } catch (err: any) {
+                    console.error("Optimization/Upload error:", err);
+                    alert(`Error procesando imagen ${file.name}`);
                 }
             }
 

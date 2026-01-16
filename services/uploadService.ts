@@ -76,18 +76,32 @@ const compressImage = async (file: File): Promise<File> => {
     });
 };
 
+// Helper to get extension
+const getFileExtension = (file: File): string => {
+    if (file.type === 'image/webp') return 'webp';
+    if (file.type === 'image/png') return 'png';
+    return 'jpg';
+};
+
 export const uploadProductImage = async (file: File, folder?: string): Promise<string | null> => {
     try {
         if (!file) return null;
 
-        // Compress Image before upload
-        console.log(`Original size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-        const compressedFile = await compressImage(file);
-        console.log(`Compressed size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+        let fileToUpload = file;
+        const isWebP = file.type === 'image/webp';
+
+        // Compress Image if NOT already WebP (assuming WebP inputs are pre-optimized)
+        // You can adjust this to also compress WebP if needed, but usually we trust the optimizer hook.
+        if (!isWebP) {
+            console.log(`Original size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            fileToUpload = await compressImage(file);
+            console.log(`Compressed (JPEG) size: ${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`);
+        } else {
+            console.log(`Uploading WebP directly: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+        }
 
         // Create a unique file name
-        // Always use jpg extension for compressed images
-        const fileExt = 'jpg';
+        const fileExt = getFileExtension(fileToUpload);
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
 
         // Clean folder name to be safe
@@ -96,7 +110,7 @@ export const uploadProductImage = async (file: File, folder?: string): Promise<s
 
         const { error: uploadError } = await supabase.storage
             .from('products')
-            .upload(filePath, compressedFile);
+            .upload(filePath, fileToUpload);
 
         if (uploadError) {
             console.error('Error uploading image to Supabase:', uploadError);
