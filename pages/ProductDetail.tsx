@@ -146,7 +146,7 @@ const ProductDetail: React.FC = () => {
                     {/* Details Section */}
                     <div className="flex flex-col">
                         <div className="mb-2 flex gap-2">
-                            {product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA'].includes(t.toUpperCase())).map(tag => (
+                            {product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA', 'NUEVO', 'NEW'].includes(t.toUpperCase())).map(tag => (
                                 <span key={tag} className="px-2 py-1 bg-white/10 text-xs font-bold uppercase rounded text-primary border border-primary/20">{tag}</span>
                             ))}
                             {product.isNew && <span className="px-2 py-1 bg-primary text-xs font-bold uppercase rounded text-white">NUEVO</span>}
