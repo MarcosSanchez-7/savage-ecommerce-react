@@ -17,6 +17,7 @@ export interface Product {
   stock?: number;
   inventory?: InventoryItem[];
   costPrice?: number;
+  slug?: string;
 }
 
 export interface InventoryItem {

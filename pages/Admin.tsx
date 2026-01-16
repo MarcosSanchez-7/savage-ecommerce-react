@@ -69,7 +69,8 @@ const AdminDashboard: React.FC = () => {
         fit: '',
         description: '',
         isFeatured: false,
-        isCategoryFeatured: false
+        isCategoryFeatured: false,
+        slug: ''
     });
 
     // Stock Matrix State
@@ -230,7 +231,8 @@ const AdminDashboard: React.FC = () => {
             fit: '',
             description: '',
             isFeatured: false,
-            isCategoryFeatured: false
+            isCategoryFeatured: false,
+            slug: ''
         });
         setStockMatrix([]); // Reset matrix 
         // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
@@ -280,7 +282,8 @@ const AdminDashboard: React.FC = () => {
             fit: product.fit || '',
             description: product.description || '',
             isFeatured: product.isFeatured || false,
-            isCategoryFeatured: product.isCategoryFeatured || false
+            isCategoryFeatured: product.isCategoryFeatured || false,
+            slug: product.slug // Preserve existing slug if any
         });
 
         // Infer Form Tab from Category for correct visuals if user switches tabs
@@ -345,6 +348,31 @@ const AdminDashboard: React.FC = () => {
         const totalStock = inventory.reduce((acc, item) => acc + item.quantity, 0);
         const matrixSizes = inventory.map(item => item.size);
 
+        // Slug Generation Helper
+        const generateSlug = (text: string) => {
+            return text
+                .toString()
+                .toLowerCase()
+                .normalize('NFD') // Separate accents
+                .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                .trim()
+                .replace(/\s+/g, '-') // Replace spaces with -
+                .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+                .replace(/\-\-+/g, '-') // Replace multiple - with single -
+                .replace(/^-+/, '') // Trim - from start
+                .replace(/-+$/, ''); // Trim - from end
+        };
+
+        // Ensure slug is unique-ish or just based on name. 
+        // Ideally we check against database, but for now we generate based on name.
+        // If editing, use existing slug if name hasn't changed? 
+        // Actually, let's just regenerate from name to ensure it's always sync. 
+        // Or prefer existing slug if passed.
+        // User request: "generate automatically based on name".
+        const productSlug = newProduct.slug && newProduct.slug.trim() !== ''
+            ? newProduct.slug
+            : generateSlug(newProduct.name);
+
         const productData: Product = {
             id: editingProductId || Date.now().toString(),
             name: newProduct.name,
@@ -363,7 +391,8 @@ const AdminDashboard: React.FC = () => {
             isNew: finalTags.includes('Nuevo'),
             isFeatured: newProduct.isFeatured,
             isCategoryFeatured: newProduct.isCategoryFeatured,
-            description: newProduct.description
+            description: newProduct.description,
+            slug: productSlug
         };
 
         if (editingProductId) {

@@ -20,7 +20,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
     <div className="group flex flex-col gap-3">
       <div
         className="relative w-full aspect-[3/4] overflow-hidden rounded bg-surface-dark group cursor-pointer"
-        onClick={() => navigate(`/product/${product.id}`)}
+        onClick={() => navigate(`/product/${product.slug || product.id}`)}
       >
         <div className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110">
           <img
@@ -108,7 +108,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
         <div className="flex-1">
           <h3
             className="text-white text-sm sm:text-base lg:text-lg font-bold leading-tight group-hover:text-primary transition-colors cursor-pointer line-clamp-2"
-            onClick={() => navigate(`/product/${product.id}`)}
+            onClick={() => navigate(`/product/${product.slug || product.id}`)}
           >
             {product.name}
             {(product.name.length < 25 && (product.category.toLowerCase().includes('camiseta') || product.name.toLowerCase().includes('camiseta'))) && (
@@ -129,7 +129,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 

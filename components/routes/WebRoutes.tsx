@@ -23,7 +23,7 @@ const WebRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/category/:category/:subcategory" element={<CategoryPage />} />
             <Route path="/blog" element={<BlogPage />} />

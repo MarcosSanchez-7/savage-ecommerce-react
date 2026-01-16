@@ -7,11 +7,15 @@ import Footer from '../components/Footer';
 import { ShoppingBag, ArrowLeft, Star, Share2 } from 'lucide-react';
 
 const ProductDetail: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
+    const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const { products, addToCart, cart, socialConfig } = useShop();
 
-    const product = products.find(p => p.id === id);
+    // Check if slug looks like a UUID (fallback for old links)
+    const isUuid = (str?: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || '');
+
+    // Find by slug OR by ID
+    const product = products.find(p => p.slug === slug || p.id === slug);
 
     // State
     const [selectedImage, setSelectedImage] = useState(0);
@@ -19,7 +23,7 @@ const ProductDetail: React.FC = () => {
 
     React.useEffect(() => {
         window.scrollTo(0, 0);
-    }, [id]);
+    }, [slug]);
 
     if (!product) {
         return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">Producto no encontrado</div>;
@@ -251,7 +255,7 @@ const ProductDetail: React.FC = () => {
                                             key={rp.id}
                                             onClick={() => {
                                                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                navigate(`/product/${rp.id}`);
+                                                navigate(`/product/${rp.slug || rp.id}`);
                                             }}
                                             className="group text-left"
                                         >
