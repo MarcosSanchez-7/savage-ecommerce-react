@@ -70,7 +70,10 @@ const AdminDashboard: React.FC = () => {
         description: '',
         isFeatured: false,
         isCategoryFeatured: false,
-        slug: ''
+        isFeatured: false,
+        isCategoryFeatured: false,
+        slug: '',
+        imageAlts: [] as string[]
     });
 
     // Stock Matrix State
@@ -232,7 +235,9 @@ const AdminDashboard: React.FC = () => {
             description: '',
             isFeatured: false,
             isCategoryFeatured: false,
-            slug: ''
+            isCategoryFeatured: false,
+            slug: '',
+            imageAlts: []
         });
         setStockMatrix([]); // Reset matrix 
         // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
@@ -283,7 +288,9 @@ const AdminDashboard: React.FC = () => {
             description: product.description || '',
             isFeatured: product.isFeatured || false,
             isCategoryFeatured: product.isCategoryFeatured || false,
-            slug: product.slug // Preserve existing slug if any
+            isCategoryFeatured: product.isCategoryFeatured || false,
+            slug: product.slug, // Preserve existing slug if any
+            imageAlts: product.imageAlts || product.images.map(() => '') // Initialize alts or defaults
         });
 
         // Infer Form Tab from Category for correct visuals if user switches tabs
@@ -392,7 +399,10 @@ const AdminDashboard: React.FC = () => {
             isFeatured: newProduct.isFeatured,
             isCategoryFeatured: newProduct.isCategoryFeatured,
             description: newProduct.description,
-            slug: productSlug
+            isCategoryFeatured: newProduct.isCategoryFeatured,
+            description: newProduct.description,
+            slug: productSlug,
+            imageAlts: newProduct.imageAlts || validImages.map(() => newProduct.name) // Default to Product Name if empty
         };
 
         if (editingProductId) {
@@ -421,20 +431,43 @@ const AdminDashboard: React.FC = () => {
         setNewProduct(prev => ({ ...prev, images: updatedImages }));
     };
 
+    const handleAltChange = (index: number, value: string) => {
+        const updatedAlts = [...(newProduct.imageAlts || newProduct.images.map(() => ''))];
+        updatedAlts[index] = value;
+        setNewProduct(prev => ({ ...prev, imageAlts: updatedAlts }));
+    };
+
     const addImageField = () => {
-        setNewProduct(prev => ({ ...prev, images: [...prev.images, ''] }));
+        setNewProduct(prev => ({
+            ...prev,
+            images: [...prev.images, ''],
+            imageAlts: [...(prev.imageAlts || []), '']
+        }));
     };
 
     const removeImageField = (index: number) => {
         const updatedImages = newProduct.images.filter((_, i) => i !== index);
-        setNewProduct(prev => ({ ...prev, images: updatedImages }));
+        const updatedAlts = (newProduct.imageAlts || newProduct.images.map(() => '')).filter((_, i) => i !== index);
+        setNewProduct(prev => ({
+            ...prev,
+            images: updatedImages,
+            imageAlts: updatedAlts
+        }));
     };
 
     const moveImageUp = (index: number) => {
         if (index === 0) return;
-        const updated = [...newProduct.images];
-        [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
-        setNewProduct(prev => ({ ...prev, images: updated }));
+        const updatedImages = [...newProduct.images];
+        const updatedAlts = [...(newProduct.imageAlts || newProduct.images.map(() => ''))];
+
+        [updatedImages[index - 1], updatedImages[index]] = [updatedImages[index], updatedImages[index - 1]];
+        [updatedAlts[index - 1], updatedAlts[index]] = [updatedAlts[index], updatedAlts[index - 1]];
+
+        setNewProduct(prev => ({
+            ...prev,
+            images: updatedImages,
+            imageAlts: updatedAlts
+        }));
     };
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -470,7 +503,8 @@ const AdminDashboard: React.FC = () => {
             if (uploadedUrls.length > 0) {
                 setNewProduct(prev => ({
                     ...prev,
-                    images: [...prev.images.filter(i => i !== ''), ...uploadedUrls] // Append new images
+                    images: [...prev.images.filter(i => i !== ''), ...uploadedUrls], // Append new images
+                    imageAlts: [...(prev.imageAlts || []), ...uploadedUrls.map(() => '')] // Append empty alts
                 }));
             }
             setIsUploading(false);
@@ -1303,14 +1337,31 @@ const AdminDashboard: React.FC = () => {
                                                     />
                                                 </div>
                                             </div>
-                                            <div className="space-y-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                                 {newProduct.images.map((img, idx) => (
-                                                    <div key={idx} className="flex gap-2 items-center group">
-                                                        <span className="text-gray-600 font-mono text-xs w-4">{idx + 1}</span>
-                                                        <div className="relative w-10 h-10 bg-gray-900 rounded overflow-hidden flex-shrink-0 border border-gray-800">
-                                                            {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                                                    <div key={idx} className="flex gap-2 items-start group bg-gray-900/50 p-3 rounded border border-gray-800">
+                                                        <span className="text-gray-600 font-mono text-xs w-4 mt-3">{idx + 1}</span>
+                                                        <div className="flex flex-col gap-2 flex-1">
+                                                            <div className="flex gap-2">
+                                                                <div className="relative w-10 h-10 bg-gray-900 rounded overflow-hidden flex-shrink-0 border border-gray-800">
+                                                                    {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                                                                </div>
+                                                                <input
+                                                                    type="text"
+                                                                    value={img}
+                                                                    onChange={e => handleImageChange(idx, e.target.value)}
+                                                                    className="flex-1 bg-black border border-gray-800 rounded p-2 text-xs focus:border-primary focus:outline-none transition-colors"
+                                                                    placeholder="URL de la imagen (https://...)"
+                                                                />
+                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                value={newProduct.imageAlts?.[idx] || ''}
+                                                                onChange={e => handleAltChange(idx, e.target.value)}
+                                                                className="w-full bg-black/50 border border-gray-800/50 rounded p-1.5 text-[10px] text-gray-300 focus:border-gray-500 focus:outline-none transition-colors placeholder:text-gray-700"
+                                                                placeholder={`Texto Alternativo (ALT) para imagen #${idx + 1} - Dejar vacío para usar nombre del producto`}
+                                                            />
                                                         </div>
-                                                        <input type="text" value={img} onChange={e => handleImageChange(idx, e.target.value)} className="flex-1 bg-black border border-gray-800 rounded p-2 text-xs focus:border-primary focus:outline-none transition-colors" placeholder="https://..." />
                                                         <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <button type="button" onClick={() => moveImageUp(idx)} disabled={idx === 0} className="text-gray-500 hover:text-white disabled:opacity-0"><ChevronUp size={12} /></button>
                                                         </div>
@@ -1319,7 +1370,7 @@ const AdminDashboard: React.FC = () => {
                                                 ))}
                                             </div>
                                             <p className="text-[10px] text-gray-500 italic">
-                                                * La imagen #1 será la portada. Usa las flechas para reordenar.</p>
+                                                * La imagen #1 será la portada. Incluye descripciones ALT para mejorar el SEO.</p>
                                         </div>
                                     </div>
                                     <div className="md:col-span-2 pt-4 border-t border-gray-800">

@@ -116,9 +116,10 @@ const ProductDetail: React.FC = () => {
                             <img
                                 src={product.images[selectedImage]}
                                 alt={
-                                    (product.name.toLowerCase().includes('camiseta') || product.category?.toLowerCase().includes('ropa'))
+                                    product.imageAlts?.[selectedImage] ||
+                                    ((product.name.toLowerCase().includes('camiseta') || product.category?.toLowerCase().includes('ropa'))
                                         ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
-                                        : `${product.name} - Savage Store Paraguay`
+                                        : `${product.name} - Savage Store Paraguay`)
                                 }
                                 className={`w-full h-full object-cover ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
                             />
@@ -150,7 +151,7 @@ const ProductDetail: React.FC = () => {
                                         onClick={() => setSelectedImage(idx)}
                                         className={`relative w-24 aspect-square rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${selectedImage === idx ? 'border-primary' : 'border-transparent hover:border-gray-600'}`}
                                     >
-                                        <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                                        <img src={img} alt={product.imageAlts?.[idx] || `${product.name} Thumbnail`} className="w-full h-full object-cover" />
                                     </button>
                                 ))}
                             </div>
