@@ -6,9 +6,10 @@ import { useNavigate } from 'react-router-dom';
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  showCategoryTag?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCategoryTag }) => {
   const navigate = useNavigate();
 
   const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
@@ -77,6 +78,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
               </div>
             ))}
         </div>
+
+        {/* Category Tag Overlay (Featured only) */}
+        {showCategoryTag && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const section = document.getElementById(product.category);
+              if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+              } else {
+                navigate(`/?category=${product.category}`); // Fallback if regular nav
+              }
+            }}
+            className="absolute bottom-3 left-3 bg-white/90 backdrop-blur text-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors z-20 flex items-center gap-1"
+          >
+            {product.category} <span className="material-symbols-outlined text-[10px]">arrow_outward</span>
+          </button>
+        )}
 
         {product.originalPrice && product.originalPrice > product.price && (
           <div className="absolute top-3 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">

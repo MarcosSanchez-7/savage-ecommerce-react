@@ -65,6 +65,7 @@ const Home: React.FC = () => {
                     return (
                         <section
                             key={category}
+                            id={category}
                             className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
                             style={{ opacity: categoryObj.opacity !== undefined ? categoryObj.opacity : 1 }}
                         >

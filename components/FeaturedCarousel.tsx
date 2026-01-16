@@ -49,9 +49,14 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
     useEffect(() => {
         if (isHovered) return; // Pause on hover
 
+        // 3 sec for mobile (itemsPerPage < 4 typically implies mobile/tablet but checking width is safer/consistent with resize logic)
+        // actually itemsPerPage is already responsive.
+        // itemsPerPage: 1 (mobile), 2 (tablet), 4 (desktop)
+        const duration = itemsPerPage === 1 ? 3000 : 5000;
+
         const interval = setInterval(() => {
             nextSlide();
-        }, 5000);
+        }, duration);
 
         return () => clearInterval(interval);
     }, [currentIndex, itemsPerPage, products.length, isHovered]);
@@ -71,7 +76,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
 
     return (
         <div
-            className="relative group"
+            className="relative group/carousel"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -80,14 +85,14 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
                 <>
                     <button
                         onClick={prevSlide}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
                         disabled={products.length <= itemsPerPage}
                     >
                         <ChevronLeft size={24} />
                     </button>
                     <button
                         onClick={nextSlide}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 disabled:opacity-0"
+                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
                         disabled={products.length <= itemsPerPage}
                     >
                         <ChevronRight size={24} />
@@ -98,8 +103,8 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
             {/* Grid */}
             <div
                 className={`grid gap-3 sm:gap-6 ${itemsPerPage === 1 ? 'grid-cols-1' :
-                        itemsPerPage === 2 ? 'grid-cols-2' :
-                            'lg:grid-cols-4'
+                    itemsPerPage === 2 ? 'grid-cols-2' :
+                        'lg:grid-cols-4'
                     }`}
             >
                 {visibleProducts.map(product => (
@@ -107,6 +112,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
                         <ProductCard
                             product={product}
                             onAddToCart={() => onAddToCart(product)}
+                            showCategoryTag={true}
                         />
                     </div>
                 ))}
@@ -119,8 +125,8 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
                         key={idx}
                         onClick={() => setCurrentIndex(idx * itemsPerPage)}
                         className={`transition-all duration-300 rounded-full ${Math.floor(currentIndex / itemsPerPage) === idx
-                                ? 'w-8 h-1 bg-primary'
-                                : 'w-2 h-1 bg-gray-800 hover:bg-gray-600'
+                            ? 'w-8 h-1 bg-primary'
+                            : 'w-2 h-1 bg-gray-800 hover:bg-gray-600'
                             }`}
                         aria-label={`Go to page ${idx + 1}`}
                     />
