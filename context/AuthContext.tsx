@@ -2,11 +2,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { UserProfile } from '../types';
+import { ADMIN_EMAIL } from '../constants';
 
 interface AuthContextType {
     session: Session | null;
     user: User | null;
     profile: UserProfile | null;
+    isAdmin: boolean;
     loading: boolean;
     signInWithEmail: (email: string, password: string) => Promise<{ error: any }>;
     signUpWithEmail: (email: string, password: string, data?: any) => Promise<{ error: any, data: any }>;
@@ -20,9 +22,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const fetchProfile = async (userId: string) => {
+    const fetchProfile = async (userId: string, currentUserEmail?: string) => {
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -32,13 +35,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (data) {
                 setProfile(data);
+
+                // --- HARDCODED SECURITY CHECK ---
+                // 1. Email must match ADMIN_EMAIL
+                // 2. Role in profile must be 'ceo'
+                const isEmailMatch = currentUserEmail === ADMIN_EMAIL;
+                const isRoleMatch = data.role === 'ceo';
+
+                setIsAdmin(isEmailMatch && isRoleMatch);
             } else {
                 setProfile(null);
+                setIsAdmin(false);
             }
         } catch (error) {
             console.error("AuthContext: Error fetching profile. Make sure you ran the migration!", error);
-            // Don't throw, just set profile null so app continues
             setProfile(null);
+            setIsAdmin(false);
         }
     };
 
@@ -48,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
-                await fetchProfile(session.user.id);
+                await fetchProfile(session.user.id, session.user.email);
             }
             setLoading(false);
         }).catch(err => {
@@ -63,9 +75,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             try {
                 if (session?.user) {
-                    await fetchProfile(session.user.id);
+                    await fetchProfile(session.user.id, session.user.email);
                 } else {
                     setProfile(null);
+                    setIsAdmin(false);
                 }
             } catch (e) {
                 console.error("AuthContext: Profile sync error", e);
@@ -83,6 +96,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const signUpWithEmail = async (email: string, password: string, userData?: any) => {
+        // SECURITY: Block registration if email is the admin email
+        if (email === ADMIN_EMAIL) {
+            return { data: null, error: { message: "Critical Security: Registration blocked for this email." } };
+        }
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -96,11 +114,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 last_name: userData.last_name,
                 city: userData.city,
                 phone: userData.phone
+                // role defaults to null (customer)
             });
             if (profileError) {
                 console.error("Error creating profile:", profileError);
             } else {
-                await fetchProfile(data.user.id);
+                await fetchProfile(data.user.id, email);
             }
         }
 
@@ -110,16 +129,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const signOut = async () => {
         await supabase.auth.signOut();
         setProfile(null);
+        setIsAdmin(false);
     };
 
     const refreshProfile = async () => {
         if (user) {
-            await fetchProfile(user.id);
+            await fetchProfile(user.id, user.email);
         }
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, profile, loading, signInWithEmail, signUpWithEmail, signOut, refreshProfile }}>
+        <AuthContext.Provider value={{ session, user, profile, isAdmin, loading, signInWithEmail, signUpWithEmail, signOut, refreshProfile }}>
             {!loading && children}
         </AuthContext.Provider>
     );

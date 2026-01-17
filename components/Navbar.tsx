@@ -11,7 +11,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   const { toggleCart, products, categories, favorites } = useShop();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const [animateCart, setAnimateCart] = useState(false);
 
   // Search State
@@ -243,7 +243,6 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
               <div className="relative group/user hidden md:block">
                 <button className="flex text-white hover:text-primary transition-colors p-2" onClick={() => {
                   // Check if Admin
-                  const isAdmin = user.email === 'mamasama811@gmail.com';
                   navigate(isAdmin ? '/admin' : '/');
                 }}>
                   <User size={22} />
@@ -255,7 +254,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                       <p className="text-[10px] text-gray-400 uppercase tracking-widest">Conectado como</p>
                       <p className="text-xs font-bold text-white truncate">{user.email?.split('@')[0]}</p>
                     </div>
-                    {user.email === 'mamasama811@gmail.com' && (
+                    {isAdmin && (
                       <Link to="/admin" className="block px-4 py-3 text-xs font-bold text-primary hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider border-b border-gray-800">
                         Panel Admin
                       </Link>

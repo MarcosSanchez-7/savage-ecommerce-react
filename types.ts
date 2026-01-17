@@ -187,5 +187,6 @@ export interface UserProfile {
   city?: string;
   phone?: string;
   email?: string;
+  role?: string;
   created_at?: string;
 }

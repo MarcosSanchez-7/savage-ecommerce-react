@@ -1,6 +1,8 @@
 
 import { Product, Testimonial, BlogPost } from './types';
 
+export const ADMIN_EMAIL = 'savageeepy@gmail.com';
+
 export const PRODUCTS: Product[] = [
   {
     id: '1',

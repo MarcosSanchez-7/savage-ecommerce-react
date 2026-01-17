@@ -4,7 +4,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute: React.FC = () => {
-    const { session, loading } = useAuth();
+    const { session, loading, isAdmin } = useAuth();
 
     if (loading) {
         return (
@@ -18,8 +18,8 @@ const ProtectedRoute: React.FC = () => {
         return <Navigate to="/login" replace />;
     }
 
-    // Security Check: Only allow specific email
-    if (session.user.email !== 'mamasama811@gmail.com') {
+    // Security Check: Only allow if isAdmin is true (Email + Role check)
+    if (!isAdmin) {
         return <Navigate to="/" replace />;
     }
 
