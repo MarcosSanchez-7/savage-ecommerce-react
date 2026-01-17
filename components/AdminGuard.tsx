@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute: React.FC = () => {
+const AdminGuard: React.FC = () => {
     const { session, loading, isAdmin } = useAuth();
 
     if (loading) {
@@ -14,11 +13,12 @@ const ProtectedRoute: React.FC = () => {
         );
     }
 
-    if (!session) {
-        return <Navigate to="/login" replace />;
+    // Must be logged in AND be Admin (CEO)
+    if (!session || !isAdmin) {
+        return <Navigate to="/" replace />;
     }
 
     return <Outlet />;
 };
 
-export default ProtectedRoute;
+export default AdminGuard;

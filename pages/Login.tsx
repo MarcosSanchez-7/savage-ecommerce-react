@@ -40,6 +40,11 @@ const Login: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Anti-Phantom Session: Clear storage before specific login attempt
+        // This ensures Supabase writes a fresh session
+        window.localStorage.clear();
+
         setError(null);
         setSuccessMessage(null);
         setLoading(true);

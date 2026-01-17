@@ -19,6 +19,7 @@ import AdminDashboard from '../../pages/Admin';
 
 import Login from '../../pages/Login';
 import ProtectedRoute from '../ProtectedRoute';
+import AdminGuard from '../AdminGuard'; // New explicit guard
 
 import ProfilePage from '../../pages/ProfilePage';
 import OrdersPage from '../../pages/OrdersPage';
@@ -40,13 +41,17 @@ const WebRoutes: React.FC = () => {
             <Route path="/care-guide" element={<CareGuide />} />
             <Route path="/nosotros" element={<AboutUs />} />
             <Route path="/favoritos" element={<FavoritesPage />} />
+            <Route path="/ayuda" element={<Contact />} />
             <Route path="/login" element={<Login />} />
 
-            {/* User Routes (Protected but not Admin) */}
-            <Route path="/perfil" element={<ProfilePage />} />
-            <Route path="/pedidos" element={<OrdersPage />} />
-
+            {/* Standard User Protected Routes (Any logged in user) */}
             <Route element={<ProtectedRoute />}>
+                <Route path="/perfil" element={<ProfilePage />} />
+                <Route path="/pedidos" element={<OrdersPage />} />
+            </Route>
+
+            {/* Admin Protected Routes (Only CEO) */}
+            <Route element={<AdminGuard />}>
                 <Route path="/admin" element={<AdminDashboard />} />
             </Route>
         </Routes>

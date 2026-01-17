@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import { UserProfile } from '../types';
-import { ADMIN_EMAIL } from '../constants';
 
 interface AuthContextType {
     session: Session | null;
@@ -35,20 +34,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             if (data) {
                 setProfile(data);
-
-                // --- HARDCODED SECURITY CHECK ---
-                // 1. Email must match ADMIN_EMAIL
-                // 2. Role in profile must be 'ceo'
-                const isEmailMatch = currentUserEmail === ADMIN_EMAIL;
-                const isRoleMatch = data.role === 'ceo';
-
-                setIsAdmin(isEmailMatch && isRoleMatch);
+                // CLEAN SECURITY CHECK: Role must be 'ceo'
+                setIsAdmin(data.role === 'ceo');
             } else {
                 setProfile(null);
                 setIsAdmin(false);
             }
         } catch (error) {
-            console.error("AuthContext: Error fetching profile. Make sure you ran the migration!", error);
+            console.error("AuthContext: Error fetching profile.", error);
             setProfile(null);
             setIsAdmin(false);
         }
@@ -75,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             try {
                 if (session?.user) {
+                    // Only fetch if profile isn't already synced or user changed
                     await fetchProfile(session.user.id, session.user.email);
                 } else {
                     setProfile(null);
@@ -96,28 +90,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const signUpWithEmail = async (email: string, password: string, userData?: any) => {
-
-
+        // Pass user data as metadata so the Trigger can create the profile
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
+            options: {
+                data: {
+                    first_name: userData?.first_name,
+                    last_name: userData?.last_name,
+                    city: userData?.city,
+                    phone: userData?.phone
+                }
+            }
         });
 
-        if (!error && data.user && userData) {
-            // Create profile
-            const { error: profileError } = await supabase.from('profiles').insert({
-                id: data.user.id,
-                first_name: userData.first_name,
-                last_name: userData.last_name,
-                city: userData.city,
-                phone: userData.phone
-                // role defaults to null (customer)
-            });
-            if (profileError) {
-                console.error("Error creating profile:", profileError);
-            } else {
-                await fetchProfile(data.user.id, email);
-            }
+        // If trigger works, profile exists immediately, or we fetch it shortly after
+        if (!error && data.user) {
+            // Optional: Fetch profile immediately just in case
+            await fetchProfile(data.user.id, email);
         }
 
         return { data, error };
