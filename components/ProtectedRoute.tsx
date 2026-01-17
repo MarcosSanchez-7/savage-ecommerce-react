@@ -18,6 +18,11 @@ const ProtectedRoute: React.FC = () => {
         return <Navigate to="/login" replace />;
     }
 
+    // Security Check: Only allow specific email
+    if (session.user.email !== 'mamasama811@gmail.com') {
+        return <Navigate to="/" replace />;
+    }
+
     return <Outlet />;
 };
 

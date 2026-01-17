@@ -130,7 +130,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
                         {/* Subcategories Flyout */}
                         {cat.subcategories && cat.subcategories.length > 0 && (
-                          <div className="absolute left-full top-0 ml-2 hidden group-hover/sub:block min-w-[180px] z-[60]">
+                          <div className="absolute left-full top-0 pl-2 hidden group-hover/sub:block min-w-[180px] z-[60]">
                             <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-2 shadow-2xl flex flex-col gap-1 backdrop-blur-md animate-in fade-in slide-in-from-left-2">
                               {cat.subcategories.map(sub => (
                                 <Link
@@ -241,7 +241,11 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             {/* Account Icon */}
             {user ? (
               <div className="relative group/user hidden md:block">
-                <button className="flex text-white hover:text-primary transition-colors p-2" onClick={() => navigate('/admin')}>
+                <button className="flex text-white hover:text-primary transition-colors p-2" onClick={() => {
+                  // Check if Admin
+                  const isAdmin = user.email === 'mamasama811@gmail.com';
+                  navigate(isAdmin ? '/admin' : '/');
+                }}>
                   <User size={22} />
                 </button>
                 {/* Dropdown */}
@@ -251,9 +255,11 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                       <p className="text-[10px] text-gray-400 uppercase tracking-widest">Conectado como</p>
                       <p className="text-xs font-bold text-white truncate">{user.email?.split('@')[0]}</p>
                     </div>
-                    <Link to="/admin" className="block px-4 py-3 text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider">
-                      Mi Cuenta
-                    </Link>
+                    {user.email === 'mamasama811@gmail.com' && (
+                      <Link to="/admin" className="block px-4 py-3 text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider">
+                        Panel Admin
+                      </Link>
+                    )}
                     <button onClick={() => signOut()} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors uppercase tracking-wider">
                       Cerrar Sesión
                     </button>

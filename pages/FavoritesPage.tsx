@@ -14,10 +14,16 @@ const FavoritesPage: React.FC = () => {
             <SEO title="Mis Favoritos - Savage Store" description="Tus productos guardados." />
 
             <div className="max-w-7xl mx-auto">
-                <header className="mb-12 border-b border-white/10 pb-8 flex items-end justify-between">
-                    <div>
-                        <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-2">Favoritos</h1>
-                        <p className="text-gray-500">{favorites.length} productos guardados</p>
+                <header className="mb-12 border-b border-white/10 pb-8 flex flex-col gap-4">
+                    <a href="/" className="text-gray-500 hover:text-white flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition-colors w-fit">
+                        <span className="material-symbols-outlined text-lg">arrow_back</span>
+                        Volver al inicio
+                    </a>
+                    <div className="flex items-end justify-between">
+                        <div>
+                            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-2">Favoritos</h1>
+                            <p className="text-gray-500">{favorites.length} productos guardados</p>
+                        </div>
                     </div>
                 </header>
 
