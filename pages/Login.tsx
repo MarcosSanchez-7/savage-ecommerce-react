@@ -67,7 +67,7 @@ const Login: React.FC = () => {
                     throw new Error("La contraseña debe tener al menos 6 caracteres.");
                 }
 
-                const { error } = await signUpWithEmail(email, password, {
+                const { data, error } = await signUpWithEmail(email, password, {
                     first_name: firstName,
                     last_name: lastName,
                     city: city,
@@ -76,10 +76,17 @@ const Login: React.FC = () => {
 
                 if (error) throw error;
 
-                setSuccessMessage("¡Cuenta creada con éxito! Bienvenido a Savage.");
-                setTimeout(() => {
-                    navigate('/');
-                }, 1500);
+                // Check if session was created (Auto Login) or if Email Confirmation is needed
+                if (data.session) {
+                    setSuccessMessage("¡Cuenta creada con éxito! Bienvenido a Savage.");
+                    setTimeout(() => {
+                        navigate('/');
+                    }, 1500);
+                } else {
+                    // Email confirmation required logic
+                    setSuccessMessage("¡Registro exitoso! Por favor, verifica tu bandeja de entrada para activar tu cuenta.");
+                    // Do NOT redirect immediately so they see the message
+                }
             }
         } catch (err: any) {
             console.error(err);
@@ -92,6 +99,13 @@ const Login: React.FC = () => {
                     setSuccessMessage(null);
                     setError(null);
                 }, 1500);
+            } else if (err.message && (err.message.includes('Email not confirmed') || err.message.includes('Invalid login credentials'))) {
+                // Handle specific auth errors friendly
+                if (err.message.includes('Email not confirmed')) {
+                    setError('Tu cuenta aún no ha sido verificada. Revisa tu correo o solicita un nuevo enlace.');
+                } else {
+                    setError('Credenciales incorrectas. Intenta nuevamente.');
+                }
             } else {
                 setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
             }
