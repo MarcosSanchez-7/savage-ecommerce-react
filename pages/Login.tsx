@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Login: React.FC = () => {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+
     const { signInWithEmail, signUpWithEmail } = useAuth();
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
@@ -28,7 +31,12 @@ const Login: React.FC = () => {
                 navigate('/');
             }
         } catch (err: any) {
-            setError(err.message || 'Ocurrió un error');
+            console.error(err);
+            if (err.message && err.message.includes('Password should be at least')) {
+                setError('La contraseña debe tener al menos 6 caracteres.');
+            } else {
+                setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
+            }
         } finally {
             setLoading(false);
         }
@@ -66,15 +74,31 @@ const Login: React.FC = () => {
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Contraseña</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                            placeholder="••••••••"
-                            required
-                            minLength={6}
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg p-3 pr-10 text-white focus:border-primary focus:outline-none transition-colors"
+                                placeholder="••••••••"
+                                required
+                                minLength={6}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                        {/* Password strength hint for register mode */}
+                        {!isLogin && (
+                            <p className="text-[10px] text-gray-400 mt-2 flex gap-1">
+                                <span className="material-symbols-outlined text-sm">info</span>
+                                Crea una contraseña más difícil con números y símbolos.
+                            </p>
+                        )}
                     </div>
 
                     <button

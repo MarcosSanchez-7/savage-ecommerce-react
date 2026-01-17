@@ -4,7 +4,7 @@ import ProductCard from '../components/ProductCard';
 import SEO from '../components/SEO';
 
 const FavoritesPage: React.FC = () => {
-    const { favorites, products } = useShop();
+    const { favorites, products, addToCart } = useShop();
 
     // Filter products that are in favorites
     const favoriteProducts = products.filter(p => favorites.includes(p.id));
@@ -24,7 +24,11 @@ const FavoritesPage: React.FC = () => {
                 {favoriteProducts.length > 0 ? (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
                         {favoriteProducts.map(product => (
-                            <ProductCard key={product.id} product={product} />
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                onAddToCart={(p) => addToCart(p)}
+                            />
                         ))}
                     </div>
                 ) : (
