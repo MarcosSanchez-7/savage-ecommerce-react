@@ -114,9 +114,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const signOut = async () => {
-        await supabase.auth.signOut();
+        // Instant Logout UI
         setProfile(null);
         setIsAdmin(false);
+        setUser(null);
+        setSession(null);
+
+        // Clear persistence immediatey
+        window.localStorage.clear();
+
+        // Fire and forget to Supabase to kill server session
+        supabase.auth.signOut();
     };
 
     const refreshProfile = async () => {

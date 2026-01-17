@@ -1478,6 +1478,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateLifestyleConfig,
             footerColumns,
             updateFooterColumns,
+            heroCarouselConfig,
+            updateHeroCarouselConfig,
             saveAllData,
             loading,
             favorites,
