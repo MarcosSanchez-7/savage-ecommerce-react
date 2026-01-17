@@ -179,3 +179,13 @@ export interface Drop {
 export interface DropsConfig {
   isEnabled: boolean;
 }
+
+export interface UserProfile {
+  id: string;
+  first_name?: string;
+  last_name?: string;
+  city?: string;
+  phone?: string;
+  email?: string;
+  created_at?: string;
+}

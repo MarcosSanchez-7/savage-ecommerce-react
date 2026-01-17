@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Home from '../../pages/Home';
@@ -21,6 +20,9 @@ import AdminDashboard from '../../pages/Admin';
 import Login from '../../pages/Login';
 import ProtectedRoute from '../ProtectedRoute';
 
+import ProfilePage from '../../pages/ProfilePage';
+import OrdersPage from '../../pages/OrdersPage';
+
 const WebRoutes: React.FC = () => {
     return (
         <Routes>
@@ -39,6 +41,11 @@ const WebRoutes: React.FC = () => {
             <Route path="/nosotros" element={<AboutUs />} />
             <Route path="/favoritos" element={<FavoritesPage />} />
             <Route path="/login" element={<Login />} />
+
+            {/* User Routes (Protected but not Admin) */}
+            <Route path="/perfil" element={<ProfilePage />} />
+            <Route path="/pedidos" element={<OrdersPage />} />
+
             <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
             </Route>

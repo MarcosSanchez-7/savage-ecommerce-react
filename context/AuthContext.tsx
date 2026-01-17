@@ -1,14 +1,17 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { Session, User } from '@supabase/supabase-js';
+import { UserProfile } from '../types';
 
 interface AuthContextType {
     session: Session | null;
     user: User | null;
+    profile: UserProfile | null;
     loading: boolean;
     signInWithEmail: (email: string, password: string) => Promise<{ error: any }>;
-    signUpWithEmail: (email: string, password: string) => Promise<{ error: any, data: any }>;
+    signUpWithEmail: (email: string, password: string, data?: any) => Promise<{ error: any, data: any }>;
     signOut: () => Promise<void>;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,20 +19,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+
+    const fetchProfile = async (userId: string) => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (data) {
+            setProfile(data);
+        } else {
+            setProfile(null);
+        }
+    };
 
     useEffect(() => {
         // Check active session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
+            if (session?.user) {
+                fetchProfile(session.user.id);
+            }
             setLoading(false);
         });
 
         // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setSession(session);
             setUser(session?.user ?? null);
+            if (session?.user) {
+                await fetchProfile(session.user.id);
+            } else {
+                setProfile(null);
+            }
             setLoading(false);
         });
 
@@ -41,25 +67,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { error };
     };
 
-    const signUpWithEmail = async (email: string, password: string) => {
+    const signUpWithEmail = async (email: string, password: string, userData?: any) => {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: {
-                data: {
-                    display_name: email.split('@')[0], // Default display name
-                }
-            }
         });
+
+        if (!error && data.user && userData) {
+            // Create profile
+            const { error: profileError } = await supabase.from('profiles').insert({
+                id: data.user.id,
+                first_name: userData.first_name,
+                last_name: userData.last_name,
+                city: userData.city,
+                phone: userData.phone
+            });
+            if (profileError) {
+                console.error("Error creating profile:", profileError);
+            } else {
+                await fetchProfile(data.user.id);
+            }
+        }
+
         return { data, error };
     };
 
     const signOut = async () => {
         await supabase.auth.signOut();
+        setProfile(null);
+    };
+
+    const refreshProfile = async () => {
+        if (user) {
+            await fetchProfile(user.id);
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, signInWithEmail, signUpWithEmail, signOut }}>
+        <AuthContext.Provider value={{ session, user, profile, loading, signInWithEmail, signUpWithEmail, signOut, refreshProfile }}>
             {!loading && children}
         </AuthContext.Provider>
     );
