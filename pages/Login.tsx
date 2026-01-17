@@ -24,6 +24,11 @@ const Login: React.FC = () => {
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Safety reset
+    React.useEffect(() => {
+        setLoading(false);
+    }, []);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
