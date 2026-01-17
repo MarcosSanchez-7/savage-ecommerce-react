@@ -20,8 +20,15 @@ const Login: React.FC = () => {
 
     const [showPassword, setShowPassword] = useState(false);
 
-    const { signInWithEmail, signUpWithEmail } = useAuth();
+    const { signInWithEmail, signUpWithEmail, session } = useAuth(); // Get session
     const navigate = useNavigate();
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (session) {
+            navigate('/');
+        }
+    }, [session, navigate]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
