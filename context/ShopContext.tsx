@@ -235,27 +235,34 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!user) return;
 
         const syncFavorites = async () => {
-            // Fetch from DB
-            const { data, error } = await supabase
-                .from('favorites')
-                .select('product_id')
-                .eq('user_id', user.id);
+            try {
+                // Fetch from DB
+                const { data, error } = await supabase
+                    .from('favorites')
+                    .select('product_id')
+                    .eq('user_id', user.id);
 
-            if (data) {
-                const dbIds = data.map(f => f.product_id);
-                // Merge Local + DB (Union)
-                const merged = Array.from(new Set([...favorites, ...dbIds]));
+                if (error) throw error;
 
-                // Update Local State
-                setFavorites(merged);
+                if (data) {
+                    const dbIds = data.map(f => f.product_id);
+                    // Merge Local + DB (Union)
+                    const merged = Array.from(new Set([...favorites, ...dbIds]));
 
-                // Push missing local items to DB
-                const newToDb = favorites.filter(id => !dbIds.includes(id));
-                if (newToDb.length > 0) {
-                    await supabase.from('favorites').insert(
-                        newToDb.map(pid => ({ user_id: user.id, product_id: pid }))
-                    );
+                    // Update Local State
+                    setFavorites(merged);
+
+                    // Push missing local items to DB
+                    const newToDb = favorites.filter(id => !dbIds.includes(id));
+                    if (newToDb.length > 0) {
+                        await supabase.from('favorites').insert(
+                            newToDb.map(pid => ({ user_id: user.id, product_id: pid }))
+                        );
+                    }
                 }
+            } catch (err) {
+                console.warn("Error syncing favorites (non-critical):", err);
+                // Fallback: Just keep using local favorites without syncing/crashing
             }
         };
 

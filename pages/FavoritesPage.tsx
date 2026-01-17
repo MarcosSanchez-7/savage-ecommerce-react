@@ -2,6 +2,7 @@ import React from 'react';
 import { useShop } from '../context/ShopContext';
 import ProductCard from '../components/ProductCard';
 import SEO from '../components/SEO';
+import { Link } from 'react-router-dom';
 
 const FavoritesPage: React.FC = () => {
     const { favorites, products, addToCart } = useShop();
@@ -15,10 +16,10 @@ const FavoritesPage: React.FC = () => {
 
             <div className="max-w-7xl mx-auto">
                 <header className="mb-12 border-b border-white/10 pb-8 flex flex-col gap-4">
-                    <a href="/" className="text-gray-500 hover:text-white flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition-colors w-fit">
+                    <Link to="/" className="text-gray-500 hover:text-white flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition-colors w-fit">
                         <span className="material-symbols-outlined text-lg">arrow_back</span>
                         Volver al inicio
-                    </a>
+                    </Link>
                     <div className="flex items-end justify-between">
                         <div>
                             <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-2">Favoritos</h1>
@@ -40,7 +41,7 @@ const FavoritesPage: React.FC = () => {
                 ) : (
                     <div className="text-center py-20 opacity-50">
                         <p className="text-xl font-medium mb-4">No tienes favoritos aún.</p>
-                        <a href="/" className="text-primary hover:underline">Explorar la tienda</a>
+                        <Link to="/" className="text-primary hover:underline">Explorar la tienda</Link>
                     </div>
                 )}
             </div>
