@@ -228,60 +228,9 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
               <Search size={22} />
             </button>
 
-            {/* Favorites Icon */}
-            <Link to="/favoritos" className="hidden md:flex relative text-white hover:text-primary transition-colors p-2 group">
-              <Heart size={22} className={favorites.length > 0 ? "fill-white group-hover:fill-primary" : ""} />
-              {favorites.length > 0 && (
-                <span className="absolute top-1 right-0 bg-primary text-black text-[9px] font-bold px-1 rounded-full min-w-[14px] h-[14px] flex items-center justify-center border border-black">
-                  {favorites.length}
-                </span>
-              )}
-            </Link>
+            {/* Favorites & User Icons REMOVED for Catalog Mode */}
 
-            {/* Account Icon */}
-            {user ? (
-              <div className="relative group/user hidden md:block">
-                <button className="flex text-white hover:text-primary transition-colors p-2" onClick={() => {
-                  // Check if Admin
-                  navigate(isAdmin ? '/admin' : '/');
-                }}>
-                  <User size={22} />
-                </button>
-                {/* Dropdown */}
-                <div className="absolute top-full right-0 pt-2 hidden group-hover/user:block w-48">
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl shadow-2xl overflow-hidden backdrop-blur-md animate-in fade-in slide-in-from-top-1">
-                    <div className="p-3 border-b border-gray-800 bg-white/5">
-                      <p className="text-[10px] text-gray-400 uppercase tracking-widest">Conectado como</p>
-                      <p className="text-xs font-bold text-white truncate">{user.email?.split('@')[0]}</p>
-                    </div>
-                    {isAdmin && (
-                      <Link to="/admin" className="block px-4 py-3 text-xs font-bold text-primary hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider border-b border-gray-800">
-                        Panel Admin
-                      </Link>
-                    )}
-                    <Link to="/pedidos" className="block px-4 py-3 text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider">
-                      Mis Pedidos
-                    </Link>
-                    <Link to="/favoritos" className="block px-4 py-3 text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider">
-                      Favoritos
-                    </Link>
-                    <Link to="/perfil" className="block px-4 py-3 text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider border-b border-gray-800">
-                      Mis Datos
-                    </Link>
-                    <button onClick={async () => {
-                      await signOut();
-                      navigate('/login');
-                    }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors uppercase tracking-wider">
-                      Cerrar Sesión
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <Link to="/login" className="hidden md:flex text-white hover:text-primary transition-colors p-2">
-                <User size={22} />
-              </Link>
-            )}
+
 
             {/* Cart Icon */}
             <button
@@ -359,12 +308,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           </Link>
 
           <div className="mt-8 border-t border-gray-900 pt-8 flex flex-col gap-4">
-            <button onClick={() => navigate('/admin')} className="flex items-center gap-4 text-gray-400 hover:text-white">
-              <User size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Mi Cuenta</span>
-            </button>
-            <Link to="/favoritos" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 text-gray-400 hover:text-white">
-              <Heart size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Favoritos</span>
-            </Link>
+            {/* Catalog Mode: No user menu */}
           </div>
         </div>
       </div>
