@@ -26,22 +26,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fetchProfile = async (userId: string, currentUserEmail?: string) => {
         try {
+            console.log("AuthContext: Fetching profile for", userId);
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
                 .single();
 
+            if (error) {
+                console.error("AuthContext: Error fetching profile from DB:", error);
+            }
+
             if (data) {
+                console.log("AuthContext: Profile found:", data.role);
                 setProfile(data);
                 // CLEAN SECURITY CHECK: Role must be 'ceo'
-                setIsAdmin(data.role === 'ceo');
+                const isCeo = data.role === 'ceo';
+                setIsAdmin(isCeo);
+                console.log("AuthContext: isAdmin set to:", isCeo);
             } else {
+                console.warn("AuthContext: No profile found for user.");
                 setProfile(null);
                 setIsAdmin(false);
             }
         } catch (error) {
-            console.error("AuthContext: Error fetching profile.", error);
+            console.error("AuthContext: Exception fetching profile.", error);
             setProfile(null);
             setIsAdmin(false);
         }

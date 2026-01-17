@@ -301,27 +301,20 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [loading, setLoading] = useState(true);
 
     // --- SUPABASE MIGRATION: FETCH DATA ---
+    // --- SUPABASE MIGRATION: FETCH DATA ---
     const fetchData = async () => {
         setLoading(true);
-        try {
-            // Fetch Products
-            const { data: productsData, error: productsError } = await supabase
-                .from('products')
-                .select('*');
 
-            // Fetch Inventory (New)
-            const { data: inventoryData, error: inventoryError } = await supabase
-                .from('inventory')
-                .select('*');
+        // 1. PRODUCTS & INVENTORY (Critical)
+        try {
+            const { data: productsData, error: productsError } = await supabase.from('products').select('*');
+            const { data: inventoryData, error: inventoryError } = await supabase.from('inventory').select('*');
 
             if (inventoryError) console.error('Error fetching inventory:', inventoryError);
-
             if (productsError) {
                 console.error('Error fetching products from Supabase:', productsError);
                 if (productsError.code === '42501' || productsError.message.includes('row-level security')) {
-                    alert('ERROR: Bloqueo de seguridad de Base de Datos. Desactiva RLS en Supabase o agrega políticas de acceso "Select" para visualizarlos.');
-                } else {
-                    alert(`Error cargando productos: ${productsError.message}`);
+                    console.warn('RLS Error on products table. Check Supabase policies.');
                 }
             } else if (productsData) {
                 setProducts(productsData.map(p => ({
@@ -338,115 +331,83 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
                 })));
             }
+        } catch (e) {
+            console.error("Critical Error loading products:", e);
+        }
 
-            // Fetch Categories
-            const { data: categoriesData, error: catError } = await supabase
-                .from('categories')
-                .select('*');
+        // 2. CATEGORIES (Important)
+        let fetchedCategories: any[] = [];
+        try {
+            const { data, error } = await supabase.from('categories').select('*');
+            if (error) console.error("Error fetching categories:", error);
+            if (data) fetchedCategories = data;
+        } catch (e) {
+            console.error("Critical Error loading categories:", e);
+        }
 
-            if (!catError && categoriesData && categoriesData.length > 0) {
-                // Don't set yet, wait for config to sort
-                // setCategories(categoriesData);
-            }
-
-            // Fetch Delivery Zones
-            const { data: zonesData, error: zonesError } = await supabase
-                .from('delivery_zones')
-                .select('*');
-
-            if (zonesError) {
-                console.error('Error fetching delivery zones:', zonesError);
-            } else if (zonesData) {
-                setDeliveryZones(zonesData.map(z => ({
-                    ...z,
-                    price: Number(z.price),
-                    points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points
-                })));
-            }
-
-            // Fetch Orders
-            const { data: ordersData, error: ordersError } = await supabase
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (ordersError) {
-                console.error('Error fetching orders:', ordersError);
-            } else if (ordersData) {
-                setOrders(ordersData.map(o => ({
-                    ...o,
-                    total_amount: Number(o.total_amount),
-                    delivery_cost: Number(o.delivery_cost),
-                })));
-            }
-
-            // Fetch Blog Posts
-            const { data: blogData, error: blogError } = await supabase
-                .from('blog_posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (blogError) {
-                console.error('Error fetching blog posts:', blogError);
-            } else if (blogData) {
-                setBlogPosts(blogData);
-            }
-
-            // Fetch Drops
-            const { data: dropsData, error: dropsError } = await supabase
-                .from('drops')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (dropsError) {
-                console.error('Error fetching drops:', dropsError);
-            } else if (dropsData) {
-                setDrops(dropsData);
-            }
-
-            // Fetch Any Store Config
-            const { data: allConfigs, error: anyConfigError } = await supabase
-                .from('store_config')
-                .select('*');
-
+        // 3. STORE CONFIG (Banners, Hero, Links)
+        let fetchedSortOrder: string[] = [];
+        try {
+            const { data: allConfigs, error: anyConfigError } = await supabase.from('store_config').select('*');
             if (anyConfigError) {
-                console.error('Error fetching store configs:', anyConfigError);
+                console.error("Error fetching store config:", anyConfigError);
             } else if (allConfigs) {
                 allConfigs.forEach(conf => {
-                    if (conf.key === 'social_config') setSocialConfig(conf.value);
-                    if (conf.key === 'navbar_links') setNavbarLinks(conf.value);
-                    if (conf.key === 'banner_bento') setBannerBento(conf.value);
-                    if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
-                    if (conf.key === 'hero_slides') setHeroSlides(conf.value);
-                    if (conf.key === 'footer_columns') setFooterColumns(conf.value);
-                    if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
-                    if (conf.key === 'drops_config') setDropsConfig(conf.value);
-                    if (conf.key === 'category_sort_order') {
-                        const order = conf.value as string[];
-                        setCategorySortOrder(order);
-                        // Sort categories if we already have them
-                        if (categoriesData) {
-                            const sorted = [...categoriesData].sort((a, b) => {
-                                const idxA = order.indexOf(a.id);
-                                const idxB = order.indexOf(b.id);
-                                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                                if (idxA !== -1) return -1;
-                                if (idxB !== -1) return 1;
-                                return 0;
-                            });
-                            setCategories(sorted);
+                    try {
+                        if (conf.key === 'social_config') setSocialConfig(conf.value);
+                        if (conf.key === 'navbar_links') setNavbarLinks(conf.value);
+                        if (conf.key === 'banner_bento') setBannerBento(conf.value);
+                        if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
+                        if (conf.key === 'hero_slides') setHeroSlides(conf.value);
+                        if (conf.key === 'footer_columns') setFooterColumns(conf.value);
+                        if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
+                        if (conf.key === 'drops_config') setDropsConfig(conf.value);
+                        if (conf.key === 'category_sort_order') {
+                            fetchedSortOrder = conf.value as string[];
+                            setCategorySortOrder(fetchedSortOrder);
                         }
+                    } catch (parseError) {
+                        console.warn(`Error parsing config for ${conf.key}`, parseError);
                     }
                 });
             }
+        } catch (e) {
+            console.error("Critical Error loading store config:", e);
+        }
 
-            // Fallback if no sort order in config, use basic categories
-            if (!allConfigs?.find(c => c.key === 'category_sort_order') && categoriesData) {
-                setCategories(categoriesData);
+        // Logic to set categories AFTER config is loaded
+        if (fetchedCategories.length > 0) {
+            if (fetchedSortOrder.length > 0) {
+                const sorted = [...fetchedCategories].sort((a, b) => {
+                    const idxA = fetchedSortOrder.indexOf(a.id);
+                    const idxB = fetchedSortOrder.indexOf(b.id);
+                    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    if (idxA !== -1) return -1;
+                    if (idxB !== -1) return 1;
+                    return 0;
+                });
+                setCategories(sorted);
+            } else {
+                setCategories(fetchedCategories);
             }
+        }
 
-        } catch (error) {
-            console.error('Exception fetching data:', error);
+        // 4. SECONDARY DATA (Orders, Delivery Zones, Blog)
+        try {
+            const { data: zones } = await supabase.from('delivery_zones').select('*');
+            if (zones) setDeliveryZones(zones.map(z => ({ ...z, price: Number(z.price), points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points })));
+
+            const { data: orders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+            if (orders) setOrders(orders.map(o => ({ ...o, total_amount: Number(o.total_amount), delivery_cost: Number(o.delivery_cost) })));
+
+            const { data: posts } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
+            if (posts) setBlogPosts(posts);
+
+            const { data: drops } = await supabase.from('drops').select('*').order('created_at', { ascending: false });
+            if (drops) setDrops(drops);
+
+        } catch (secondaryError) {
+            console.warn("Non-critical error loading secondary data:", secondaryError);
         } finally {
             setLoading(false);
         }
