@@ -138,9 +138,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    // Safety Timeout to prevent Black Screen
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (loading) {
+                console.warn("AuthContext: Force stopping loading state after timeout.");
+                setLoading(false);
+            }
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [loading]);
+
     return (
         <AuthContext.Provider value={{ session, user, profile, isAdmin, loading, signInWithEmail, signUpWithEmail, signOut, refreshProfile }}>
-            {!loading && children}
+            {loading ? (
+                <div className="min-h-screen flex items-center justify-center bg-black text-white">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+                        <p className="text-xs uppercase tracking-widest text-gray-500 animate-pulse">Cargando Savage...</p>
+                    </div>
+                </div>
+            ) : (
+                children
+            )}
         </AuthContext.Provider>
     );
 };
