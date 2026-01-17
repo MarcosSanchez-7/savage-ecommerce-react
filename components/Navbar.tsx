@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
+import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, X, ArrowLeft, Heart, User, ShoppingBag, Menu, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
@@ -9,7 +10,8 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
-  const { toggleCart, products, categories } = useShop();
+  const { toggleCart, products, categories, favorites } = useShop();
+  const { user, signOut } = useAuth();
   const [animateCart, setAnimateCart] = useState(false);
 
   // Search State
@@ -227,14 +229,42 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
 
             {/* Favorites Icon */}
-            <button className="hidden md:flex text-white hover:text-primary transition-colors p-2" onClick={() => alert('Feature coming soon!')}>
-              <Heart size={22} />
-            </button>
+            <Link to="/favoritos" className="hidden md:flex relative text-white hover:text-primary transition-colors p-2 group">
+              <Heart size={22} className={favorites.length > 0 ? "fill-white group-hover:fill-primary" : ""} />
+              {favorites.length > 0 && (
+                <span className="absolute top-1 right-0 bg-primary text-black text-[9px] font-bold px-1 rounded-full min-w-[14px] h-[14px] flex items-center justify-center border border-black">
+                  {favorites.length}
+                </span>
+              )}
+            </Link>
 
             {/* Account Icon */}
-            <button className="hidden md:flex text-white hover:text-primary transition-colors p-2" onClick={() => navigate('/admin')}>
-              <User size={22} />
-            </button>
+            {user ? (
+              <div className="relative group/user hidden md:block">
+                <button className="flex text-white hover:text-primary transition-colors p-2" onClick={() => navigate('/admin')}>
+                  <User size={22} />
+                </button>
+                {/* Dropdown */}
+                <div className="absolute top-full right-0 pt-2 hidden group-hover/user:block w-48">
+                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl shadow-2xl overflow-hidden backdrop-blur-md animate-in fade-in slide-in-from-top-1">
+                    <div className="p-3 border-b border-gray-800 bg-white/5">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest">Conectado como</p>
+                      <p className="text-xs font-bold text-white truncate">{user.email?.split('@')[0]}</p>
+                    </div>
+                    <Link to="/admin" className="block px-4 py-3 text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider">
+                      Mi Cuenta
+                    </Link>
+                    <button onClick={() => signOut()} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors uppercase tracking-wider">
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Link to="/login" className="hidden md:flex text-white hover:text-primary transition-colors p-2">
+                <User size={22} />
+              </Link>
+            )}
 
             {/* Cart Icon */}
             <button

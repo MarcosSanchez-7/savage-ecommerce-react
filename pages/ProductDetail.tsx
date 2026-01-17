@@ -5,12 +5,12 @@ import { useShop } from '../context/ShopContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
-import { ShoppingBag, ArrowLeft, Star, Share2 } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Star, Share2, Heart } from 'lucide-react';
 
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { products, addToCart, cart, socialConfig } = useShop();
+    const { products, addToCart, cart, socialConfig, favorites, toggleFavorite } = useShop();
 
     // Check if slug looks like a UUID (fallback for old links)
     const isUuid = (str?: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || '');
@@ -244,14 +244,18 @@ const ProductDetail: React.FC = () => {
                                 )}
                             </button>
 
-                            {/* <div className="flex gap-4">
-                                <button className="flex-1 py-3 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
-                                    <Star size={16} /> Guardar
+                            <div className="flex gap-4 mt-4">
+                                <button
+                                    onClick={() => toggleFavorite(product.id)}
+                                    className={`flex-1 py-4 border rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${favorites.includes(product.id) ? 'bg-red-500/10 border-red-500 text-red-500' : 'border-gray-800 hover:bg-white/5 text-white hover:text-white'}`}
+                                >
+                                    <Heart size={16} className={favorites.includes(product.id) ? 'fill-red-500' : ''} />
+                                    {favorites.includes(product.id) ? 'Guardado' : 'Guardar'}
                                 </button>
-                                <button className="flex-1 py-3 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
+                                <button className="flex-1 py-4 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors text-white">
                                     <Share2 size={16} /> Compartir
                                 </button>
-                            </div> */}
+                            </div>
                         </div>
 
                         {/* Recommendations Section */}

@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
+import { useAuth } from './AuthContext';
 
 interface CartItem extends Product {
     quantity: number;
@@ -222,22 +223,71 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
 
     // Favorites Logic
+    // Favorites Logic
+    const { user } = useAuth();
     const [favorites, setFavorites] = useState<string[]>(() => {
         const saved = localStorage.getItem('savage_favorites');
         return saved ? JSON.parse(saved) : [];
     });
 
+    // 1. Sync DB -> Local when User logs in
+    useEffect(() => {
+        if (!user) return;
+
+        const syncFavorites = async () => {
+            // Fetch from DB
+            const { data, error } = await supabase
+                .from('favorites')
+                .select('product_id')
+                .eq('user_id', user.id);
+
+            if (data) {
+                const dbIds = data.map(f => f.product_id);
+                // Merge Local + DB (Union)
+                const merged = Array.from(new Set([...favorites, ...dbIds]));
+
+                // Update Local State
+                setFavorites(merged);
+
+                // Push missing local items to DB
+                const newToDb = favorites.filter(id => !dbIds.includes(id));
+                if (newToDb.length > 0) {
+                    await supabase.from('favorites').insert(
+                        newToDb.map(pid => ({ user_id: user.id, product_id: pid }))
+                    );
+                }
+            }
+        };
+
+        syncFavorites();
+    }, [user]); // Run when user changes (login)
+
+    // 2. Persist to LocalStorage always
     useEffect(() => {
         localStorage.setItem('savage_favorites', JSON.stringify(favorites));
     }, [favorites]);
 
-    const toggleFavorite = (productId: string) => {
+    const toggleFavorite = async (productId: string) => {
+        const isFav = favorites.includes(productId);
+
+        // Optimistic UI Update
         setFavorites(prev => {
             if (prev.includes(productId)) {
                 return prev.filter(id => id !== productId);
             }
             return [...prev, productId];
         });
+
+        // DB Update if user is logged in
+        if (user) {
+            if (isFav) {
+                // Remove
+                await supabase.from('favorites').delete().match({ user_id: user.id, product_id: productId });
+            } else {
+                // Add
+                await supabase.from('favorites').insert({ user_id: user.id, product_id: productId });
+            }
+        }
     };
 
     const [isCartOpen, setIsCartOpen] = useState(false);
