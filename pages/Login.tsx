@@ -69,7 +69,12 @@ const Login: React.FC = () => {
             if (err.message && err.message.includes('Password should be at least')) {
                 setError('La contraseña debe tener al menos 6 caracteres.');
             } else if (err.message && err.message.includes('User already registered')) {
-                setError('Este correo ya está registrado.');
+                setSuccessMessage('Cuenta ya existente. Redirigiendo al Login...');
+                setTimeout(() => {
+                    setIsLogin(true);
+                    setSuccessMessage(null);
+                    setError(null);
+                }, 1500);
             } else {
                 setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
             }
