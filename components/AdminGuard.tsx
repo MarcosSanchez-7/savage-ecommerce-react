@@ -14,7 +14,13 @@ const AdminGuard: React.FC = () => {
     }
 
     // Must be logged in AND be Admin (CEO)
-    if (!session || !isAdmin) {
+    // 1. If no session, redirect to LOGIN (so user can sign in as admin)
+    if (!session) {
+        return <Navigate to="/login" replace />;
+    }
+
+    // 2. If logged in but NOT admin, redirect to HOME (security block)
+    if (!isAdmin) {
         return <Navigate to="/" replace />;
     }
 
