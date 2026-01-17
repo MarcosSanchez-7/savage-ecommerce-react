@@ -288,119 +288,119 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
           </div>
         </div>
+      </nav>
 
-        {/* MOBILE MENU FULLSCREEN */}
-        <div className={`fixed inset-0 bg-black z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col`}>
-          <div className="flex items-center justify-between p-6 border-b border-gray-900">
-            <div className="flex items-center gap-2">
-              <div className="size-8">
-                <img src="/crown.png" alt="" className="w-full h-full object-contain brightness-110" />
-              </div>
-              <span className="text-xl font-black text-white tracking-widest">SAVAGE</span>
+      {/* MOBILE MENU FULLSCREEN */}
+      <div className={`fixed inset-0 bg-black z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col`}>
+        <div className="flex items-center justify-between p-6 border-b border-gray-900">
+          <div className="flex items-center gap-2">
+            <div className="size-8">
+              <img src="/crown.png" alt="" className="w-full h-full object-contain brightness-110" />
             </div>
-            <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 hover:text-white p-2">
-              <X size={28} />
-            </button>
+            <span className="text-xl font-black text-white tracking-widest">SAVAGE</span>
           </div>
-
-          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
-              INICIO
-            </Link>
-
-            {/* Mobile Categories Accordion */}
-            <div>
-              <button
-                onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
-                className="w-full flex items-center justify-between text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors"
-              >
-                CATEGORÍAS
-                {isMobileCategoriesOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-              </button>
-
-              <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-4 pl-4 ${isMobileCategoriesOpen ? 'max-h-[500px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-                {categories.map(cat => (
-                  <Link
-                    key={cat.id}
-                    to={`/category/${cat.id}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-lg font-bold text-gray-400 hover:text-white uppercase tracking-wider"
-                  >
-                    {cat.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <Link to="/nosotros" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
-              NOSOTROS
-            </Link>
-
-            <Link to="/ayuda" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
-              AYUDA
-            </Link>
-
-            <div className="mt-8 border-t border-gray-900 pt-8 flex flex-col gap-4">
-              <button onClick={() => navigate('/admin')} className="flex items-center gap-4 text-gray-400 hover:text-white">
-                <User size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Mi Cuenta</span>
-              </button>
-              <button className="flex items-center gap-4 text-gray-400 hover:text-white" onClick={() => alert('Favorites coming soon!')}>
-                <Heart size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Favoritos</span>
-              </button>
-            </div>
-          </div>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 hover:text-white p-2">
+            <X size={28} />
+          </button>
         </div>
 
-        {/* MOBILE SEARCH OVERLAY (Same as before but refined) */}
-        {isMobileSearchOpen && (
-          <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-200">
-            <div className="flex items-center gap-4 p-4 border-b border-gray-800">
-              <button onClick={() => setIsMobileSearchOpen(false)} className="text-gray-400 hover:text-white">
-                <ArrowLeft size={24} />
-              </button>
-              <div className="flex-1 bg-gray-900 rounded-full px-4 py-3 flex items-center gap-2">
-                <Search size={18} className="text-gray-500" />
-                <input
-                  autoFocus
-                  className="flex-1 bg-transparent border-none outline-none text-white text-sm font-medium placeholder-gray-500"
-                  placeholder="Buscar productos..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="text-gray-500">
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+          <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
+            INICIO
+          </Link>
 
-            <div className="flex-1 overflow-y-auto p-4">
-              {/* Results Logic same as desktop */}
-              {searchQuery.length > 1 && (
-                <div className="flex flex-col gap-4">
-                  {searchResults.length > 0 ? (
-                    searchResults.map(p => (
-                      <button key={p.id} onClick={() => handleProductClick(p.id)} className="flex gap-4 items-center">
-                        <div className="w-16 h-20 bg-gray-900 rounded-md overflow-hidden">
-                          <img src={p.images[0]} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-white font-bold text-sm uppercase line-clamp-2">{p.name}</p>
-                          <p className="text-primary font-bold text-sm mt-1">Gs. {p.price.toLocaleString()}</p>
-                        </div>
-                      </button>
-                    ))
-                  ) : (
-                    <p className="text-center text-gray-500 text-sm mt-10">No se encontraron resultados</p>
-                  )}
-                </div>
+          {/* Mobile Categories Accordion */}
+          <div>
+            <button
+              onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
+              className="w-full flex items-center justify-between text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors"
+            >
+              CATEGORÍAS
+              {isMobileCategoriesOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+            </button>
+
+            <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-4 pl-4 ${isMobileCategoriesOpen ? 'max-h-[500px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
+              {categories.map(cat => (
+                <Link
+                  key={cat.id}
+                  to={`/category/${cat.id}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-lg font-bold text-gray-400 hover:text-white uppercase tracking-wider"
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <Link to="/nosotros" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
+            NOSOTROS
+          </Link>
+
+          <Link to="/ayuda" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
+            AYUDA
+          </Link>
+
+          <div className="mt-8 border-t border-gray-900 pt-8 flex flex-col gap-4">
+            <button onClick={() => navigate('/admin')} className="flex items-center gap-4 text-gray-400 hover:text-white">
+              <User size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Mi Cuenta</span>
+            </button>
+            <Link to="/favoritos" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 text-gray-400 hover:text-white">
+              <Heart size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Favoritos</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE SEARCH OVERLAY (Same as before but refined) */}
+      {isMobileSearchOpen && (
+        <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-200">
+          <div className="flex items-center gap-4 p-4 border-b border-gray-800">
+            <button onClick={() => setIsMobileSearchOpen(false)} className="text-gray-400 hover:text-white">
+              <ArrowLeft size={24} />
+            </button>
+            <div className="flex-1 bg-gray-900 rounded-full px-4 py-3 flex items-center gap-2">
+              <Search size={18} className="text-gray-500" />
+              <input
+                autoFocus
+                className="flex-1 bg-transparent border-none outline-none text-white text-sm font-medium placeholder-gray-500"
+                placeholder="Buscar productos..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="text-gray-500">
+                  <X size={16} />
+                </button>
               )}
             </div>
           </div>
-        )}
 
-      </nav>
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* Results Logic same as desktop */}
+            {searchQuery.length > 1 && (
+              <div className="flex flex-col gap-4">
+                {searchResults.length > 0 ? (
+                  searchResults.map(p => (
+                    <button key={p.id} onClick={() => handleProductClick(p.id)} className="flex gap-4 items-center">
+                      <div className="w-16 h-20 bg-gray-900 rounded-md overflow-hidden">
+                        <img src={p.images[0]} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-white font-bold text-sm uppercase line-clamp-2">{p.name}</p>
+                        <p className="text-primary font-bold text-sm mt-1">Gs. {p.price.toLocaleString()}</p>
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500 text-sm mt-10">No se encontraron resultados</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </>
   );
 };
