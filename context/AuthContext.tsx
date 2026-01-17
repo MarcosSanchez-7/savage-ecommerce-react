@@ -96,10 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const signUpWithEmail = async (email: string, password: string, userData?: any) => {
-        // SECURITY: Block registration if email is the admin email
-        if (email === ADMIN_EMAIL) {
-            return { data: null, error: { message: "Critical Security: Registration blocked for this email." } };
-        }
+
 
         const { data, error } = await supabase.auth.signUp({
             email,
