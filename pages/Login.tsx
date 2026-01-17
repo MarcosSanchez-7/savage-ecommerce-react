@@ -4,7 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { Eye, EyeOff } from 'lucide-react';
 
-const Login: React.FC = () => {
+interface LoginProps {
+    onLoginSuccess?: () => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     const [isLogin, setIsLogin] = useState(true);
 
     // Login Fields
@@ -23,12 +27,13 @@ const Login: React.FC = () => {
     const { signInWithEmail, signUpWithEmail, session } = useAuth(); // Get session
     const navigate = useNavigate();
 
-    // Redirect if already logged in
+    // Redirect if already logged in (Only if not in inline mode)
     React.useEffect(() => {
-        if (session) {
+        if (session && !onLoginSuccess) {
             navigate('/');
         }
-    }, [session, navigate]);
+    }, [session, navigate, onLoginSuccess]);
+
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -53,11 +58,13 @@ const Login: React.FC = () => {
             if (isLogin) {
                 const { error } = await signInWithEmail(email, password);
                 if (error) throw error;
-                // Since state update is async, we can't trust isAdmin immediately here without a refresh,
-                // but AuthContext updates state on login.
-                // A simple reload or redirect to home is safer, letting the context settle.
-                // However, let's try to be smart.
-                navigate('/');
+
+                // If provided, let parent handle success (e.g. AdminGuard)
+                if (onLoginSuccess) {
+                    onLoginSuccess();
+                } else {
+                    navigate('/');
+                }
             } else {
                 // Register Validations
                 if (password !== confirmPassword) {
@@ -79,9 +86,11 @@ const Login: React.FC = () => {
                 // Check if session was created (Auto Login) or if Email Confirmation is needed
                 if (data.session) {
                     setSuccessMessage("¡Cuenta creada con éxito! Bienvenido a Savage.");
-                    setTimeout(() => {
-                        navigate('/');
-                    }, 1500);
+                    if (onLoginSuccess) {
+                        setTimeout(() => onLoginSuccess(), 1500);
+                    } else {
+                        setTimeout(() => navigate('/'), 1500);
+                    }
                 } else {
                     // Email confirmation required logic
                     setSuccessMessage("¡Registro exitoso! Por favor, verifica tu bandeja de entrada para activar tu cuenta.");
@@ -113,6 +122,7 @@ const Login: React.FC = () => {
             setLoading(false);
         }
     };
+
 
     const toggleMode = () => {
         setIsLogin(!isLogin);

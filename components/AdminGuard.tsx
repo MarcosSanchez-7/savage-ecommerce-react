@@ -16,7 +16,7 @@ const AdminGuard: React.FC = () => {
 
     // 1. If no session, show Inline Login
     if (!session) {
-        return <Login />;
+        return <Login onLoginSuccess={() => window.location.reload()} />;
     }
 
     // 2. If logged in but NOT admin, redirect to HOME (security block)
