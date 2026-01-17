@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, X, ArrowLeft } from 'lucide-react';
+import { Search, X, ArrowLeft, Heart, User, ShoppingBag, Menu, ChevronDown, ChevronUp } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
 
 interface NavbarProps {
@@ -9,7 +9,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
-  const { toggleCart, navbarLinks, products } = useShop();
+  const { toggleCart, products, categories } = useShop();
   const [animateCart, setAnimateCart] = useState(false);
 
   // Search State
@@ -18,8 +18,14 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof products>([]);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+
   const navigate = useNavigate();
 
+  // Search Logic
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
       const results = products.filter(p =>
@@ -33,7 +39,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
     }
   }, [searchQuery, products]);
 
-  // Close search on click outside
+  // Click Outside Search
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -49,6 +55,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
     setIsSearchOpen(false);
     setIsMobileSearchOpen(false);
     setSearchQuery('');
+    setIsMobileMenuOpen(false);
   };
 
   useEffect(() => {
@@ -59,95 +66,107 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
     }
   }, [cartCount]);
 
+  // Prevent scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isMobileMenuOpen]);
+
   return (
     <>
       <AnnouncementBar />
       <nav className="sticky top-0 z-50 w-full border-b border-[#333] bg-[#0a0a0a]/80 backdrop-blur-md">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
-          {/* Logo */}
-          {/* Logo */}
+        <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+
+          {/* LEFT: Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 group"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-2 group z-50"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              setIsMobileMenuOpen(false);
+            }}
           >
-            <div className="size-10 flex items-center justify-center transition-transform group-hover:scale-110">
+            <div className="size-8 md:size-10 flex items-center justify-center transition-transform group-hover:scale-110">
               <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.6)] filter brightness-110" />
             </div>
-            <h2 className="text-white text-2xl font-black leading-none tracking-widest uppercase transition-colors group-hover:text-primary pt-1">
+            <h2 className="text-white text-xl md:text-2xl font-black leading-none tracking-widest uppercase transition-colors group-hover:text-primary pt-1">
               SAVAGE
             </h2>
           </Link>
 
-          {/* Desktop Links - Centered */}
-          <div className="hidden md:flex flex-1 justify-center gap-8 lg:gap-12 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            {navbarLinks.map(link => (
-              <div key={link.id} className="relative group h-full flex items-center justify-center">
-                <Link
-                  className="text-gray-400 hover:text-white hover:font-bold transition-all text-sm font-medium uppercase tracking-widest relative py-2"
-                  to={link.path}
-                >
-                  {link.label}
-                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-primary transition-all group-hover:w-full"></span>
-                </Link>
+          {/* CENTER: Desktop Links */}
+          <div className="hidden md:flex flex-1 justify-center gap-12 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <Link to="/" className="text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors">
+              INICIO
+            </Link>
 
-                {/* Subcategories Dropdown */}
-                {link.subcategories && link.subcategories.length > 0 && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 hidden group-hover:block w-48 z-50">
-                    <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 shadow-2xl flex flex-col gap-2 backdrop-blur-md bg-[#0a0a0a]/95">
-                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0a0a0a] border-t border-l border-gray-800 transform rotate-45"></div>
-                      {link.subcategories.map(sub => (
-                        <Link
-                          key={sub}
-                          to={`${link.path.replace(/\/$/, '')}/${sub.trim()}`}
-                          className="text-gray-400 hover:text-primary text-[10px] font-bold uppercase tracking-widest hover:translate-x-1 transition-all"
-                        >
-                          {sub}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
+            {/* Categories Dropdown */}
+            <div className="relative group h-full flex items-center">
+              <button className="text-sm font-bold text-gray-400 group-hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1 py-6">
+                CATEGORÍAS <ChevronDown size={14} />
+              </button>
+
+              {/* Dropdown Content */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-0 hidden group-hover:block min-w-[200px] z-50">
+                <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-2 shadow-2xl flex flex-col gap-1 backdrop-blur-md mt-2 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0a0a0a] border-t border-l border-gray-800 transform rotate-45"></div>
+                  {categories.map(cat => (
+                    <Link
+                      key={cat.id}
+                      to={`/category/${cat.id}`}
+                      className="px-4 py-3 hover:bg-white/5 rounded-lg text-xs font-bold text-gray-300 hover:text-primary uppercase tracking-wider transition-colors"
+                    >
+                      {cat.name}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            ))}
+            </div>
+
+            <Link to="/ayuda" className="text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors">
+              AYUDA
+            </Link>
           </div>
 
-          {/* Right Actions: Search + Cart */}
-          <div className="flex items-center gap-1 md:gap-4 relative">
+          {/* RIGHT: Icons */}
+          <div className="flex items-center gap-2 md:gap-6">
 
-            {/* Search */}
-            <div ref={searchRef} className="hidden md:flex items-center relative transition-all">
-              <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? 'w-60 bg-white/5 border-gray-700' : 'w-8 border-transparent'} border rounded-full overflow-hidden`}>
+            {/* Desktop Search Trigger */}
+            <div ref={searchRef} className="relative hidden md:block">
+              <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? 'w-64 bg-white/5 border-gray-700 px-3' : 'w-10 border-transparent justify-center'} border rounded-full overflow-hidden h-10`}>
                 <button
                   onClick={() => {
-                    if (isSearchOpen && !searchQuery) { setIsSearchOpen(false); return; }
-                    setIsSearchOpen(true);
-                    setTimeout(() => document.getElementById('navbar-search')?.focus(), 50);
+                    setIsSearchOpen(!isSearchOpen);
+                    if (!isSearchOpen) setTimeout(() => document.getElementById('navbar-search-input')?.focus(), 100);
                   }}
-                  className={`p-2 hover:text-white transition-colors flex items-center justify-center ${isSearchOpen ? 'text-gray-300' : 'text-gray-400'}`}
+                  className={`text-white hover:text-primary transition-colors ${isSearchOpen ? 'mr-2' : ''}`}
                 >
-                  <Search size={18} />
+                  <Search size={20} />
                 </button>
                 <input
-                  id="navbar-search"
+                  id="navbar-search-input"
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="BUSCAR..."
-                  className={`bg-transparent border-none outline-none text-xs font-bold tracking-wider text-white placeholder-gray-600 transition-all duration-300 ${isSearchOpen ? 'w-full px-2 opacity-100' : 'w-0 px-0 opacity-0'}`}
+                  className={`bg-transparent border-none outline-none text-xs font-bold text-white placeholder-gray-500 w-full ${isSearchOpen ? 'block' : 'hidden'}`}
                 />
                 {isSearchOpen && searchQuery && (
-                  <button onClick={() => { setSearchQuery(''); document.getElementById('navbar-search')?.focus(); }} className="p-2 text-gray-500 hover:text-white">
-                    <X size={12} />
+                  <button onClick={() => { setSearchQuery(''); document.getElementById('navbar-search-input')?.focus(); }} className="text-gray-500 hover:text-white ml-2">
+                    <X size={14} />
                   </button>
                 )}
               </div>
 
-              {/* Results Dropdown */}
+              {/* Desktop Search Results */}
               {isSearchOpen && searchQuery.length > 1 && (
-                <div className="absolute top-12 right-0 w-80 bg-[#0a0a0a] border border-gray-800 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-in-from-top-2 z-50">
+                <div className="absolute top-12 right-0 w-80 bg-[#0a0a0a] border border-gray-800 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
                   {searchResults.length > 0 ? (
-                    <div className="max-h-[60vh] overflow-y-auto scrollbar-hide">
+                    <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
                       <div className="p-3 bg-white/5 border-b border-gray-800 text-[10px] font-bold text-gray-500 uppercase tracking-wider sticky top-0 backdrop-blur-md">
                         Resultados ({searchResults.length})
                       </div>
@@ -168,33 +187,44 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                       ))}
                     </div>
                   ) : (
-                    <div className="p-6 text-center">
-                      <span className="text-gray-600 text-xs uppercase tracking-widest block mb-1">Sin resultados</span>
-                    </div>
+                    <div className="p-6 text-center text-gray-500 text-xs uppercase tracking-widest">Sin resultados</div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Mobile Search Button */}
-            <button
-              className="flex md:hidden p-2 text-gray-300 hover:text-white transition-colors"
-              onClick={() => setIsMobileSearchOpen(true)}
-            >
+            {/* Mobile Search Trigger */}
+            <button className="md:hidden text-white hover:text-primary transition-colors p-2" onClick={() => setIsMobileSearchOpen(true)}>
               <Search size={22} />
             </button>
 
-            {/* Cart Button */}
+            {/* Favorites Icon (Hidden on Mobile? Or shown? Let's show it or hide if too crowded. User said 'Coloca a la derecha los iconos'. Usually small icons fit) */}
+            <button className="hidden md:flex text-white hover:text-primary transition-colors p-2" onClick={() => alert('Feature coming soon!')}>
+              {/* Actually user said "nuevo estado global... permite añadir/quitar". But didn't ask for a Favorites Page yet. 
+                   I'll just link to nowhere or show a toast. Or maybe I should list them? 
+                   User requirement: "Crea un nuevo estado global... Agrega un icono de corazón en cada ProductCard".
+                   The navbar icon should probably open a list or something. 
+                   For now, I'll make it show an alert or just be there aesthetically as requested. 
+               */}
+              <Heart size={22} />
+            </button>
+
+            {/* Account Icon */}
+            {/* <Link to="/admin" className="hidden md:flex text-white hover:text-primary transition-colors p-2">
+              <User size={22} />
+            </Link> */}
+            <button className="hidden md:flex text-white hover:text-primary transition-colors p-2" onClick={() => navigate('/admin')}>
+              <User size={22} />
+            </button>
+
+            {/* Cart Icon */}
             <button
               onClick={toggleCart}
-              className={`relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded hover:bg-white/10 transition-colors ${animateCart ? 'text-primary' : 'text-gray-300 hover:text-white'}`}
+              className={`relative flex items-center justify-center p-2 text-white hover:text-primary transition-colors ${animateCart ? 'text-primary scale-110' : ''}`}
             >
-              <span className={`material-symbols-outlined transition-transform duration-300 text-[24px] ${animateCart ? 'scale-125' : 'scale-100'}`}>
-                shopping_bag
-              </span>
-
+              <ShoppingBag size={22} />
               {cartCount > 0 && (
-                <span className={`absolute top-0 right-0 md:top-0 md:right-0 bg-primary text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] flex items-center justify-center transition-transform duration-300 border border-[#0a0a0a] ${animateCart ? 'scale-125' : 'scale-100'}`}>
+                <span className="absolute top-0 right-0 bg-primary text-white text-[9px] font-bold px-1 rounded-full min-w-[14px] h-[14px] flex items-center justify-center border border-black">
                   {cartCount}
                 </span>
               )}
@@ -202,99 +232,121 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
             {/* Mobile Menu Toggle */}
             <button
-              className="flex md:hidden p-2 text-white ml-2"
-              onClick={() => {
-                const mobileMenu = document.getElementById('mobile-menu');
-                if (mobileMenu) mobileMenu.classList.toggle('hidden');
-              }}
+              className="md:hidden text-white p-1 ml-1"
+              onClick={() => setIsMobileMenuOpen(true)}
             >
-              <span className="material-symbols-outlined">menu</span>
+              <Menu size={24} />
             </button>
           </div>
         </div>
 
-        {/* Mobile Search Overlay */}
-        {isMobileSearchOpen && (
-          <div className="fixed inset-0 z-[9999] bg-black flex flex-col h-[100dvh] w-full">
-            {/* Header */}
-            <div className="flex items-center gap-2 p-4 border-b border-gray-800 bg-black shrink-0">
+        {/* MOBILE MENU FULLSCREEN */}
+        <div className={`fixed inset-0 bg-black z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col`}>
+          <div className="flex items-center justify-between p-6 border-b border-gray-900">
+            <div className="flex items-center gap-2">
+              <div className="size-8">
+                <img src="/crown.png" alt="" className="w-full h-full object-contain brightness-110" />
+              </div>
+              <span className="text-xl font-black text-white tracking-widest">SAVAGE</span>
+            </div>
+            <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 hover:text-white p-2">
+              <X size={28} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+            <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
+              INICIO
+            </Link>
+
+            {/* Mobile Categories Accordion */}
+            <div>
               <button
-                onClick={() => { setIsMobileSearchOpen(false); setSearchQuery(''); }}
-                className="p-2 text-white hover:bg-white/10 rounded-full"
+                onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
+                className="w-full flex items-center justify-between text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors"
               >
+                CATEGORÍAS
+                {isMobileCategoriesOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+              </button>
+
+              <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-4 pl-4 ${isMobileCategoriesOpen ? 'max-h-[500px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
+                {categories.map(cat => (
+                  <Link
+                    key={cat.id}
+                    to={`/category/${cat.id}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-lg font-bold text-gray-400 hover:text-white uppercase tracking-wider"
+                  >
+                    {cat.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <Link to="/ayuda" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
+              AYUDA
+            </Link>
+
+            <div className="mt-8 border-t border-gray-900 pt-8 flex flex-col gap-4">
+              <button onClick={() => navigate('/admin')} className="flex items-center gap-4 text-gray-400 hover:text-white">
+                <User size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Mi Cuenta</span>
+              </button>
+              <button className="flex items-center gap-4 text-gray-400 hover:text-white" onClick={() => alert('Favorites coming soon!')}>
+                <Heart size={24} /> <span className="text-lg font-bold uppercase tracking-wider">Favoritos</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* MOBILE SEARCH OVERLAY (Same as before but refined) */}
+        {isMobileSearchOpen && (
+          <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-200">
+            <div className="flex items-center gap-4 p-4 border-b border-gray-800">
+              <button onClick={() => setIsMobileSearchOpen(false)} className="text-gray-400 hover:text-white">
                 <ArrowLeft size={24} />
               </button>
-              <div className="flex-1 flex items-center bg-gray-900 border border-gray-700 rounded-lg px-4 py-3">
+              <div className="flex-1 bg-gray-900 rounded-full px-4 py-3 flex items-center gap-2">
+                <Search size={18} className="text-gray-500" />
                 <input
                   autoFocus
-                  className="flex-1 bg-transparent border-none outline-none text-base text-white placeholder-gray-400"
+                  className="flex-1 bg-transparent border-none outline-none text-white text-sm font-medium placeholder-gray-500"
                   placeholder="Buscar productos..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="text-gray-400 p-1">
-                    <X size={18} />
+                  <button onClick={() => setSearchQuery('')} className="text-gray-500">
+                    <X size={16} />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Results Area */}
-            <div className="flex-1 overflow-y-auto p-4 bg-black">
-              {searchQuery.length > 1 ? (
-                searchResults.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">
-                      Resultados ({searchResults.length})
-                    </div>
-                    <div className="grid grid-cols-1 gap-3">
-                      {searchResults.map(product => (
-                        <button
-                          key={product.id}
-                          onClick={() => handleProductClick(product.id)}
-                          className="flex items-center gap-4 p-3 bg-gray-900/50 rounded-xl border border-gray-800 active:bg-gray-800 transition-all text-left"
-                        >
-                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 shrink-0">
-                            <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm text-white line-clamp-2 leading-snug">{product.name}</div>
-                            <div className="text-sm text-primary font-black mt-1">Gs. {product.price.toLocaleString()}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center pt-20 text-gray-500">
-                    <Search size={48} className="opacity-20 mb-4" />
-                    <p className="text-sm font-medium">No encontramos nada para "{searchQuery}"</p>
-                  </div>
-                )
-              ) : (
-                <div className="flex flex-col items-center justify-center pt-20 text-gray-600">
-                  <p className="text-sm font-medium">Escribe para buscar...</p>
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Results Logic same as desktop */}
+              {searchQuery.length > 1 && (
+                <div className="flex flex-col gap-4">
+                  {searchResults.length > 0 ? (
+                    searchResults.map(p => (
+                      <button key={p.id} onClick={() => handleProductClick(p.id)} className="flex gap-4 items-center">
+                        <div className="w-16 h-20 bg-gray-900 rounded-md overflow-hidden">
+                          <img src={p.images[0]} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-white font-bold text-sm uppercase line-clamp-2">{p.name}</p>
+                          <p className="text-primary font-bold text-sm mt-1">Gs. {p.price.toLocaleString()}</p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500 text-sm mt-10">No se encontraron resultados</p>
+                  )}
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {/* Mobile Menu */}
-        <div id="mobile-menu" className="hidden md:hidden absolute top-20 left-0 w-full bg-[#0a0a0a] border-b border-gray-800 p-6 flex flex-col gap-6 shadow-2xl animate-in slide-in-from-top-4">
-          {navbarLinks.map(link => (
-            <Link
-              key={link.id}
-              className="text-lg font-bold uppercase tracking-widest text-white hover:text-primary transition-colors border-b border-gray-800 pb-2"
-              to={link.path}
-              onClick={() => document.getElementById('mobile-menu')?.classList.add('hidden')}
-            >
-              {link.label}
-            </Link>
-          ))}
-          {/* Helper Link for Admin if needed or just general links */}
-        </div>
       </nav>
     </>
   );

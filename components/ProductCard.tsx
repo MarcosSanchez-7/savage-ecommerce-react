@@ -2,6 +2,8 @@
 import React from 'react';
 import { Product } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { Heart } from 'lucide-react';
+import { useShop } from '../context/ShopContext';
 
 interface ProductCardProps {
   product: Product;
@@ -11,6 +13,8 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCategoryTag }) => {
   const navigate = useNavigate();
+  const { favorites, toggleFavorite } = useShop();
+  const isFavorite = favorites.includes(product.id);
 
   const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
     ? product.inventory.every(i => Number(i.quantity) === 0)
@@ -40,6 +44,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
             />
           )}
         </div>
+
+        {/* Favorite Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFavorite(product.id);
+          }}
+          className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/20 hover:bg-white text-white hover:text-red-500 backdrop-blur-sm transition-all duration-300 group/heart"
+        >
+          <Heart
+            size={18}
+            className={`transition-all duration-300 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`}
+          />
+        </button>
+
         {/* Sold Out Overlay */}
         {isTotallyOutOfStock && (
           <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center">
@@ -98,7 +117,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
         )}
 
         {product.originalPrice && product.originalPrice > product.price && (
-          <div className="absolute top-3 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+          <div className="absolute top-14 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm z-20">
             -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
           </div>
         )}

@@ -63,6 +63,8 @@ interface ShopContextType {
     updateCategoryOrder: (orderedIds: string[]) => void;
     saveAllData: () => void;
     loading: boolean;
+    favorites: string[];
+    toggleFavorite: (productId: string) => void;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -218,6 +220,25 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+
+    // Favorites Logic
+    const [favorites, setFavorites] = useState<string[]>(() => {
+        const saved = localStorage.getItem('savage_favorites');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    useEffect(() => {
+        localStorage.setItem('savage_favorites', JSON.stringify(favorites));
+    }, [favorites]);
+
+    const toggleFavorite = (productId: string) => {
+        setFavorites(prev => {
+            if (prev.includes(productId)) {
+                return prev.filter(id => id !== productId);
+            }
+            return [...prev, productId];
+        });
+    };
 
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -1401,7 +1422,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             footerColumns,
             updateFooterColumns,
             saveAllData,
-            loading
+            loading,
+            favorites,
+            toggleFavorite
 
         }}>
             {children}
