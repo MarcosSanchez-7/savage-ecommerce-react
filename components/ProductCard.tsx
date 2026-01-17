@@ -13,8 +13,9 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCategoryTag }) => {
   const navigate = useNavigate();
-  const { favorites, toggleFavorite } = useShop();
-  const isFavorite = favorites.includes(product.id);
+  // Favorites removed
+  // const { favorites, toggleFavorite } = useShop();
+  // const isFavorite = favorites.includes(product.id);
 
   const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
     ? product.inventory.every(i => Number(i.quantity) === 0)
@@ -46,18 +47,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
         </div>
 
         {/* Favorite Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFavorite(product.id);
-          }}
-          className="absolute top-3 right-3 z-30 p-2 rounded-full bg-black/20 hover:bg-white text-white hover:text-red-500 backdrop-blur-sm transition-all duration-300 group/heart"
-        >
-          <Heart
-            size={18}
-            className={`transition-all duration-300 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`}
-          />
-        </button>
+        {/* Favorite Button Removed */}
 
         {/* Sold Out Overlay */}
         {isTotallyOutOfStock && (

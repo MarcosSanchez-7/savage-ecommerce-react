@@ -10,7 +10,8 @@ import { ShoppingBag, ArrowLeft, Star, Share2, Heart } from 'lucide-react';
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { products, addToCart, cart, socialConfig, favorites, toggleFavorite } = useShop();
+    const { products, addToCart, cart, socialConfig } = useShop();
+    // const { favorites, toggleFavorite } = useShop(); // Removed favorites
 
     // Check if slug looks like a UUID (fallback for old links)
     const isUuid = (str?: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || '');
