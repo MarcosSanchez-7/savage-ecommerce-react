@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, X, ArrowLeft, Heart, User, ShoppingBag, Menu, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, X, ArrowLeft, Heart, User, ShoppingBag, Menu, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
 
 interface NavbarProps {
@@ -79,7 +79,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
     <>
       <AnnouncementBar />
       <nav className="sticky top-0 z-50 w-full border-b border-[#333] bg-[#0a0a0a]/80 backdrop-blur-md">
-        <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between relative">
 
           {/* LEFT: Logo */}
           <Link
@@ -99,41 +99,69 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           </Link>
 
           {/* CENTER: Desktop Links */}
-          <div className="hidden md:flex flex-1 justify-center gap-12 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <Link to="/" className="text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors">
-              INICIO
-            </Link>
+          <div className="hidden md:flex flex-1 justify-center items-center h-full gap-8 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl pointer-events-none">
+            <div className="flex gap-8 pointer-events-auto h-full items-center">
+              <Link to="/" className="h-full flex items-center px-2 text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors relative group">
+                INICIO
+                <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+              </Link>
 
-            {/* Categories Dropdown */}
-            <div className="relative group h-full flex items-center">
-              <button className="text-sm font-bold text-gray-400 group-hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1 py-6">
-                CATEGORÍAS <ChevronDown size={14} />
-              </button>
+              {/* Categories Dropdown */}
+              <div className="relative group h-full flex items-center">
+                <button className="h-full flex items-center px-2 gap-1 text-sm font-bold text-gray-400 group-hover:text-white uppercase tracking-widest transition-colors relative">
+                  CATEGORÍAS <ChevronDown size={14} />
+                </button>
 
-              {/* Dropdown Content */}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-0 hidden group-hover:block min-w-[200px] z-50">
-                <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-2 shadow-2xl flex flex-col gap-1 backdrop-blur-md mt-2 animate-in fade-in slide-in-from-top-2">
-                  <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0a0a0a] border-t border-l border-gray-800 transform rotate-45"></div>
-                  {categories.map(cat => (
-                    <Link
-                      key={cat.id}
-                      to={`/category/${cat.id}`}
-                      className="px-4 py-3 hover:bg-white/5 rounded-lg text-xs font-bold text-gray-300 hover:text-primary uppercase tracking-wider transition-colors"
-                    >
-                      {cat.name}
-                    </Link>
-                  ))}
+                {/* Dropdown Content */}
+                <div className="absolute top-full left-1/2 -translate-x-1/2 pt-0 hidden group-hover:block min-w-[220px] z-50">
+                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-2 shadow-2xl flex flex-col gap-1 backdrop-blur-md mt-0 animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0a0a0a] border-t border-l border-gray-800 transform rotate-45"></div>
+                    {categories.map(cat => (
+                      <div key={cat.id} className="relative group/sub">
+                        <Link
+                          to={`/category/${cat.id}`}
+                          className="flex items-center justify-between px-4 py-3 hover:bg-white/5 rounded-lg text-xs font-bold text-gray-300 hover:text-primary uppercase tracking-wider transition-colors w-full"
+                        >
+                          {cat.name}
+                          {cat.subcategories && cat.subcategories.length > 0 && <ChevronRight size={12} className="text-gray-500 group-hover/sub:text-primary" />}
+                        </Link>
+
+                        {/* Subcategories Flyout */}
+                        {cat.subcategories && cat.subcategories.length > 0 && (
+                          <div className="absolute left-full top-0 ml-2 hidden group-hover/sub:block min-w-[180px] z-[60]">
+                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-2 shadow-2xl flex flex-col gap-1 backdrop-blur-md animate-in fade-in slide-in-from-left-2">
+                              {cat.subcategories.map(sub => (
+                                <Link
+                                  key={sub}
+                                  to={`/category/${cat.id}/${sub}`}
+                                  className="px-4 py-2 hover:bg-white/5 rounded-lg text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-wider transition-colors block"
+                                >
+                                  {sub}
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <Link to="/ayuda" className="text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors">
-              AYUDA
-            </Link>
+              <Link to="/nosotros" className="h-full flex items-center px-2 text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors relative group">
+                NOSOTROS
+                <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+              </Link>
+
+              <Link to="/ayuda" className="h-full flex items-center px-2 text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors relative group">
+                AYUDA
+                <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
+              </Link>
+            </div>
           </div>
 
           {/* RIGHT: Icons */}
-          <div className="flex items-center gap-2 md:gap-6">
+          <div className="flex items-center gap-2 md:gap-6 z-50">
 
             {/* Desktop Search Trigger */}
             <div ref={searchRef} className="relative hidden md:block">
@@ -198,21 +226,12 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
               <Search size={22} />
             </button>
 
-            {/* Favorites Icon (Hidden on Mobile? Or shown? Let's show it or hide if too crowded. User said 'Coloca a la derecha los iconos'. Usually small icons fit) */}
+            {/* Favorites Icon */}
             <button className="hidden md:flex text-white hover:text-primary transition-colors p-2" onClick={() => alert('Feature coming soon!')}>
-              {/* Actually user said "nuevo estado global... permite añadir/quitar". But didn't ask for a Favorites Page yet. 
-                   I'll just link to nowhere or show a toast. Or maybe I should list them? 
-                   User requirement: "Crea un nuevo estado global... Agrega un icono de corazón en cada ProductCard".
-                   The navbar icon should probably open a list or something. 
-                   For now, I'll make it show an alert or just be there aesthetically as requested. 
-               */}
               <Heart size={22} />
             </button>
 
             {/* Account Icon */}
-            {/* <Link to="/admin" className="hidden md:flex text-white hover:text-primary transition-colors p-2">
-              <User size={22} />
-            </Link> */}
             <button className="hidden md:flex text-white hover:text-primary transition-colors p-2" onClick={() => navigate('/admin')}>
               <User size={22} />
             </button>
@@ -282,6 +301,10 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 ))}
               </div>
             </div>
+
+            <Link to="/nosotros" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
+              NOSOTROS
+            </Link>
 
             <Link to="/ayuda" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
               AYUDA
