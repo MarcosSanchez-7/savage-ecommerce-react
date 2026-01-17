@@ -36,7 +36,10 @@ const Login: React.FC = () => {
             if (isLogin) {
                 const { error } = await signInWithEmail(email, password);
                 if (error) throw error;
-                // Redirect logic based on role is handled in AuthContext or components, but simple redirect here works
+                // Since state update is async, we can't trust isAdmin immediately here without a refresh,
+                // but AuthContext updates state on login.
+                // A simple reload or redirect to home is safer, letting the context settle.
+                // However, let's try to be smart.
                 navigate('/');
             } else {
                 // Register Validations
