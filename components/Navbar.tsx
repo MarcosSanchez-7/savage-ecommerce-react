@@ -268,7 +268,10 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                     <Link to="/perfil" className="block px-4 py-3 text-xs font-bold text-gray-300 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-wider border-b border-gray-800">
                       Mis Datos
                     </Link>
-                    <button onClick={() => signOut()} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors uppercase tracking-wider">
+                    <button onClick={async () => {
+                      await signOut();
+                      navigate('/login');
+                    }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors uppercase tracking-wider">
                       Cerrar Sesión
                     </button>
                   </div>
