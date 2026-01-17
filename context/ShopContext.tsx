@@ -447,6 +447,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         fetchData();
+
+        // Safety timeout to prevent infinite loading (Black Screen Fix)
+        const safetyTimer = setTimeout(() => {
+            setLoading(false);
+        }, 3000); // 3 seconds max loading time
+
+        return () => clearTimeout(safetyTimer);
     }, []);
 
     // --- END SUPABASE FETCH ---
