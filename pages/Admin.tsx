@@ -20,9 +20,11 @@ import {
     Edit,
     Menu,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    Activity
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AdminAnalytics from '../components/AdminAnalytics';
 import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import { uploadProductImage } from '../services/uploadService';
@@ -897,6 +899,9 @@ const AdminDashboard: React.FC = () => {
                 </div>
 
                 <nav className="flex-1 space-y-2">
+                    <button onClick={() => setActiveTab('analytics')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                        <Activity size={20} className="text-primary" /> <span className="font-bold text-sm">Dashboard & Ventas</span>
+                    </button>
                     <button onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'products' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <ShoppingBag size={20} /> <span className="font-bold text-sm">Productos</span>
                     </button>
@@ -942,6 +947,13 @@ const AdminDashboard: React.FC = () => {
             {/* Main Content */}
             {/* Main Content */}
             <main id="admin-main-content" className="flex-1 p-4 md:p-10 overflow-y-auto h-[calc(100vh-73px)] md:h-screen">
+
+                {/* ANALYTICS TAB */}
+                {activeTab === 'analytics' && (
+                    <div className="max-w-7xl mx-auto space-y-12">
+                       <AdminAnalytics />
+                    </div>
+                )}
 
                 {/* DROPS TAB */}
                 {activeTab === 'drops' && (
