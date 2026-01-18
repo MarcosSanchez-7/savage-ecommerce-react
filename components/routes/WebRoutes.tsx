@@ -23,8 +23,7 @@ import AdminGuard from '../AdminGuard'; // New explicit guard
 
 import ProfilePage from '../../pages/ProfilePage';
 import OrdersPage from '../../pages/OrdersPage';
-import ViewImage from '../../pages/ViewImage'; // New
-import OrderSummary from '../../pages/OrderSummary'; // New
+
 
 const WebRoutes: React.FC = () => {
     return (
@@ -45,8 +44,6 @@ const WebRoutes: React.FC = () => {
             <Route path="/favoritos" element={<FavoritesPage />} />
             <Route path="/ayuda" element={<Contact />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/view-img/:fileName" element={<ViewImage />} />
-            <Route path="/order-summary/:id" element={<OrderSummary />} />
 
             {/* Standard User Protected Routes (Any logged in user) */}
             <Route element={<ProtectedRoute />}>
