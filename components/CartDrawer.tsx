@@ -104,12 +104,12 @@ const CartDrawer: React.FC = () => {
         <div className="fixed inset-0 z-[9999] flex justify-end">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm touch-none"
                 onClick={toggleCart}
             />
 
             {/* Drawer */}
-            <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 isolate">
+            <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-[100dvh] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 isolate overscroll-contain">
                 <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a] flex-none z-10">
                     <div className="flex items-center gap-3">
                         <button onClick={toggleCart} className="md:hidden text-gray-400 hover:text-white">
