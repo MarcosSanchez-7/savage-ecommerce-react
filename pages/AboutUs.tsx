@@ -1,14 +1,22 @@
 import React from 'react';
-import { Shield, Users, Trophy, Truck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Shield, Users, Trophy, Truck, ArrowLeft } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const AboutUs: React.FC = () => {
     return (
-        <div className="bg-black min-h-screen text-white pt-20">
+        <div className="bg-black min-h-screen text-white pt-20 relative">
             <SEO
                 title="Nosotros - Savage Store Paraguay"
                 description="Conoce la historia detrás de Savage Store, tu destino premium de streetwear y camisetas retro en Paraguay."
             />
+
+            {/* Back Button */}
+            <div className="absolute top-24 left-6 z-30 md:top-28 md:left-12">
+                <Link to="/" className="flex items-center gap-2 text-white/50 hover:text-primary transition-colors font-bold uppercase tracking-widest text-xs md:text-sm">
+                    <ArrowLeft size={18} /> Volver al Inicio
+                </Link>
+            </div>
 
             {/* Hero Section */}
             <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
@@ -18,7 +26,7 @@ const AboutUs: React.FC = () => {
                     alt="Savage Team"
                     className="absolute inset-0 w-full h-full object-cover grayscale opacity-60"
                 />
-                <div className="relative z-20 text-center px-6 max-w-3xl">
+                <div className="relative z-20 text-center px-6 max-w-3xl pt-10">
                     <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase glitch-effect">
                         Somos <span className="text-primary">Savage</span>
                     </h1>
@@ -63,23 +71,23 @@ const AboutUs: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-6 md:px-12">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Shield className="w-12 h-12 text-gray-400 group-hover:text-primary mb-6 transition-colors" />
-                            <h3 className="text-xl font-bold uppercase mb-3">Autenticidad</h3>
-                            <p className="text-gray-500 text-sm leading-relaxed">Productos 100% originales y de la más alta calidad garantizada.</p>
+                            <Shield className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <h3 className="text-xl font-bold uppercase mb-3 text-white">Autenticidad</h3>
+                            <p className="text-gray-500 text-sm leading-relaxed">Calidad Premium Garantizada.</p>
                         </div>
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Truck className="w-12 h-12 text-gray-400 group-hover:text-primary mb-6 transition-colors" />
-                            <h3 className="text-xl font-bold uppercase mb-3">Rapidez</h3>
+                            <Truck className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <h3 className="text-xl font-bold uppercase mb-3 text-white">Rapidez</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">Envíos a todo el país con la logística más eficiente del mercado.</p>
                         </div>
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Users className="w-12 h-12 text-gray-400 group-hover:text-primary mb-6 transition-colors" />
-                            <h3 className="text-xl font-bold uppercase mb-3">Comunidad</h3>
+                            <Users className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <h3 className="text-xl font-bold uppercase mb-3 text-white">Comunidad</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">Más que clientes, somos una familia unida por el estilo.</p>
                         </div>
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Trophy className="w-12 h-12 text-gray-400 group-hover:text-primary mb-6 transition-colors" />
-                            <h3 className="text-xl font-bold uppercase mb-3">Exclusividad</h3>
+                            <Trophy className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <h3 className="text-xl font-bold uppercase mb-3 text-white">Exclusividad</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">Acceso a drops limitados y ediciones especiales que no verás en otro lado.</p>
                         </div>
                     </div>
