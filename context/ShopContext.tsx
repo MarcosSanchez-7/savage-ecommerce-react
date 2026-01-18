@@ -555,7 +555,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_category_featured: product.isCategoryFeatured,
                 description: product.description,
                 stock_quantity: product.stock || 0,
-                cost_price: product.costPrice || 0
+                cost_price: product.costPrice || 0,
+                slug: product.slug,
+                image_alts: product.imageAlts
             };
 
             const { data, error } = await supabase
@@ -614,7 +616,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_category_featured: updatedProduct.isCategoryFeatured,
                 description: updatedProduct.description,
                 stock_quantity: updatedProduct.stock || 0,
-                cost_price: updatedProduct.costPrice || 0
+                cost_price: updatedProduct.costPrice || 0,
+                slug: updatedProduct.slug,
+                image_alts: updatedProduct.imageAlts
             };
 
             const { error } = await supabase

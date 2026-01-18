@@ -30,6 +30,21 @@ import { openGooglePicker } from '../services/googlePickerService';
 import { Loader2, UploadCloud, Image as GoogleIcon } from 'lucide-react';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
 
+// Helper to generate URL-friendly slugs
+const generateSlug = (text: string) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .normalize('NFD') // Separate accents
+        .replace(/[\u0300-\u036f]/g, '') // Remove accents
+        .trim()
+        .replace(/\s+/g, '-') // Replace spaces with -
+        .replace(/[^\w\-]+/g, '') // Remove all non-word chars
+        .replace(/\-\-+/g, '-') // Replace multiple - with single -
+        .replace(/^-+/, '') // Trim - from start
+        .replace(/-+$/, ''); // Trim - from end
+};
+
 const AdminDashboard: React.FC = () => {
     const {
         products, addProduct, updateProduct, deleteProduct,
@@ -287,7 +302,7 @@ const AdminDashboard: React.FC = () => {
             isFeatured: product.isFeatured || false,
             isCategoryFeatured: product.isCategoryFeatured || false,
             isCategoryFeatured: product.isCategoryFeatured || false,
-            slug: product.slug, // Preserve existing slug if any
+            slug: product.slug || generateSlug(product.name), // Preserve existing slug or generate from name
             imageAlts: product.imageAlts || product.images.map(() => '') // Initialize alts or defaults
         });
 
@@ -353,27 +368,7 @@ const AdminDashboard: React.FC = () => {
         const totalStock = inventory.reduce((acc, item) => acc + item.quantity, 0);
         const matrixSizes = inventory.map(item => item.size);
 
-        // Slug Generation Helper
-        const generateSlug = (text: string) => {
-            return text
-                .toString()
-                .toLowerCase()
-                .normalize('NFD') // Separate accents
-                .replace(/[\u0300-\u036f]/g, '') // Remove accents
-                .trim()
-                .replace(/\s+/g, '-') // Replace spaces with -
-                .replace(/[^\w\-]+/g, '') // Remove all non-word chars
-                .replace(/\-\-+/g, '-') // Replace multiple - with single -
-                .replace(/^-+/, '') // Trim - from start
-                .replace(/-+$/, ''); // Trim - from end
-        };
-
-        // Ensure slug is unique-ish or just based on name. 
-        // Ideally we check against database, but for now we generate based on name.
-        // If editing, use existing slug if name hasn't changed? 
-        // Actually, let's just regenerate from name to ensure it's always sync. 
-        // Or prefer existing slug if passed.
-        // User request: "generate automatically based on name".
+        // Slug Logic
         const productSlug = newProduct.slug && newProduct.slug.trim() !== ''
             ? newProduct.slug
             : generateSlug(newProduct.name);
@@ -1087,10 +1082,41 @@ const AdminDashboard: React.FC = () => {
                                             <input
                                                 type="text"
                                                 value={newProduct.name}
-                                                onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setNewProduct(prev => ({
+                                                        ...prev,
+                                                        name: val,
+                                                        slug: !editingProductId ? generateSlug(val) : prev.slug
+                                                    }));
+                                                }}
                                                 className="w-full bg-transparent border-b border-gray-800 text-xl font-bold text-white placeholder-gray-800 focus:border-white focus:outline-none transition-colors py-2"
                                                 placeholder="Ej. Camiseta Titular 2024"
                                             />
+                                        </div>
+
+                                        {/* Slug Line (SEO) */}
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">URL Slug (SEO)</label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setNewProduct(prev => ({ ...prev, slug: generateSlug(prev.name) }))}
+                                                    className="text-[10px] text-primary hover:underline font-bold uppercase"
+                                                >
+                                                    Regenerar desde Nombre
+                                                </button>
+                                            </div>
+                                            <div className="flex items-center gap-2 bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-3 opacity-80 focus-within:opacity-100 transition-opacity focus-within:border-primary/50">
+                                                <span className="text-gray-500 text-xs font-mono select-none">savageeepy.com/product/</span>
+                                                <input
+                                                    type="text"
+                                                    value={newProduct.slug}
+                                                    onChange={e => setNewProduct({ ...newProduct, slug: e.target.value })}
+                                                    className="w-full bg-transparent border-none text-sm font-mono text-white focus:outline-none placeholder-gray-700"
+                                                    placeholder="nombre-del-producto-seo"
+                                                />
+                                            </div>
                                         </div>
 
                                         {/* Categories Grid */}
