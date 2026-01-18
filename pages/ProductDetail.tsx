@@ -10,7 +10,7 @@ import { ShoppingBag, ArrowLeft, Star, Share2, Heart } from 'lucide-react';
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { products, addToCart, cart, socialConfig } = useShop();
+    const { products, addToCart, cart, socialConfig, toggleCart } = useShop();
     // const { favorites, toggleFavorite } = useShop(); // Removed favorites
 
     // Check if slug looks like a UUID (fallback for old links)
@@ -37,16 +37,16 @@ const ProductDetail: React.FC = () => {
         ? product.inventory.every(i => Number(i.quantity) === 0)
         : product.stock === 0;
 
-    const handleWhatsAppOrder = () => {
+    const handleAddToCart = () => {
         if (isTotallyOutOfStock) return;
 
-        // Build Message
-        const sizeInfo = selectedSize || (isAccessory ? 'Único' : 'No especificado');
-        const message = `Hola! Quiero más info de: ${product.name} (Talle: ${sizeInfo}). ID: ${product.id}`;
+        if (product.sizes && product.sizes.length > 0 && !selectedSize && !isAccessory) {
+            alert('Por favor selecciona un talle para continuar.');
+            return;
+        }
 
-        // WhatsApp URL
-        const number = socialConfig.whatsapp ? socialConfig.whatsapp.replace(/\D/g, '') : '595983840235'; // Fallback
-        window.open(`https://wa.me/${number}?text=${encodeURIComponent(message)}`, '_blank');
+        addToCart(product, selectedSize || 'Único');
+        toggleCart();
     };
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -170,23 +170,17 @@ const ProductDetail: React.FC = () => {
 
                         <div className="mt-auto space-y-4">
                             <button
-                                onClick={handleWhatsAppOrder}
+                                onClick={handleAddToCart}
                                 disabled={isTotallyOutOfStock}
-                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#25D366] hover:bg-[#20b858] text-white shadow-lg lg:hover:scale-[1.01]'}`}
+                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded-sm transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-[#cda434] text-black shadow-[0_0_20px_rgba(212,175,55,0.3)] lg:hover:scale-[1.01]'}`}
                             >
                                 {isTotallyOutOfStock ? 'AGOTADO' : (
                                     <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" /><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1" /></svg>
-                                        PEDIR POR WHATSAPP
+                                        <ShoppingBag size={24} className="fill-black" />
+                                        AÑADIR AL CARRITO
                                     </>
                                 )}
                             </button>
-
-                            <div className="flex gap-4 mt-4">
-                                <button className="flex-1 py-4 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors text-white">
-                                    <Share2 size={16} /> Compartir
-                                </button>
-                            </div>
                         </div>
 
                         {/* Recommendations Section */}

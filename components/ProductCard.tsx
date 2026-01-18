@@ -93,12 +93,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
           <button
             onClick={(e) => {
               e.stopPropagation();
-              const section = document.getElementById(product.category);
-              if (section) {
-                section.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                navigate(`/?category=${product.category}`); // Fallback if regular nav
-              }
+              navigate(`/category/${product.category}`);
             }}
             className="absolute bottom-3 left-3 bg-white/90 backdrop-blur text-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors z-20 flex items-center gap-1"
           >
