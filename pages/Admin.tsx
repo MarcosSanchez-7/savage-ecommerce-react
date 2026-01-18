@@ -18,6 +18,7 @@ import {
     Layers,
     Map,
     Edit,
+    Type,
     Menu,
     ArrowUp,
     ArrowDown,
@@ -62,12 +63,12 @@ const AdminDashboard: React.FC = () => {
         updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
         saveAllData, drops, addDrop, deleteDrop, loading,
-        dropsConfig, updateDropsConfig, updateCategoryOrder
+        dropsConfig, updateDropsConfig, updateCategoryOrder, descriptionTemplates, updateDescriptionTemplates
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
-    const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
+    const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops' | 'texts'>('products');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -144,6 +145,26 @@ const AdminDashboard: React.FC = () => {
             setHeroInterval(heroCarouselConfig.interval / 1000);
         }
     }, [heroSlides, heroCarouselConfig]);
+
+    // Smart Description Logic
+    // Smart Description Logic
+    useEffect(() => {
+        if (!newProduct.description && !editingProductId) {
+            const cat = newProduct.category?.toUpperCase() || '';
+            const sub = newProduct.subcategory?.toUpperCase() || '';
+
+            if (cat === 'INFANTIL' || sub === 'INFANTIL') {
+                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.kids }));
+            } else if (cat === 'CALZADOS' || newProduct.type === 'footwear') {
+                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.shoes }));
+            } else if (cat.includes('PLAYER') || sub.includes('PLAYER')) {
+                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.player }));
+            } else if (cat.includes('FAN') || sub.includes('FAN') || sub.includes('RETRO') || cat.includes('CAMISETAS')) {
+                // Default to Fan for generic 'Camisetas' if not specified otherwise
+                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.fan }));
+            }
+        }
+    }, [newProduct.category, newProduct.subcategory, newProduct.type, descriptionTemplates, editingProductId]);
 
     const handleHeroFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && uploadingSlideId) {
@@ -222,6 +243,20 @@ const AdminDashboard: React.FC = () => {
     const [newCategorySubcats, setNewCategorySubcats] = useState('');
     const [categoryToEdit, setCategoryToEdit] = useState<string | null>(null);
     const [editSubcats, setEditSubcats] = useState('');
+
+    // Description Settings Form
+    const [textsForm, setTextsForm] = useState({ fan: '', player: '', kids: '', shoes: '' });
+
+    useEffect(() => {
+        if (descriptionTemplates) {
+            setTextsForm(descriptionTemplates);
+        }
+    }, [descriptionTemplates]);
+
+    const handleTextsSave = async () => {
+        await updateDescriptionTemplates(textsForm);
+        alert('Plantillas de texto actualizadas!');
+    };
 
     const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size'];
     const footwearSizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
@@ -925,6 +960,9 @@ const AdminDashboard: React.FC = () => {
                     </button>
                     <button onClick={() => setActiveTab('blog')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'blog' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <MessageSquare size={20} /> <span className="font-bold text-sm">Blog / Reviews</span>
+                    </button>
+                    <button onClick={() => setActiveTab('texts')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'texts' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                        <Type size={20} /> <span className="font-bold text-sm">Textos / Descripciones</span>
                     </button>
                     <button onClick={() => setActiveTab('config')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'config' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Settings size={20} /> <span className="font-bold text-sm">Configuración</span>
@@ -2403,6 +2441,79 @@ const AdminDashboard: React.FC = () => {
                                             </button>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+                {
+                    activeTab === 'texts' && (
+                        <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+                            <header className="border-b border-gray-800 pb-6 flex justify-between items-end">
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-2">Configuración de Textos</h2>
+                                    <p className="text-gray-400">Define las descripciones base para el autocompletado en productos.</p>
+                                </div>
+                                <button onClick={handleTextsSave} className="bg-primary hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
+                                    <Save size={18} /> GUARDAR TEXTOS
+                                </button>
+                            </header>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Fan Version */}
+                                <div className="space-y-4">
+                                    <label className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                        Versión Fan
+                                    </label>
+                                    <textarea
+                                        value={textsForm.fan}
+                                        onChange={e => setTextsForm(prev => ({ ...prev, fan: e.target.value }))}
+                                        className="w-full h-40 bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 text-sm text-gray-300 focus:border-primary focus:outline-none transition-colors resize-none font-sans leading-relaxed"
+                                        placeholder="Descripción para camisetas versión Fan..."
+                                    />
+                                </div>
+
+                                {/* Player Version */}
+                                <div className="space-y-4">
+                                    <label className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                                        Versión Player
+                                    </label>
+                                    <textarea
+                                        value={textsForm.player}
+                                        onChange={e => setTextsForm(prev => ({ ...prev, player: e.target.value }))}
+                                        className="w-full h-40 bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 text-sm text-gray-300 focus:border-primary focus:outline-none transition-colors resize-none font-sans leading-relaxed"
+                                        placeholder="Descripción para camisetas versión Player..."
+                                    />
+                                </div>
+
+                                {/* Kids */}
+                                <div className="space-y-4">
+                                    <label className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                        Conjuntos Infantil
+                                    </label>
+                                    <textarea
+                                        value={textsForm.kids}
+                                        onChange={e => setTextsForm(prev => ({ ...prev, kids: e.target.value }))}
+                                        className="w-full h-40 bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 text-sm text-gray-300 focus:border-primary focus:outline-none transition-colors resize-none font-sans leading-relaxed"
+                                        placeholder="Descripción para conjuntos de niños..."
+                                    />
+                                </div>
+
+                                {/* Shoes */}
+                                <div className="space-y-4">
+                                    <label className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                        Calzados Premium
+                                    </label>
+                                    <textarea
+                                        value={textsForm.shoes}
+                                        onChange={e => setTextsForm(prev => ({ ...prev, shoes: e.target.value }))}
+                                        className="w-full h-40 bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 text-sm text-gray-300 focus:border-primary focus:outline-none transition-colors resize-none font-sans leading-relaxed"
+                                        placeholder="Descripción para calzados..."
+                                    />
                                 </div>
                             </div>
                         </div>

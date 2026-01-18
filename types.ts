@@ -190,3 +190,10 @@ export interface UserProfile {
   role?: string;
   created_at?: string;
 }
+
+export interface DescriptionTemplates {
+  fan: string;
+  player: string;
+  kids: string;
+  shoes: string;
+}
