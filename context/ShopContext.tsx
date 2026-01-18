@@ -462,7 +462,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
             return [...prev, { ...product, quantity: 1, selectedSize: finalSize }];
         });
-        setIsCartOpen(true);
+        setIsCartOpen(false); // Disabled auto-open
     };
 
     const removeFromCart = (productId: string, size: string) => {

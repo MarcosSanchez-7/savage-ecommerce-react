@@ -72,7 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
 
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {product.isNew && (
-            <div className="bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+            <div className="bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 uppercase tracking-wider rounded-sm">
               Nuevo
             </div>
           )}
@@ -82,7 +82,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               return !['SIN CATEGORIA', 'SIN CATEGORÍA', 'NUEVO', 'NEW'].includes(t);
             })
             .map(tag => (
-              <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+              <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 uppercase tracking-wider rounded-sm">
                 {tag}
               </div>
             ))}
@@ -95,14 +95,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               e.stopPropagation();
               navigate(`/category/${product.category}`);
             }}
-            className="absolute bottom-3 left-3 bg-white/90 backdrop-blur text-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors z-20 flex items-center gap-1"
+            className="absolute bottom-3 left-3 bg-white/90 backdrop-blur text-black text-[8px] md:text-[10px] font-bold px-2 py-1 md:px-3 md:py-1.5 uppercase tracking-wider rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors z-20 flex items-center gap-1"
           >
             {product.category} <span className="material-symbols-outlined text-[10px]">arrow_outward</span>
           </button>
         )}
 
         {product.originalPrice && product.originalPrice > product.price && (
-          <div className="absolute top-14 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm z-20">
+          <div className="absolute top-14 right-3 bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 uppercase tracking-wider rounded-sm z-20">
             -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
           </div>
         )}

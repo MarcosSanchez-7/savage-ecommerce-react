@@ -109,7 +109,7 @@ const CartDrawer: React.FC = () => {
             />
 
             {/* Drawer */}
-            <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-[100dvh] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
                 <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a]">
                     <div className="flex items-center gap-3">
                         <button onClick={toggleCart} className="md:hidden text-gray-400 hover:text-white">
