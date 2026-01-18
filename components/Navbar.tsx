@@ -12,6 +12,10 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   const { toggleCart, products, categories, favorites } = useShop();
   const { user, signOut, isAdmin } = useAuth();
+
+  // Hide "HUÉRFANOS" from public menu (Catalog Mode)
+  const visibleCategories = categories.filter(c => !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase()));
+
   const [animateCart, setAnimateCart] = useState(false);
 
   // Search State
@@ -118,7 +122,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-0 hidden group-hover:block min-w-[220px] z-50">
                   <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-2 shadow-2xl flex flex-col gap-1 backdrop-blur-md mt-0 animate-in fade-in slide-in-from-top-2">
                     <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0a0a0a] border-t border-l border-gray-800 transform rotate-45"></div>
-                    {categories.map(cat => (
+                    {visibleCategories.map(cat => (
                       <div key={cat.id} className="relative group/sub">
                         <Link
                           to={`/category/${cat.id}`}
@@ -286,7 +290,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
 
             <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-4 pl-4 ${isMobileCategoriesOpen ? 'max-h-[500px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-              {categories.map(cat => (
+              {visibleCategories.map(cat => (
                 <Link
                   key={cat.id}
                   to={`/category/${cat.id}`}
