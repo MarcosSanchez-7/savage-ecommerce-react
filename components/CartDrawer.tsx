@@ -109,8 +109,8 @@ const CartDrawer: React.FC = () => {
             />
 
             {/* Drawer */}
-            <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-[100dvh] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
-                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a]">
+            <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 isolate">
+                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a] flex-none z-10">
                     <div className="flex items-center gap-3">
                         <button onClick={toggleCart} className="md:hidden text-gray-400 hover:text-white">
                             <ArrowLeft size={20} />
@@ -122,7 +122,7 @@ const CartDrawer: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-[420px]">
                     {cart.length === 0 ? (
                         <div className="text-center text-gray-500 mt-20">
                             <p>Tu carrito está vacío.</p>
@@ -163,8 +163,8 @@ const CartDrawer: React.FC = () => {
                                                 <select
                                                     value={item.selectedSize}
                                                     onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
-                                                    className="bg-[#111] border border-gray-700 text-white text-[10px] rounded px-1.5 py-0.5 outline-none focus:border-white appearance-none cursor-pointer hover:bg-gray-900 transition-colors"
-                                                    style={{ backgroundImage: 'none' }}
+                                                    className="bg-[#111] border border-gray-700 text-white text-[10px] rounded px-1.5 py-0.5 outline-none focus:border-white appearance-none cursor-pointer hover:bg-gray-900 transition-colors text-center w-full min-w-[30px]"
+                                                    style={{ backgroundImage: 'none', textAlignLast: 'center' }}
                                                 >
                                                     {item.sizes.map(s => (
                                                         <option key={s} value={s} className="bg-white text-black">{s}</option>
@@ -202,7 +202,7 @@ const CartDrawer: React.FC = () => {
                 </div>
 
                 {cart.length > 0 && (
-                    <div className="p-4 border-t border-gray-800 bg-[#0a0a0a]">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-[#0a0a0a] z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-gray-400 text-xs">Subtotal</span>
                             <span className="text-sm font-bold font-mono">Gs. {cartTotal.toLocaleString()}</span>
