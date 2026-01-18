@@ -46,7 +46,6 @@ const ProductDetail: React.FC = () => {
         }
 
         addToCart(product, selectedSize || 'Único');
-        addToCart(product, selectedSize || 'Único');
         // toggleCart(); // Disabled auto-open
         // Maybe add a toast here? User asked for "value... in preview".
         // Use a simple alert or toast if available. For now, rely on badge count.

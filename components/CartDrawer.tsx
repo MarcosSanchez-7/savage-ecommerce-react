@@ -122,7 +122,7 @@ const CartDrawer: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-[420px]">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {cart.length === 0 ? (
                         <div className="text-center text-gray-500 mt-20">
                             <p>Tu carrito está vacío.</p>
@@ -202,7 +202,7 @@ const CartDrawer: React.FC = () => {
                 </div>
 
                 {cart.length > 0 && (
-                    <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-[#0a0a0a] z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+                    <div className="p-4 border-t border-gray-800 bg-[#0a0a0a] flex-none z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-gray-400 text-xs">Subtotal</span>
                             <span className="text-sm font-bold font-mono">Gs. {cartTotal.toLocaleString()}</span>

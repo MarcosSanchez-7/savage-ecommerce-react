@@ -22,7 +22,7 @@ const Home: React.FC = () => {
     // Categories are now directly from context (objects)
 
     return (
-        <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
+        <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white overflow-x-hidden">
             <Navbar cartCount={cartCount} />
 
             <main>
