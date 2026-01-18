@@ -951,7 +951,7 @@ const AdminDashboard: React.FC = () => {
                 {/* ANALYTICS TAB */}
                 {activeTab === 'analytics' && (
                     <div className="max-w-7xl mx-auto space-y-12">
-                       <AdminAnalytics />
+                        <AdminAnalytics />
                     </div>
                 )}
 

@@ -30,10 +30,10 @@ const CartDrawer: React.FC = () => {
         if (isCartOpen) {
             document.body.style.overflow = 'hidden';
         } else {
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = '';
         }
         return () => {
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = '';
         };
     }, [isCartOpen]);
 
@@ -110,19 +110,19 @@ const CartDrawer: React.FC = () => {
 
             {/* Drawer */}
             <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
-                <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a]">
-                    <div className="flex items-center gap-4">
+                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a]">
+                    <div className="flex items-center gap-3">
                         <button onClick={toggleCart} className="md:hidden text-gray-400 hover:text-white">
-                            <ArrowLeft size={24} />
+                            <ArrowLeft size={20} />
                         </button>
-                        <h2 className="text-xl font-bold tracking-wider">CARRITO ({cart.length})</h2>
+                        <h2 className="text-lg font-bold tracking-wider">CARRITO ({cart.length})</h2>
                     </div>
                     <button onClick={toggleCart} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                        <X size={20} />
+                        <X size={18} />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {cart.length === 0 ? (
                         <div className="text-center text-gray-500 mt-20">
                             <p>Tu carrito está vacío.</p>
@@ -138,58 +138,60 @@ const CartDrawer: React.FC = () => {
                         </div>
                     ) : (
                         cart.map(item => (
-                            <div key={`${item.id}-${item.selectedSize}`} className="flex gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                            <div key={`${item.id}-${item.selectedSize}`} className="flex gap-3 p-2 bg-white/5 rounded-lg border border-white/5">
                                 <img
                                     src={item.images ? item.images[0] : 'https://via.placeholder.com/150'}
                                     alt={item.name}
-                                    className="w-20 h-20 object-cover rounded-md"
+                                    className="w-14 h-14 object-cover rounded-md"
                                 />
                                 <div className="flex-1">
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="font-bold text-sm">{item.name}</h3>
+                                    <div className="flex justify-between items-start mb-1">
+                                        <h3 className="font-bold text-xs line-clamp-2 md:line-clamp-1 pr-2">{item.name}</h3>
                                         <button
                                             onClick={() => removeFromCart(item.id, item.selectedSize)}
                                             className="text-gray-500 hover:text-red-500 transition-colors"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
-                                    <p className="text-accent-gray text-xs mb-2">{item.category}</p>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <p className="text-accent-gray text-[10px] uppercase">{item.category}</p>
 
-                                    {/* Size Selector */}
-                                    <div className="mb-3">
-                                        {item.sizes && item.sizes.length > 0 && (
-                                            <select
-                                                value={item.selectedSize}
-                                                onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
-                                                className="w-full bg-[#111] border border-gray-700 text-white text-sm rounded-md px-3 py-2 outline-none focus:border-white appearance-none cursor-pointer hover:bg-gray-900 transition-colors"
-                                                style={{ backgroundImage: 'none' }}
-                                            >
-                                                {item.sizes.map(s => (
-                                                    <option key={s} value={s} className="bg-white text-black">{s}</option>
-                                                ))}
-                                            </select>
-                                        )}
-                                        {(!item.sizes || item.sizes.length === 0) && (
-                                            <span className="text-xs text-gray-400">One Size</span>
-                                        )}
+                                        {/* Size Selector Compact */}
+                                        <div className="relative">
+                                            {item.sizes && item.sizes.length > 0 && (
+                                                <select
+                                                    value={item.selectedSize}
+                                                    onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
+                                                    className="bg-[#111] border border-gray-700 text-white text-[10px] rounded px-1.5 py-0.5 outline-none focus:border-white appearance-none cursor-pointer hover:bg-gray-900 transition-colors"
+                                                    style={{ backgroundImage: 'none' }}
+                                                >
+                                                    {item.sizes.map(s => (
+                                                        <option key={s} value={s} className="bg-white text-black">{s}</option>
+                                                    ))}
+                                                </select>
+                                            )}
+                                            {(!item.sizes || item.sizes.length === 0) && (
+                                                <span className="text-[10px] text-gray-400">Único</span>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="flex justify-between items-center">
-                                        <span className="font-mono font-bold">Gs. {item.price.toLocaleString()}</span>
-                                        <div className="flex items-center gap-3 bg-black rounded-lg px-2 py-1 border border-gray-800">
+                                        <span className="font-mono font-bold text-sm">Gs. {item.price.toLocaleString()}</span>
+                                        <div className="flex items-center gap-2 bg-black rounded px-1.5 py-0.5 border border-gray-800">
                                             <button
                                                 onClick={() => updateQuantity(item.id, item.selectedSize, -1)}
-                                                className="p-1 hover:text-primary transition-colors disabled:opacity-50"
+                                                className="hover:text-primary transition-colors disabled:opacity-50"
                                             >
-                                                <Minus size={12} />
+                                                <Minus size={10} />
                                             </button>
-                                            <span className="text-sm w-4 text-center">{item.quantity}</span>
+                                            <span className="text-xs w-3 text-center font-bold">{item.quantity}</span>
                                             <button
                                                 onClick={() => updateQuantity(item.id, item.selectedSize, 1)}
-                                                className="p-1 hover:text-primary transition-colors"
+                                                className="hover:text-primary transition-colors"
                                             >
-                                                <Plus size={12} />
+                                                <Plus size={10} />
                                             </button>
                                         </div>
                                     </div>
@@ -200,28 +202,28 @@ const CartDrawer: React.FC = () => {
                 </div>
 
                 {cart.length > 0 && (
-                    <div className="p-6 border-t border-gray-800 bg-[#0a0a0a]">
-                        <div className="flex justify-between items-center mb-6">
-                            <span className="text-gray-400">Total Productos</span>
-                            <span className="text-xl font-bold font-mono">Gs. {cartTotal.toLocaleString()}</span>
+                    <div className="p-4 border-t border-gray-800 bg-[#0a0a0a]">
+                        <div className="flex justify-between items-center mb-4">
+                            <span className="text-gray-400 text-xs">Subtotal</span>
+                            <span className="text-sm font-bold font-mono">Gs. {cartTotal.toLocaleString()}</span>
                         </div>
                         {selectedLocation && (
-                            <div className="flex justify-between items-center mb-6 animate-in fade-in">
-                                <span className="text-gray-400 flex items-center gap-2"><Truck size={16} /> Costo de Envío</span>
+                            <div className="flex justify-between items-center mb-4 animate-in fade-in">
+                                <span className="text-gray-400 flex items-center gap-1 text-xs"><Truck size={12} /> Envío</span>
                                 {shippingCost > 0 ? (
-                                    <span className="text-white font-bold font-mono">Gs. {shippingCost.toLocaleString()}</span>
+                                    <span className="text-white font-bold font-mono text-sm">Gs. {shippingCost.toLocaleString()}</span>
                                 ) : (
-                                    <span className="text-yellow-500 font-bold text-xs uppercase">A convenir / Fuera de Zona</span>
+                                    <span className="text-yellow-500 font-bold text-[10px] uppercase">A convenir</span>
                                 )}
                             </div>
                         )}
-                        <div className="flex justify-between items-center mb-6 pt-4 border-t border-gray-800">
-                            <span className="text-gray-200 font-bold uppercase">Total a Pagar</span>
-                            <span className="text-2xl text-primary font-black font-mono">Gs. {finalTotal.toLocaleString()}</span>
+                        <div className="flex justify-between items-center mb-4 pt-3 border-t border-gray-800">
+                            <span className="text-gray-200 font-bold uppercase text-sm">Total</span>
+                            <span className="text-lg text-primary font-black font-mono">Gs. {finalTotal.toLocaleString()}</span>
                         </div>
                         <button
                             onClick={handleCheckout}
-                            className="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2"
+                            className="w-full bg-primary hover:bg-red-700 text-black font-black py-3 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2 text-sm"
                         >
                             CONFIRMAR PEDIDO
                         </button>

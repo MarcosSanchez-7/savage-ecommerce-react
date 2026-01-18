@@ -4,6 +4,13 @@ import { Shield, Users, Trophy, Truck, ArrowLeft } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const AboutUs: React.FC = () => {
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+        // Safeguard to ensure scroll is unlocked
+        document.body.style.overflow = 'auto';
+        return () => { document.body.style.overflow = ''; }; // Clean up
+    }, []);
+
     return (
         <div className="bg-black min-h-screen text-white pt-20 relative">
             <SEO
