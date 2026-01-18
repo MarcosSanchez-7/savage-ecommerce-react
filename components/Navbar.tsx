@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, X, ArrowLeft, Heart, User, ShoppingBag, Menu, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
+import { Search, X, ArrowLeft, Heart, User, ShoppingCart, Menu, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
 
 interface NavbarProps {
@@ -243,7 +243,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
               onClick={toggleCart}
               className={`relative flex items-center justify-center p-2 text-white hover:text-primary transition-colors ${animateCart ? 'text-primary scale-110' : ''}`}
             >
-              <ShoppingBag size={22} />
+              <ShoppingCart size={20} />
               {cartCount > 0 && (
                 <span className="absolute top-0 right-0 bg-primary text-white text-[9px] font-bold px-1 rounded-full min-w-[14px] h-[14px] flex items-center justify-center border border-black">
                   {cartCount}
