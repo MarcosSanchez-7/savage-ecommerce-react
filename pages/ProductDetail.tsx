@@ -176,7 +176,7 @@ const ProductDetail: React.FC = () => {
                             >
                                 {isTotallyOutOfStock ? 'AGOTADO' : (
                                     <>
-                                        <ShoppingBag size={24} className="fill-black" />
+                                        <ShoppingBag size={24} className="text-black" />
                                         AÑADIR AL CARRITO
                                     </>
                                 )}
