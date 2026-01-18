@@ -81,14 +81,29 @@ const CartDrawer: React.FC = () => {
 
         // WhatsApp Checkout Logic
         const phoneNumber = socialConfig.whatsapp || "595983840235";
+        const domain = window.location.hostname.includes('localhost') ? window.location.origin : 'https://www.savageeepy.com';
 
         // Helper for formatting currency
         const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
 
+        // Helper to shorten image URL
+        const getShortImgLink = (fullUrl: string) => {
+            try {
+                const fileName = fullUrl.split('/').pop(); // Extracts 'file.jpg' from '.../product-images/file.jpg'
+                if (!fileName) return fullUrl;
+                return `${domain}/view-img/${fileName}`;
+            } catch (e) {
+                return fullUrl;
+            }
+        };
+
         const message = `👋 Hola! Me gustaría confirmar la disponibilidad de talles para el siguiente pedido:\n\n` +
             `*PEDIDO #${displayId}*\n` +
             cart.map(item => {
-                const imgLink = item.images && item.images.length > 0 ? `\n🖼️ Ver foto: ${item.images[0]}` : '';
+                // Generate Short Link
+                const imgLink = item.images && item.images.length > 0
+                    ? `\n🖼️ Ver foto: ${getShortImgLink(item.images[0])}`
+                    : '';
                 return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle Seleccionado: ${item.selectedSize}${imgLink}`;
             }).join('\n\n') +
             `\n\n--------------------------------\n` +
@@ -96,7 +111,8 @@ const CartDrawer: React.FC = () => {
             `🚚 *ENVÍO:* ${shippingCost > 0 ? formatPrice(shippingCost) : 'A convenir'}\n` +
             `--------------------------------\n` +
             `*TOTAL FINAL:* ${formatPrice(finalTotal)}\n` +
-            `\n📍 *Ubicación:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}`;
+            `\n📍 *Ubicación:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}\n` +
+            `\n🔗 *Ver Resumen Visual:* ${domain}/order-summary/${orderId}`;
 
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
