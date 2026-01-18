@@ -14,7 +14,9 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   const { user, signOut, isAdmin } = useAuth();
 
   // Hide "HUÉRFANOS" from public menu (Catalog Mode)
-  const visibleCategories = categories.filter(c => !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase()));
+  const visibleCategories = categories
+    .filter(c => !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase()))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const [animateCart, setAnimateCart] = useState(false);
 
