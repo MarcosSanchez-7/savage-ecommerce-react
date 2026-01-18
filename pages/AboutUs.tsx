@@ -45,13 +45,13 @@ const AboutUs: React.FC = () => {
                         </h2>
                         <div className="space-y-6 text-gray-400 leading-loose text-lg">
                             <p>
-                                Savage nació de una obsesión: la búsqueda de la perfección en el estilo. Nos dimos cuenta de que en Paraguay faltaba un lugar que fusionara la cultura del streetwear global con la pasión innegable por el fútbol retro y moderno.
+                                Savage nació en Asunción de una obsesión por la perfección en el estilo. Nos dimos cuenta de que en Paraguay faltaba un lugar que fusionara la cultura del streetwear global con la pasión innegable por el fútbol retro y moderno.
                             </p>
                             <p>
-                                Comenzamos como un pequeño proyecto de importación de camisetas exclusivas, pero nuestra comunidad exigía más. Querían calidad, querían exclusividad, y querían una experiencia que los hiciera sentir parte de algo grande.
+                                Comenzamos como un proyecto enfocado en la exclusividad, y hoy nuestra mayor especialización son las camisetas de fútbol, nuestro punto fuerte y el corazón de la tienda. Somos una experiencia 100% online: no tenemos tienda física, lo que nos permite concentrarnos totalmente en la logística y en ofrecerte la mejor calidad del mercado directamente a tu puerta.
                             </p>
                             <p>
-                                Hoy, Savage Store es el referente número uno para quienes no se conforman con lo básico. Buscamos las piezas más codiciadas alrededor del mundo y las traemos directamente a tu puerta.
+                                Estamos en constante crecimiento, expandiéndonos hacia nuevos artículos y accesorios, buscando siempre la mejor alternativa para quienes no se conforman con lo básico.
                             </p>
                         </div>
                     </div>
@@ -71,22 +71,22 @@ const AboutUs: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-6 md:px-12">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Shield className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <Shield className="w-12 h-12 text-primary mb-6 transition-colors" strokeWidth={1.5} />
                             <h3 className="text-xl font-bold uppercase mb-3 text-white">Autenticidad</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">Calidad Premium Garantizada.</p>
                         </div>
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Truck className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <Truck className="w-12 h-12 text-primary mb-6 transition-colors" strokeWidth={1.5} />
                             <h3 className="text-xl font-bold uppercase mb-3 text-white">Rapidez</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">Envíos a todo el país con la logística más eficiente del mercado.</p>
                         </div>
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Users className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <Users className="w-12 h-12 text-primary mb-6 transition-colors" strokeWidth={1.5} />
                             <h3 className="text-xl font-bold uppercase mb-3 text-white">Comunidad</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">Más que clientes, somos una familia unida por el estilo.</p>
                         </div>
                         <div className="p-8 bg-black/50 border border-white/10 rounded-xl hover:border-primary/50 transition-colors group">
-                            <Trophy className="w-12 h-12 text-primary mb-6 transition-colors" />
+                            <Trophy className="w-12 h-12 text-primary mb-6 transition-colors" strokeWidth={1.5} />
                             <h3 className="text-xl font-bold uppercase mb-3 text-white">Exclusividad</h3>
                             <p className="text-gray-500 text-sm leading-relaxed">Acceso a drops limitados y ediciones especiales que no verás en otro lado.</p>
                         </div>
@@ -97,9 +97,9 @@ const AboutUs: React.FC = () => {
             {/* CTA */}
             <section className="py-32 px-6 text-center">
                 <h2 className="text-4xl md:text-5xl font-black mb-8 uppercase">¿Estás listo para el siguiente nivel?</h2>
-                <a href="/category/all" className="inline-block bg-primary text-black font-black text-lg px-12 py-4 rounded-full hover:scale-105 transition-transform">
-                    VER COLECCIÓN
-                </a>
+                <Link to="/category/Camisetas" className="inline-block bg-primary text-black font-black text-lg px-12 py-4 rounded-full hover:scale-105 transition-transform">
+                    VER CATÁLOGO DE CAMISETAS
+                </Link>
             </section>
         </div>
     );
