@@ -70,8 +70,6 @@ const AdminDashboard: React.FC = () => {
         description: '',
         isFeatured: false,
         isCategoryFeatured: false,
-        isFeatured: false,
-        isCategoryFeatured: false,
         slug: '',
         imageAlts: [] as string[]
     });
@@ -397,8 +395,6 @@ const AdminDashboard: React.FC = () => {
             fit: newProduct.fit,
             isNew: finalTags.includes('Nuevo'),
             isFeatured: newProduct.isFeatured,
-            isCategoryFeatured: newProduct.isCategoryFeatured,
-            description: newProduct.description,
             isCategoryFeatured: newProduct.isCategoryFeatured,
             description: newProduct.description,
             slug: productSlug,

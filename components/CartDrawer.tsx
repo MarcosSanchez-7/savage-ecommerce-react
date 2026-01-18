@@ -85,16 +85,16 @@ const CartDrawer: React.FC = () => {
         // Helper for formatting currency
         const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
 
-        const message = `*NUEVO PEDIDO SAVAGE #${displayId}* \n\n` +
+        const message = `👋 Hola! Me gustaría confirmar la disponibilidad de talles para el siguiente pedido:\n\n` +
+            `*PEDIDO #${displayId}*\n` +
             cart.map(item => {
                 const imgLink = item.images && item.images.length > 0 ? `\n🖼️ Ver foto: ${item.images[0]}` : '';
-                return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle: ${item.selectedSize}\n   Precio: ${formatPrice(item.price * item.quantity)}${imgLink}`;
+                return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle Seleccionado: ${item.selectedSize}${imgLink}`;
             }).join('\n\n') +
             `\n\n--------------------------------\n` +
-            `*SUBTOTAL:* ${formatPrice(cartTotal)}\n` +
-            (shippingCost > 0 ? `*ENVÍO:* ${formatPrice(shippingCost)}\n` : '') +
-            `*TOTAL FINAL:* ${formatPrice(finalTotal)}` +
-            (selectedLocation ? `\n\n📍 *UBICACIÓN DE ENVÍO:*\nhttps://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : '');
+            `*TOTAL APROX:* ${formatPrice(finalTotal)}\n` +
+            (shippingCost > 0 ? `*(Incluye envío estimado)*` : '') +
+            `\n📍 *Ubicación:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}`;
 
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
