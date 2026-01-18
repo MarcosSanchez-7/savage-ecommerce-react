@@ -92,8 +92,10 @@ const CartDrawer: React.FC = () => {
                 return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle Seleccionado: ${item.selectedSize}${imgLink}`;
             }).join('\n\n') +
             `\n\n--------------------------------\n` +
-            `*TOTAL APROX:* ${formatPrice(finalTotal)}\n` +
-            (shippingCost > 0 ? `*(Incluye envío estimado)*` : '') +
+            `💵 *PRODUCTOS:* ${formatPrice(cartTotal)}\n` +
+            `🚚 *ENVÍO:* ${shippingCost > 0 ? formatPrice(shippingCost) : 'A convenir'}\n` +
+            `--------------------------------\n` +
+            `*TOTAL FINAL:* ${formatPrice(finalTotal)}\n` +
             `\n📍 *Ubicación:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}`;
 
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
