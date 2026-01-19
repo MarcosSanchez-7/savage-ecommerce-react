@@ -669,9 +669,17 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const deleteProduct = async (productId: string) => {
         // Optimistic UI
+        const previousProducts = [...products];
         setProducts(prev => prev.filter(p => p.id !== productId));
 
         try {
+            // 1. Manual Cascade: Delete dependencies first
+            // Supabase might have foreign key constraints that prevent deleting the product
+            // if we don't delete the children first (unless ON DELETE CASCADE is set in DB).
+            await supabase.from('inventory').delete().eq('product_id', productId);
+            await supabase.from('favorites').delete().eq('product_id', productId);
+
+            // 2. Delete the Product
             const { error } = await supabase
                 .from('products')
                 .delete()
@@ -679,11 +687,16 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error deleting product from Supabase:', error);
+                alert(`Error al eliminar de la base de datos: ${error.message}`);
+                setProducts(previousProducts); // Revert on specific error
             }
         } catch (err) {
-            console.error(err);
+            console.error("Exception deleting product:", err);
+            setProducts(previousProducts); // Revert
+            alert("Ocurrió un error inesperado al eliminar el producto.");
         }
     };
+
 
     const updateHeroSlides = async (slides: HeroSlide[]) => {
         setHeroSlides(slides);
