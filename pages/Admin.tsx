@@ -96,9 +96,13 @@ const AdminDashboard: React.FC = () => {
     const [stockMatrix, setStockMatrix] = useState<{ size: string; quantity: number }[]>([]);
 
     useEffect(() => {
-        // Prevent reset if loading a product for edit
+        // Prevent reset if loading a product for edit. 
+        // We use a timeout to clear the flag to ensure it survives React Strict Mode's double-invocation
+        // and any immediate re-renders caused by state updates.
         if (isLoadingProductRef.current) {
-            isLoadingProductRef.current = false;
+            setTimeout(() => {
+                isLoadingProductRef.current = false;
+            }, 600); // 600ms buffer to ensure UI is fully settled
             return;
         }
 
@@ -285,7 +289,6 @@ const AdminDashboard: React.FC = () => {
             description: '',
             isFeatured: false,
             isCategoryFeatured: false,
-            isCategoryFeatured: false,
             slug: '',
             imageAlts: []
         });
@@ -337,7 +340,6 @@ const AdminDashboard: React.FC = () => {
             fit: product.fit || '',
             description: product.description || '',
             isFeatured: product.isFeatured || false,
-            isCategoryFeatured: product.isCategoryFeatured || false,
             isCategoryFeatured: product.isCategoryFeatured || false,
             slug: product.slug || generateSlug(product.name), // Preserve existing slug or generate from name
             imageAlts: product.imageAlts || product.images.map(() => '') // Initialize alts or defaults
@@ -983,7 +985,6 @@ const AdminDashboard: React.FC = () => {
             </aside>
 
             {/* Main Content */}
-            {/* Main Content */}
             <main id="admin-main-content" className="flex-1 p-4 md:p-10 overflow-y-auto h-[calc(100vh-73px)] md:h-screen">
 
                 {/* ANALYTICS TAB */}
@@ -1343,10 +1344,13 @@ const AdminDashboard: React.FC = () => {
                                                         <div className="flex items-center gap-4">
                                                             <div className="flex items-center gap-2">
                                                                 <input
-                                                                    type="number"
+                                                                    type="text"
+                                                                    inputMode="numeric"
+                                                                    pattern="[0-9]*"
                                                                     value={item.quantity}
                                                                     onChange={(e) => {
-                                                                        const val = parseInt(e.target.value) || 0;
+                                                                        const val = e.target.value === '' ? 0 : parseInt(e.target.value);
+                                                                        if (isNaN(val)) return; // Prevent non-numeric
                                                                         const newMatrix = [...stockMatrix];
                                                                         newMatrix[index].quantity = val;
                                                                         setStockMatrix(newMatrix);

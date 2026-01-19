@@ -69,7 +69,7 @@ export const uploadProductImage = async (file: File, folder?: string): Promise<s
         // Debug log
         console.log(`[Upload] Original: ${(file.size / 1024).toFixed(2)} KB | WebP: ${(compressedFile.size / 1024).toFixed(2)} KB`);
 
-        // Generate unique filename safely
+        // Create a unique file name
         const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
         const cleanName = compressedFile.name.toLowerCase().replace(/[^a-z0-9-.]/g, '-'); // Sanitize chars
         // Ensure final name ends in .webp
@@ -77,7 +77,17 @@ export const uploadProductImage = async (file: File, folder?: string): Promise<s
         // Double check uniqueness injecting timestamp if not present
         const storageName = finalName.includes(uniqueSuffix) ? finalName : `${finalName.replace('.webp', '')}-${uniqueSuffix}.webp`;
 
-        const cleanFolder = folder ? folder.toLowerCase().replace(/[^a-z0-9-_]/g, '-') : 'general';
+        // Normalize folder name: Lowercase, remove accents, replace spaces/special chars with single dash
+        const cleanFolder = folder
+            ? folder
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // Remove accents
+                .trim()
+                .replace(/[^a-z0-9-_]+/g, '-')   // Replace non-alphanum with dash
+                .replace(/^-+|-+$/g, '')         // Trim dashes
+            : 'general';
+
         const filePath = `${cleanFolder}/${storageName}`;
 
         // Upload to NEW 'savage-storage' bucket
