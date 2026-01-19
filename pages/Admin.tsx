@@ -1577,18 +1577,23 @@ const AdminDashboard: React.FC = () => {
                                                                                             </div>
 
                                                                                             {/* Stock Pills */}
+                                                                                            {/* Stock Pills - Enforce Server Data Only */}
                                                                                             <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                                                {sortedInventory.length > 0 ? (
-                                                                                                    sortedInventory.map(inv => (
-                                                                                                        <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
-                                                                                                            <span className="text-[10px] font-bold">{inv.size}</span>
-                                                                                                            <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
-                                                                                                        </div>
-                                                                                                    ))
+                                                                                                {p.inventory ? (
+                                                                                                    p.inventory.length > 0 ? (
+                                                                                                        sortedInventory.map(inv => (
+                                                                                                            <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
+                                                                                                                <span className="text-[10px] font-bold">{inv.size}</span>
+                                                                                                                <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                                            </div>
+                                                                                                        ))
+                                                                                                    ) : (
+                                                                                                        <span className="text-[10px] text-gray-600 font-mono border border-dashed border-gray-800 px-2 py-0.5 rounded">Sin Stock Configurado</span>
+                                                                                                    )
                                                                                                 ) : (
-                                                                                                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border bg-gray-800 border-gray-700 text-gray-300">
-                                                                                                        <span className="text-[10px] font-bold">Total</span>
-                                                                                                        <span className={`text-[10px] font-mono ${p.stock && p.stock > 0 ? 'text-green-400' : 'text-red-500'}`}>{p.stock || 0}</span>
+                                                                                                    <div className="flex items-center gap-1">
+                                                                                                        <Loader2 size={10} className="animate-spin text-primary" />
+                                                                                                        <span className="text-[10px] text-gray-500">Sincronizando...</span>
                                                                                                     </div>
                                                                                                 )}
                                                                                             </div>
