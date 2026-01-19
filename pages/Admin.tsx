@@ -283,8 +283,6 @@ const AdminDashboard: React.FC = () => {
         setStockMatrix([]); // Reset matrix 
         // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
         // but if we close the form it's fine. 
-        // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
-        // but if we close the form it's fine. 
         // If we stay on form, `activeFormTab` is still set so it might re-populate or we need to respect the clean state.
         // Actually the useEffect depends on [activeFormTab]. If we don't change default it won't trigger re-set.
         // So we should manually setting it to default 'ESTÁNDAR' behavior or cleared. 
