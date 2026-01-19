@@ -105,7 +105,7 @@ const ProductDetail: React.FC = () => {
                             />
                             {isTotallyOutOfStock && (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="bg-red-600 text-white font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-white transform -rotate-12 shadow-2xl">
+                                    <span className="bg-black text-yellow-500 font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-yellow-500 transform -rotate-12 shadow-2xl">
                                         AGOTADO
                                     </span>
                                 </div>
@@ -174,8 +174,8 @@ const ProductDetail: React.FC = () => {
                                                             : 'border-gray-800 text-gray-400 hover:border-gray-600'
                                                     }`}
                                             >
-                                                <span className={`text-xs sm:text-base ${isOutOfStock ? 'line-through' : ''}`}>{size}</span>
-                                                {isOutOfStock && <span className="absolute text-[8px] font-black top-0 right-1 text-red-700">X</span>}
+                                                <span className={`text-xs sm:text-base ${isOutOfStock ? 'opacity-20' : ''}`}>{size}</span>
+                                                {isOutOfStock && <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[10px] font-bold text-red-500 bg-black/10">AGOTADO</span>}
                                             </button>
                                         );
                                     })}

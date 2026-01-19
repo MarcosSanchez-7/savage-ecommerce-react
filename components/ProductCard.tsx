@@ -54,7 +54,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
         {/* Sold Out Overlay */}
         {isTotallyOutOfStock && (
           <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center">
-            <span className="bg-red-600 text-white font-black px-4 py-2 uppercase tracking-widest text-sm border-2 border-white transform -rotate-12 shadow-xl">
+            <span className="bg-black text-yellow-500 font-black px-4 py-2 uppercase tracking-widest text-sm border-2 border-yellow-500 transform -rotate-12 shadow-xl">
               AGOTADO
             </span>
           </div>

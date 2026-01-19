@@ -296,6 +296,9 @@ const AdminDashboard: React.FC = () => {
     };
 
     const handleEditProduct = async (product: Product) => {
+        // Clear matrix immediately to avoid showing stale data (or zeros) while fetching
+        setStockMatrix([]);
+
         // Map Inventory to Stock Matrix
         let initialMatrix: { size: string; quantity: number }[] = [];
 
