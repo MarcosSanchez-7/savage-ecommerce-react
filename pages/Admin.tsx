@@ -32,6 +32,7 @@ import { uploadProductImage } from '../services/uploadService';
 import { openGooglePicker } from '../services/googlePickerService';
 import { Loader2, UploadCloud, Image as GoogleIcon } from 'lucide-react';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
+import { supabase } from '../services/supabase';
 
 // Helper to generate URL-friendly slugs
 const generateSlug = (text: string) => {
@@ -296,18 +297,33 @@ const AdminDashboard: React.FC = () => {
         setShowProductForm(false);
     };
 
-    const handleEditProduct = (product: Product) => {
+    const handleEditProduct = async (product: Product) => {
         // Map Inventory to Stock Matrix
         let initialMatrix: { size: string; quantity: number }[] = [];
 
-        if (product.inventory && product.inventory.length > 0) {
-            initialMatrix = product.inventory.map(inv => ({ size: inv.size, quantity: inv.quantity }));
-        } else if (product.sizes && product.sizes.length > 0) {
-            // Fallback for old products (sizes only)
-            initialMatrix = product.sizes.map(s => ({ size: s, quantity: Math.floor((product.stock || 0) / product.sizes.length) }));
-            // Distribute stock or just 0? User asked for 0 default but for editing we should show something.
-            // Let's just set 0 if no inventory record.
-            initialMatrix = product.sizes.map(s => ({ size: s, quantity: 0 }));
+        // FORCE FETCH FRESH INVENTORY from Supabase to ensure sync across devices
+        // This overrides whatever might be cached in the 'product' object passed from context
+        try {
+            const { data: freshInventory, error } = await supabase
+                .from('inventory')
+                .select('*')
+                .eq('product_id', product.id);
+
+            if (freshInventory && freshInventory.length > 0) {
+                initialMatrix = freshInventory.map(inv => ({ size: inv.size, quantity: inv.quantity }));
+            } else if (product.inventory && product.inventory.length > 0) {
+                // Fallback to local if fetch fails but local exists (unlikely but safe)
+                initialMatrix = product.inventory.map(inv => ({ size: inv.size, quantity: inv.quantity }));
+            } else if (product.sizes && product.sizes.length > 0) {
+                // Legacy fallback
+                initialMatrix = product.sizes.map(s => ({ size: s, quantity: 0 }));
+            }
+        } catch (err) {
+            console.error("Error fetching fresh inventory:", err);
+            // Fallback to local
+            if (product.inventory) {
+                initialMatrix = product.inventory.map(inv => ({ size: inv.size, quantity: inv.quantity }));
+            }
         }
 
         // Set active tab based on category/type to load correct defaults if needed

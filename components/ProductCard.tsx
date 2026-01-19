@@ -17,9 +17,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
   // const { favorites, toggleFavorite } = useShop();
   // const isFavorite = favorites.includes(product.id);
 
-  const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
-    ? product.inventory.every(i => Number(i.quantity) === 0)
-    : product.stock === 0;
+  const totalStock = product.inventory && product.inventory.length > 0
+    ? product.inventory.reduce((acc, curr) => acc + Number(curr.quantity), 0)
+    : product.stock || 0;
+
+  const isTotallyOutOfStock = totalStock <= 0;
 
   return (
     <div className="group flex flex-col gap-3">
