@@ -152,16 +152,30 @@ const ProductDetail: React.FC = () => {
                                 <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:gap-3">
                                     {product.sizes.map(size => {
                                         const normalizedSize = size.trim().toUpperCase();
+                                        // Check inventory for this specific size
+                                        const invItem = product.inventory?.find(i => i.size.trim().toUpperCase() === normalizedSize);
+                                        // If inventory exists, check quantity. If not, fallback to assuming available (or use global stock)
+                                        // User confirmed they use the matrix, so we should trust 'inventory' if present.
+                                        const isOutOfStock = invItem ? Number(invItem.quantity) <= 0 : (product.inventory && product.inventory.length > 0);
+                                        // Logic: if valid inventory array exists but size not found, it implies 0? Or just checking explicitly found item.
+                                        // Let's assume if it is found and 0, it is out.
+                                        // If product has inventory but this size isn't in it, treat as out? Yes.
+
                                         return (
                                             <button
                                                 key={size}
-                                                onClick={() => setSelectedSize(size)}
-                                                className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
-                                                    ? 'bg-white text-black border-white'
-                                                    : 'border-gray-800 text-gray-400 hover:border-gray-600'
+                                                onClick={() => !isOutOfStock && setSelectedSize(size)}
+                                                disabled={isOutOfStock}
+                                                className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden 
+                                                ${isOutOfStock
+                                                        ? 'bg-gray-900 border-gray-800 text-gray-700 cursor-not-allowed opacity-50 relative'
+                                                        : selectedSize === size
+                                                            ? 'bg-white text-black border-white'
+                                                            : 'border-gray-800 text-gray-400 hover:border-gray-600'
                                                     }`}
                                             >
-                                                <span className="text-xs sm:text-base">{size}</span>
+                                                <span className={`text-xs sm:text-base ${isOutOfStock ? 'line-through' : ''}`}>{size}</span>
+                                                {isOutOfStock && <span className="absolute text-[8px] font-black top-0 right-1 text-red-700">X</span>}
                                             </button>
                                         );
                                     })}

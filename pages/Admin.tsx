@@ -100,31 +100,19 @@ const AdminDashboard: React.FC = () => {
     const isLoadingProductRef = React.useRef(false); // Flag to prevent matrix reset on edit load
     const [isBlogUploading, setIsBlogUploading] = useState(false);
 
+    // Helper for matrix defaults
+    const getDefaultMatrix = (tab: string) => {
+        if (tab === 'ESTÁNDAR') return ['P', 'M', 'G', 'XL', 'XXL'].map(s => ({ size: s, quantity: 0 }));
+        if (tab === 'INFANTIL') return ['4', '6', '8', '10', '12', '14', '16'].map(s => ({ size: s, quantity: 0 }));
+        if (tab === 'CALZADOS') return ['37', '38', '39', '40', '41', '42', '43', '44'].map(s => ({ size: s, quantity: 0 }));
+        if (tab === 'ACCESORIOS') return [{ size: 'Único', quantity: 0 }];
+        return [];
+    };
+
     // Stock Matrix State
     const [stockMatrix, setStockMatrix] = useState<{ size: string; quantity: number }[]>([]);
 
-    useEffect(() => {
-        // Prevent reset if loading a product for edit
-        if (isLoadingProductRef.current || editingProductId) {
-            // Don't reset matrix if we are in "Edit Mode" or currently loading one.
-            if (isLoadingProductRef.current) {
-                setTimeout(() => { isLoadingProductRef.current = false; }, 600);
-            }
-            return;
-        }
-
-        // Initialize matrix based on tab
-        if (activeFormTab === 'ESTÁNDAR') {
-            setStockMatrix(['P', 'M', 'G', 'XL', 'XXL'].map(s => ({ size: s, quantity: 0 })));
-        } else if (activeFormTab === 'INFANTIL') {
-            setStockMatrix(['4', '6', '8', '10', '12', '14', '16'].map(s => ({ size: s, quantity: 0 })));
-        } else if (activeFormTab === 'CALZADOS') {
-            setStockMatrix(['37', '38', '39', '40', '41', '42', '43', '44'].map(s => ({ size: s, quantity: 0 })));
-        } else if (activeFormTab === 'ACCESORIOS') {
-            setStockMatrix([{ size: 'Único', quantity: 0 }]);
-        }
-    }, [activeFormTab, editingProductId]);
-
+    // Removed useEffect that was causing race conditions on mobile
 
 
     // Favicon Upload State
@@ -294,11 +282,14 @@ const AdminDashboard: React.FC = () => {
         setStockMatrix([]); // Reset matrix 
         // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
         // but if we close the form it's fine. 
+        // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
+        // but if we close the form it's fine. 
         // If we stay on form, `activeFormTab` is still set so it might re-populate or we need to respect the clean state.
         // Actually the useEffect depends on [activeFormTab]. If we don't change default it won't trigger re-set.
         // So we should manually setting it to default 'ESTÁNDAR' behavior or cleared. 
         // Let's rely on the useEffect logic by resetting activeFormTab too.
         setActiveFormTab('ESTÁNDAR');
+        setStockMatrix(getDefaultMatrix('ESTÁNDAR'));
 
         setEditingProductId(null);
         setIsImported(false);
@@ -1117,7 +1108,14 @@ const AdminDashboard: React.FC = () => {
                                             <button
                                                 key={tab}
                                                 type="button"
-                                                onClick={() => setActiveFormTab(tab as any)}
+                                                onClick={() => {
+                                                    setActiveFormTab(tab as any);
+                                                    // Only reset/change matrix if we are adding a new product or explicitly want to switch types
+                                                    // If editing, user might want to switch tab to see other defaults or change type.
+                                                    // Let's force reset to the tab's defaults. The issue was *automatic* reset.
+                                                    // Manual click means manual intent.
+                                                    setStockMatrix(getDefaultMatrix(tab));
+                                                }}
                                                 className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
                                             >
                                                 {tab}
