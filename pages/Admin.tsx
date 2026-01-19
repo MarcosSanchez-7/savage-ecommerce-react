@@ -92,17 +92,24 @@ const AdminDashboard: React.FC = () => {
         imageAlts: [] as string[]
     });
 
+    const [editingProductId, setEditingProductId] = useState<string | null>(null);
+    const [isImported, setIsImported] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const blogFileInputRef = React.useRef<HTMLInputElement>(null);
+    const isLoadingProductRef = React.useRef(false); // Flag to prevent matrix reset on edit load
+    const [isBlogUploading, setIsBlogUploading] = useState(false);
+
     // Stock Matrix State
     const [stockMatrix, setStockMatrix] = useState<{ size: string; quantity: number }[]>([]);
 
     useEffect(() => {
-        // Prevent reset if loading a product for edit. 
-        // We use a timeout to clear the flag to ensure it survives React Strict Mode's double-invocation
-        // and any immediate re-renders caused by state updates.
-        if (isLoadingProductRef.current) {
-            setTimeout(() => {
-                isLoadingProductRef.current = false;
-            }, 600); // 600ms buffer to ensure UI is fully settled
+        // Prevent reset if loading a product for edit
+        if (isLoadingProductRef.current || editingProductId) {
+            // Don't reset matrix if we are in "Edit Mode" or currently loading one.
+            if (isLoadingProductRef.current) {
+                setTimeout(() => { isLoadingProductRef.current = false; }, 600);
+            }
             return;
         }
 
@@ -116,15 +123,9 @@ const AdminDashboard: React.FC = () => {
         } else if (activeFormTab === 'ACCESORIOS') {
             setStockMatrix([{ size: 'Único', quantity: 0 }]);
         }
-    }, [activeFormTab]);
+    }, [activeFormTab, editingProductId]);
 
-    const [editingProductId, setEditingProductId] = useState<string | null>(null);
-    const [isImported, setIsImported] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const blogFileInputRef = React.useRef<HTMLInputElement>(null);
-    const isLoadingProductRef = React.useRef(false); // Flag to prevent matrix reset on edit load
-    const [isBlogUploading, setIsBlogUploading] = useState(false);
+
 
     // Favicon Upload State
     const faviconFileInputRef = React.useRef<HTMLInputElement>(null);
@@ -270,8 +271,6 @@ const AdminDashboard: React.FC = () => {
 
     const availableTags = ['Nuevo', 'Oferta', 'Importado', 'Premium', 'Limitado'];
 
-    // --- Product Handlers ---
-    // --- Product Handlers ---
     // --- Product Handlers ---
     const resetForm = () => {
         setNewProduct({
