@@ -440,37 +440,47 @@ const AdminDashboard: React.FC = () => {
             imageAlts: newProduct.imageAlts || validImages.map(() => newProduct.name)
         };
 
+        let finalProductId = editingProductId;
+
         if (editingProductId) {
             await updateProduct(productData);
-            alert('Producto actualizado correctamente.');
+            alert('Producto actualizado correctamente en tabla maestra.');
         } else {
-            // Ensure we use the ID generated above
-            await addProduct(productData);
+            // Wait for the REAL UUID from Supabase
+            const newId = await addProduct(productData);
+            if (!newId) {
+                alert('Error crítico: No se pudo crear el producto en la base de datos (ID nulo). El inventario no se guardó.');
+                return;
+            }
+            finalProductId = newId;
             alert('Producto añadido correctamente.');
         }
 
         // 4. Server-First Inventory Sync
-        // Upsert inventory for EACH size in stockMatrix
-        const inventoryUpdates = stockMatrix.map(item => ({
-            product_id: productData.id,
-            size: item.size,
-            quantity: item.quantity,
-        }));
+        // Upsert inventory for EACH size in stockMatrix using the VALID UUID
+        if (finalProductId) {
+            const inventoryUpdates = stockMatrix.map(item => ({
+                product_id: finalProductId, // Use the real UUID
+                size: item.size,
+                quantity: Number(item.quantity), // Force Number
+            }));
 
-        try {
-            const { error } = await supabase
-                .from('inventory')
-                .upsert(inventoryUpdates, { onConflict: 'product_id, size' });
+            try {
+                const { error } = await supabase
+                    .from('inventory')
+                    .upsert(inventoryUpdates, { onConflict: 'product_id, size' });
 
-            if (error) {
-                console.error('Inventory Sync Error:', error);
-                alert('Error sincronizando inventario. Ver consola.');
-            } else {
-                console.log('Inventory Synced Successfully');
+                if (error) {
+                    console.error('Inventory Sync Error:', error);
+                    alert(`Error sincronizando inventario: ${error.message}`);
+                } else {
+                    console.log('Inventory Synced Successfully for ID:', finalProductId);
+                }
+            } catch (err) {
+                console.error('Inventory Sync Exception:', err);
             }
-        } catch (err) {
-            console.error('Inventory Sync Exception:', err);
         }
+
 
         resetForm();
     };

@@ -559,7 +559,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const addProduct = async (product: Product) => {
+    const addProduct = async (product: Product): Promise<string | null> => {
         // Optimistic UI update (using the temporary ID passed from Admin)
         setProducts(prev => [...prev, product]);
 
@@ -606,6 +606,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                 // Revert optimistic update on error
                 setProducts(prev => prev.filter(p => p.id !== product.id));
+                return null;
             } else if (data) {
                 // Save Inventory
                 if (product.inventory) {
@@ -615,11 +616,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // Success! Update the local state with the REAL UUID from the DB
                 // This replaces the temporary timestamp ID with the valid UUID
                 setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
+                return data.id;
             }
-
+            return null;
         } catch (err) {
             console.error(err);
             setProducts(prev => prev.filter(p => p.id !== product.id));
+            return null;
         }
     };
 
