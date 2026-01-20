@@ -105,7 +105,7 @@ const ProductDetail: React.FC = () => {
                             />
                             {isTotallyOutOfStock && (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="bg-black text-yellow-500 font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-yellow-500 transform -rotate-12 shadow-2xl">
+                                    <span className="bg-black text-white font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-white transform -rotate-12 shadow-2xl">
                                         AGOTADO
                                     </span>
                                 </div>

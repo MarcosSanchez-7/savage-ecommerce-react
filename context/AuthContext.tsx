@@ -57,41 +57,72 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        // Check active session
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
+        // 1. Initialize Session
+        supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
-            if (session?.user) {
-                await fetchProfile(session.user.id, session.user.email);
-            }
-            setLoading(false);
+            // Loading handled by the user-effect below
         }).catch(err => {
             console.error("AuthContext: Failed to get session", err);
             setLoading(false);
         });
 
-        // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        // 2. Listen for Auth Changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            console.log("AuthContext: Auth change event:", _event);
             setSession(session);
             setUser(session?.user ?? null);
 
-            try {
-                if (session?.user) {
-                    // Only fetch if profile isn't already synced or user changed
-                    await fetchProfile(session.user.id, session.user.email);
-                } else {
-                    setProfile(null);
-                    setIsAdmin(false);
-                }
-            } catch (e) {
-                console.error("AuthContext: Profile sync error", e);
-            } finally {
+            // If we signed out, clear everything immediately
+            if (_event === 'SIGNED_OUT' || !session) {
+                setProfile(null);
+                setIsAdmin(false);
                 setLoading(false);
             }
         });
 
         return () => subscription.unsubscribe();
     }, []);
+
+    // 3. Dedicated Effect for Profile Fetching (Prevents Loops)
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadProfile = async () => {
+            // If no user, we are done loading (unless we are in the middle of a sign-in check, but session init handles that)
+            if (!user) {
+                if (session === null) setLoading(false); // Only stop loading if session is definitely null
+                return;
+            }
+
+            // If we already have a profile for this user, don't re-fetch
+            if (profile && profile.id === user.id) {
+                setLoading(false);
+                return;
+            }
+
+            console.log("AuthContext: User detected, fetching profile...", user.id);
+
+            // Safety Timeout logic
+            const timeoutId = setTimeout(() => {
+                if (isMounted && loading) {
+                    console.warn("AuthContext: Profile fetch timed out (5s). Force releasing lock.");
+                    setLoading(false);
+                }
+            }, 5000);
+
+            await fetchProfile(user.id, user.email);
+
+            if (isMounted) {
+                clearTimeout(timeoutId);
+                setLoading(false);
+            }
+        };
+
+        loadProfile();
+
+        return () => { isMounted = false; };
+    }, [user?.id]); // Only re-run if specific user ID changes
 
     const signInWithEmail = async (email: string, password: string) => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
