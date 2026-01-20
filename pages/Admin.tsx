@@ -289,8 +289,8 @@ const AdminDashboard: React.FC = () => {
         setShowProductForm(false);
     };
 
-    const handleEditProduct = async (product: Product) => {
-        // 1. Loading State: Clear matrix immediately
+    const loadProductData = async (product: Product) => {
+        // 1. Loading State: Clear matrix immediately logic
         setStockMatrix([]);
 
         // 2. Strict Sync: Fetch ONLY from database
@@ -303,6 +303,7 @@ const AdminDashboard: React.FC = () => {
             if (error) throw error;
 
             if (freshInventory && freshInventory.length > 0) {
+                // Map directly from DB to UI format
                 const matrix = freshInventory.map(inv => ({ size: inv.size, quantity: inv.quantity }));
                 setStockMatrix(matrix);
             } else {
@@ -311,13 +312,13 @@ const AdminDashboard: React.FC = () => {
         } catch (err) {
             console.error("Error syncing inventory:", err);
             alert("Error al sincronizar inventario. Por favor recarga la página.");
-            return; // Stop editing to prevent saving bad data
+            return; // Stop editing
         }
 
         // 3. Prevent Tab Reset Side-effects
         isLoadingProductRef.current = true;
 
-        // 4. Fill Form
+        // 4. Fill Form - No fallback to local data for stock
         setNewProduct({
             name: product.name,
             price: (product.originalPrice && product.originalPrice > product.price) ? product.price.toString() : product.price.toString(),
@@ -327,7 +328,7 @@ const AdminDashboard: React.FC = () => {
             subcategory: product.subcategory || '',
             type: product.type || 'clothing',
             images: product.images,
-            sizes: product.sizes, // This is just for record, matrix rules
+            sizes: product.sizes, // Keep historical sizes for reference if needed, but matrix rules
             tags: product.tags,
             fit: product.fit || '',
             description: product.description || '',
@@ -1615,7 +1616,7 @@ const AdminDashboard: React.FC = () => {
                                                                                             </span>
 
                                                                                             <div className="flex gap-1 mt-auto pt-4 md:pt-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity bg-[#0F0F0F]/80 backdrop-blur-sm rounded-lg p-1 z-10">
-                                                                                                <button onClick={(e) => { e.stopPropagation(); handleEditProduct(p); }} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
+                                                                                                <button onClick={(e) => { e.stopPropagation(); loadProductData(p); }} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
                                                                                                 <button onClick={(e) => { e.stopPropagation(); if (confirm('¿Eliminar producto?')) deleteProduct(p.id); }} className="p-1.5 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-full transition-colors"><Trash2 size={12} /></button>
                                                                                             </div>
                                                                                         </div>
