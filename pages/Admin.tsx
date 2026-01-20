@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
+import { useAuth } from '../context/AuthContext';
 import {
     Plus,
     Trash2,
@@ -50,6 +51,90 @@ const generateSlug = (text: string) => {
 };
 
 const AdminDashboard: React.FC = () => {
+    // --- AUTH PROTECTION ---
+    const { session, loading: authLoading, signInWithEmail } = useAuth();
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [loginError, setLoginError] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoggingIn(true);
+        setLoginError('');
+
+        const { error } = await signInWithEmail(loginEmail, loginPassword);
+        if (error) {
+            console.error(error);
+            setLoginError('Credenciales incorrectas.');
+            setIsLoggingIn(false);
+        }
+        // If success, session updates automatically and renders dashboard
+    };
+
+    if (authLoading) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <Loader2 className="animate-spin text-primary" size={40} />
+            </div>
+        );
+    }
+
+    if (!session) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-[#050505] border border-gray-800 p-8 rounded-2xl shadow-[0_0_50px_rgba(255,215,0,0.05)]">
+                    <div className="text-center mb-10">
+                        <h1 className="text-4xl font-black text-white italic tracking-tighter mb-2">SAVAGE <span className="text-primary">ADMIN</span></h1>
+                        <p className="text-gray-500 text-[10px] uppercase tracking-[0.2em]">Panel de Control Restringido</p>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Email de Acceso</label>
+                            <input
+                                type="email"
+                                value={loginEmail}
+                                onChange={(e) => setLoginEmail(e.target.value)}
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 text-sm"
+                                placeholder="ceo@savage.com"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Contraseña</label>
+                            <input
+                                type="password"
+                                value={loginPassword}
+                                onChange={(e) => setLoginPassword(e.target.value)}
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 text-sm"
+                                placeholder="••••••••••••"
+                            />
+                        </div>
+
+                        {loginError && (
+                            <div className="text-red-500 text-[10px] font-bold text-center bg-red-900/10 p-3 rounded border border-red-900/20 animate-in fade-in slide-in-from-top-2">
+                                {loginError}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isLoggingIn}
+                            className="w-full bg-primary hover:bg-yellow-500 text-black font-black uppercase py-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed tracking-widest text-xs shadow-lg shadow-primary/20 hover:shadow-primary/40"
+                        >
+                            {isLoggingIn ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <Loader2 className="animate-spin" size={14} /> VERIFICANDO...
+                                </span>
+                            ) : 'INGRESAR AL SISTEMA'}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+    // --- END AUTH PROTECTION ---
+
     const {
         products, addProduct, updateProduct, deleteProduct,
         heroSlides, updateHeroSlides,
