@@ -30,13 +30,11 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
-import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
+import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
-import { uploadProductImage } from '../services/uploadService';
-import { openGooglePicker } from '../services/googlePickerService';
-import { Loader2, UploadCloud, Image as GoogleIcon } from 'lucide-react';
+import { Loader2, UploadCloud } from 'lucide-react';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
-import { supabase } from '../services/supabase';
+import { uploadProductImage as uploadImage } from '../services/uploadService';
 
 // Helper to generate URL-friendly slugs
 const generateSlug = (text: string) => {
@@ -139,7 +137,6 @@ const AdminDashboard: React.FC = () => {
     // --- END AUTH PROTECTION ---
 
     const {
-        products, addProduct, updateProduct, deleteProduct,
         heroSlides, updateHeroSlides,
         orders, updateOrderStatus, deleteOrder, clearOrders,
         blogPosts, addBlogPost, updateBlogPost, deleteBlogPost,
@@ -151,72 +148,22 @@ const AdminDashboard: React.FC = () => {
         heroCarouselConfig,
         updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
-        saveAllData, drops, addDrop, deleteDrop, loading,
-        dropsConfig, updateDropsConfig, updateCategoryOrder, descriptionTemplates, updateDescriptionTemplates
+        saveAllData, loading,
+        updateCategoryOrder, descriptionTemplates, updateDescriptionTemplates
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
-    const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops' | 'texts'>('products');
+    const [activeTab, setActiveTab] = useState<'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'texts'>('orders');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Folder State for Products
-    const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
-    const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
-
-    const toggleCategory = (cat: string) => setOpenCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
-    const toggleSubcategory = (key: string) => setOpenSubcategories(prev => ({ ...prev, [key]: !prev[key] }));
-
-    // Product Form State
-    const [newProduct, setNewProduct] = useState({
-        name: '',
-        price: '',
-        originalPrice: '',
-        costPrice: '',
-        category: '',
-        subcategory: '',
-        type: 'clothing' as 'clothing' | 'footwear',
-        images: [''],
-        sizes: [] as string[],
-        tags: [] as string[],
-        fit: '',
-        description: '',
-        isFeatured: false,
-        isCategoryFeatured: false,
-        slug: '',
-        imageAlts: [] as string[]
-    });
-
-    const [editingProductId, setEditingProductId] = useState<string | null>(null);
-    const [isImported, setIsImported] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const blogFileInputRef = React.useRef<HTMLInputElement>(null);
-    const isLoadingProductRef = React.useRef(false); // Flag to prevent matrix reset on edit load
-    const [isBlogUploading, setIsBlogUploading] = useState(false);
-
-    // Server-First Inventory State
-    const [stockMatrix, setStockMatrix] = useState<{ size: string, quantity: number }[]>([]);
-
-    const getDefaultMatrix = (type: string, category: string) => {
-        let sizes = ['P', 'M', 'G', 'XL'];
-        if (type === 'footwear' || category === 'CALZADOS') {
-            sizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
-        } else if (category === 'INFANTIL') {
-            sizes = ['2', '4', '6', '8', '10', '12', '14', '16'];
-        }
-        return sizes.map(size => ({ size, quantity: 0 }));
-    };
-
-    // Favicon Upload State
     const faviconFileInputRef = React.useRef<HTMLInputElement>(null);
     const [isFaviconUploading, setIsFaviconUploading] = useState(false);
+    const blogFileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isBlogUploading, setIsBlogUploading] = useState(false);
 
-    const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-    const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([]);
-    const [showProductForm, setShowProductForm] = useState(false);
 
     // Hero Form State
     const [heroForm, setHeroForm] = useState<HeroSlide[]>(heroSlides);
@@ -234,50 +181,39 @@ const AdminDashboard: React.FC = () => {
         }
     }, [heroSlides, heroCarouselConfig]);
 
-    // Smart Description Logic
-    // Smart Description Logic
-    useEffect(() => {
-        if (!newProduct.description && !editingProductId) {
-            const cat = newProduct.category?.toUpperCase() || '';
-            const sub = newProduct.subcategory?.toUpperCase() || '';
-
-            if (cat === 'INFANTIL' || sub === 'INFANTIL') {
-                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.kids }));
-            } else if (cat === 'CALZADOS' || newProduct.type === 'footwear') {
-                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.shoes }));
-            } else if (cat.includes('PLAYER') || sub.includes('PLAYER')) {
-                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.player }));
-            } else if (cat.includes('FAN') || sub.includes('FAN') || sub.includes('RETRO') || cat.includes('CAMISETAS')) {
-                // Default to Fan for generic 'Camisetas' if not specified otherwise
-                setNewProduct(prev => ({ ...prev, description: descriptionTemplates.fan }));
-            }
-        }
-
-        // Auto-Generate Stock Matrix for New Products
-        if (!editingProductId && !isLoadingProductRef.current && newProduct.category) {
-            setStockMatrix(getDefaultMatrix(newProduct.type, newProduct.category));
-        }
-
-    }, [newProduct.category, newProduct.subcategory, newProduct.type, descriptionTemplates, editingProductId]);
-
     const handleHeroFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && uploadingSlideId) {
-            setIsUploading(true);
             const file = e.target.files[0];
-            const url = await uploadProductImage(file, 'hero');
-
+            const url = await uploadImage(file, 'hero');
             if (url) {
-                setHeroForm(prev => prev.map(slide =>
-                    slide.id === uploadingSlideId ? { ...slide, image: url } : slide
-                ));
+                setHeroForm(prev => prev.map(s => s.id === uploadingSlideId ? { ...s, image: url } : s));
             }
-
-            setIsUploading(false);
-            setUploadingSlideId(null);
-            if (heroFileInputRef.current) heroFileInputRef.current.value = '';
         }
     };
 
+    const handleBlogFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setIsBlogUploading(true);
+            const file = e.target.files[0];
+            const url = await uploadImage(file, 'blog');
+            if (url) {
+                setBlogForm(prev => ({ ...prev, image: url }));
+            }
+            setIsBlogUploading(false);
+        }
+    };
+
+    const handleFaviconFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setIsFaviconUploading(true);
+            const file = e.target.files[0];
+            const url = await uploadImage(file, 'config');
+            if (url) {
+                setConfigForm(prev => ({ ...prev, favicon: url }));
+            }
+            setIsFaviconUploading(false);
+        }
+    };
     // Blog Form State
     const [blogForm, setBlogForm] = useState({
         title: '',
@@ -290,10 +226,7 @@ const AdminDashboard: React.FC = () => {
 
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
 
-    // Drop Form State
-    const [dropTitle, setDropTitle] = useState('');
-    const [isDropUploading, setIsDropUploading] = useState(false);
-    const dropFileInputRef = React.useRef<HTMLInputElement>(null);
+
 
     // Config Form State
     const [configForm, setConfigForm] = useState({
@@ -352,396 +285,7 @@ const AdminDashboard: React.FC = () => {
         alert('Plantillas de texto actualizadas!');
     };
 
-    const clothingSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'One Size'];
-    const footwearSizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'];
 
-    // Determine available sizes based on type
-    const availableSizes = newProduct.type === 'footwear' ? footwearSizes : clothingSizes;
-
-    const availableTags = ['Nuevo', 'Oferta', 'Importado', 'Premium', 'Limitado'];
-
-    // --- Product Handlers ---
-    const resetForm = () => {
-        setNewProduct({
-            name: '',
-            price: '',
-            originalPrice: '',
-            costPrice: '',
-            category: '',
-            subcategory: '',
-            type: 'clothing',
-            images: [''],
-            sizes: [],
-            tags: [],
-            fit: '',
-            description: '',
-            isFeatured: false,
-            isCategoryFeatured: false,
-            slug: '',
-            imageAlts: []
-        });
-        setActiveFormTab('ESTÁNDAR');
-
-        setEditingProductId(null);
-        setIsImported(false);
-        setStockMatrix([]); // Clear matrix
-        setShowProductForm(false);
-    };
-
-
-
-    const loadProductData = async (product: Product) => {
-        isLoadingProductRef.current = true;
-
-        // Set editing ID immediately to prevent auto-reset effects
-        setEditingProductId(product.id);
-        setIsImported(product.tags.includes('Importado'));
-        setShowProductForm(true);
-
-        // Price Mapping: 
-        // If it's a normal price (no offer), it should show up in "Precio Regular"
-        const hasOffer = product.originalPrice && product.originalPrice > product.price;
-
-        // 1. Fill Form
-        setNewProduct({
-            name: product.name,
-            price: hasOffer ? product.price.toString() : '',
-            originalPrice: hasOffer ? product.originalPrice.toString() : product.price.toString(),
-            costPrice: product.costPrice ? product.costPrice.toString() : '',
-            category: product.category,
-            subcategory: product.subcategory || '',
-            type: product.type || 'clothing',
-            images: product.images,
-            sizes: product.sizes,
-            tags: product.tags,
-            fit: product.fit || '',
-            description: product.description || '',
-            isFeatured: product.isFeatured || false,
-            isCategoryFeatured: product.isCategoryFeatured || false,
-            slug: product.slug || generateSlug(product.name),
-            imageAlts: product.imageAlts || product.images.map(() => '')
-        });
-
-        // 2. Set Tab
-        if (product.category === 'INFANTIL') setActiveFormTab('INFANTIL');
-        else if (product.category === 'CALZADOS' || product.type === 'footwear') setActiveFormTab('CALZADOS');
-        else if (['ACCESORIOS', 'RELOJES', 'HUÉRFANOS'].includes(product.category)) setActiveFormTab('ACCESORIOS');
-        else setActiveFormTab('ESTÁNDAR');
-
-        // 3. Load Inventory Breakdown
-        const defaultMatrix = getDefaultMatrix(product.type || 'clothing', product.category);
-
-        // Prefer already loaded inventory from context
-        const existingInventory = product.inventory || [];
-
-        let targetMatrix = defaultMatrix;
-
-        if (existingInventory.length > 0) {
-            targetMatrix = defaultMatrix.map(item => {
-                const found = existingInventory.find(inv =>
-                    inv.size.toString().trim().toUpperCase() === item.size.toString().trim().toUpperCase()
-                );
-                return found ? { size: item.size, quantity: Number(found.quantity) } : item;
-            });
-        } else {
-            // Only if missing in context, try a direct fetch
-            try {
-                const { data: serverInv } = await supabase
-                    .from('inventory')
-                    .select('*')
-                    .eq('product_id', product.id);
-
-                if (serverInv && serverInv.length > 0) {
-                    targetMatrix = defaultMatrix.map(item => {
-                        const found = serverInv.find(inv =>
-                            inv.size.toString().trim().toUpperCase() === item.size.toString().trim().toUpperCase()
-                        );
-                        return found ? { size: item.size, quantity: Number(found.quantity) } : item;
-                    });
-                }
-            } catch (err) {
-                console.error("Direct inventory fetch failed:", err);
-            }
-        }
-
-        setStockMatrix(targetMatrix);
-
-        // Scroll
-        const mainContent = document.getElementById('admin-main-content');
-        if (mainContent) {
-            mainContent.scrollTo({ top: 0, behavior: 'instant' });
-            mainContent.scrollTop = 0;
-        }
-        window.scrollTo({ top: 0, behavior: 'instant' });
-
-        // Release lock after a short delay to allow state to settle
-        setTimeout(() => {
-            isLoadingProductRef.current = false;
-        }, 100);
-    };
-
-
-    const handleAddProduct = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!newProduct.name) {
-            alert('Por favor completa el nombre del producto.');
-            return;
-        }
-
-        const validImages = newProduct.images.filter(img => img.trim() !== '');
-
-        // Handle Imported Tag Logic
-        let finalTags = [...newProduct.tags];
-        const importTag = '25 a 30 dias';
-
-        if (isImported) {
-            if (!finalTags.includes(importTag)) finalTags.push(importTag);
-        } else {
-            finalTags = finalTags.filter(t => t !== importTag);
-        }
-
-        // Determine final prices
-        const regularDisplayPrice = Number(newProduct.originalPrice) || 0;
-        const offerDisplayPrice = Number(newProduct.price) || 0;
-
-        let price = 0;
-        let originalPrice: number | undefined = undefined;
-
-        if (offerDisplayPrice > 0) {
-            // It's an offer: Regular is the old price, Oferta is the new one
-            price = offerDisplayPrice;
-            originalPrice = regularDisplayPrice > offerDisplayPrice ? regularDisplayPrice : undefined;
-        } else {
-            // Normal price: Handled in "Precio Regular" field usually, or "Precio Oferta"
-            // If they only filled one, that's the final price.
-            price = regularDisplayPrice || offerDisplayPrice;
-            originalPrice = undefined;
-        }
-
-        // Tag Logic for 'Oferta'
-        if (originalPrice && originalPrice > price) {
-            if (!finalTags.includes('Oferta')) finalTags.push('Oferta');
-        } else {
-            finalTags = finalTags.filter(t => t !== 'Oferta');
-        }
-
-        // Slug Logic
-        const productSlug = newProduct.slug && newProduct.slug.trim() !== ''
-            ? newProduct.slug
-            : generateSlug(newProduct.name);
-
-        // Calculate Total Stock
-        const totalStock = stockMatrix.reduce((acc, curr) => acc + curr.quantity, 0);
-
-        // Auto-Agotado Tag
-        if (totalStock === 0) {
-            if (!finalTags.includes('Agotado')) finalTags.push('Agotado');
-        } else {
-            finalTags = finalTags.filter(t => t !== 'Agotado');
-        }
-
-        const productData: Product = {
-            id: editingProductId || Date.now().toString(),
-            name: newProduct.name,
-            price: price,
-            originalPrice: originalPrice > price ? originalPrice : undefined,
-            costPrice: Number(newProduct.costPrice) || 0,
-            category: newProduct.category || categories[0]?.id || 'Uncategorized',
-            subcategory: newProduct.subcategory,
-            type: newProduct.type,
-            images: validImages.length > 0 ? validImages : ['https://via.placeholder.com/300'],
-            sizes: stockMatrix.map(s => s.size), // Maintain size list for reference
-            stock: totalStock,
-            inventory: stockMatrix.map(item => ({ size: item.size, quantity: Number(item.quantity) })),
-            tags: finalTags,
-            fit: newProduct.fit,
-            isNew: finalTags.includes('Nuevo'),
-            isFeatured: newProduct.isFeatured,
-            isCategoryFeatured: newProduct.isCategoryFeatured,
-            description: newProduct.description,
-            slug: productSlug,
-            imageAlts: newProduct.imageAlts || validImages.map(() => newProduct.name)
-        };
-
-        let finalProductId = editingProductId;
-
-        if (editingProductId) {
-            await updateProduct(productData);
-            alert('Producto actualizado correctamente en tabla maestra.');
-        } else {
-            // Wait for the REAL UUID from Supabase
-            const newId = await addProduct(productData);
-            if (!newId) {
-                alert('Error crítico: No se pudo crear el producto en la base de datos (ID nulo). El inventario no se guardó.');
-                return;
-            }
-            finalProductId = newId;
-            alert('Producto añadido correctamente.');
-        }
-
-        // 4. Server-First Inventory Sync
-        // Upsert inventory for EACH size in stockMatrix using the VALID UUID
-        if (finalProductId) {
-            const inventoryUpdates = stockMatrix.map(item => ({
-                product_id: finalProductId, // Use the real UUID
-                size: item.size,
-                quantity: Number(item.quantity), // Force Number
-            }));
-
-            try {
-                const { error } = await supabase
-                    .from('inventory')
-                    .upsert(inventoryUpdates, { onConflict: 'product_id, size' });
-
-                if (error) {
-                    console.error('Inventory Sync Error:', error);
-                    alert(`Error sincronizando inventario: ${error.message}`);
-                } else {
-                    console.log('Inventory Synced Successfully for ID:', finalProductId);
-                }
-            } catch (err) {
-                console.error('Inventory Sync Exception:', err);
-            }
-        }
-
-
-        resetForm();
-    };
-
-
-
-    const toggleTag = (tag: string) => {
-        setNewProduct(prev => ({
-            ...prev,
-            tags: prev.tags.includes(tag) ? prev.tags.filter(t => t !== tag) : [...prev.tags, tag]
-        }));
-    };
-
-    const handleImageChange = (index: number, value: string) => {
-        const updatedImages = [...newProduct.images];
-        updatedImages[index] = value;
-        setNewProduct(prev => ({ ...prev, images: updatedImages }));
-    };
-
-    const handleAltChange = (index: number, value: string) => {
-        const updatedAlts = [...(newProduct.imageAlts || newProduct.images.map(() => ''))];
-        updatedAlts[index] = value;
-        setNewProduct(prev => ({ ...prev, imageAlts: updatedAlts }));
-    };
-
-    const addImageField = () => {
-        setNewProduct(prev => ({
-            ...prev,
-            images: [...prev.images, ''],
-            imageAlts: [...(prev.imageAlts || []), '']
-        }));
-    };
-
-    const removeImageField = (index: number) => {
-        const updatedImages = newProduct.images.filter((_, i) => i !== index);
-        const updatedAlts = (newProduct.imageAlts || newProduct.images.map(() => '')).filter((_, i) => i !== index);
-        setNewProduct(prev => ({
-            ...prev,
-            images: updatedImages,
-            imageAlts: updatedAlts
-        }));
-    };
-
-    const moveImageUp = (index: number) => {
-        if (index === 0) return;
-        const updatedImages = [...newProduct.images];
-        const updatedAlts = [...(newProduct.imageAlts || newProduct.images.map(() => ''))];
-
-        [updatedImages[index - 1], updatedImages[index]] = [updatedImages[index], updatedImages[index - 1]];
-        [updatedAlts[index - 1], updatedAlts[index]] = [updatedAlts[index], updatedAlts[index - 1]];
-
-        setNewProduct(prev => ({
-            ...prev,
-            images: updatedImages,
-            imageAlts: updatedAlts
-        }));
-    };
-
-    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setIsUploading(true);
-            const files = Array.from(e.target.files) as File[];
-            const uploadedUrls: string[] = [];
-
-            for (const file of files) {
-                try {
-                    // Optimize image using Web Worker (OffscreenCanvas)
-                    // This converts to WebP and resizes to max 1920px without blocking UI
-                    const optimizedFile = await optimizeImage(file, {
-                        maxWidth: 1920,
-                        maxHeight: 1920,
-                        quality: 0.8
-                    });
-
-                    // Organize by category folder
-                    const folder = newProduct.category ? newProduct.category : 'general';
-                    // Upload the optimized WebP file
-                    // uploadProductImage handles WebP smartly (skips re-compression)
-                    const url = await uploadProductImage(optimizedFile, folder);
-                    if (url) {
-                        uploadedUrls.push(url);
-                    }
-                } catch (err: any) {
-                    console.error("Optimization/Upload error:", err);
-                    alert(`Error procesando imagen ${file.name}`);
-                }
-            }
-
-            if (uploadedUrls.length > 0) {
-                setNewProduct(prev => ({
-                    ...prev,
-                    images: [...prev.images.filter(i => i !== ''), ...uploadedUrls], // Append new images
-                    imageAlts: [...(prev.imageAlts || []), ...uploadedUrls.map(() => '')] // Append empty alts
-                }));
-            }
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = ''; // Reset input
-        }
-    };
-
-    const handleGooglePhotosSelect = () => {
-        openGooglePicker(async (blob, name) => {
-            setIsUploading(true);
-            try {
-                const file = new File([blob], name, { type: blob.type });
-                const folder = newProduct.category ? newProduct.category : 'general';
-                const url = await uploadProductImage(file, folder);
-                if (url) {
-                    setNewProduct(prev => ({
-                        ...prev,
-                        images: [...prev.images.filter(img => img.trim() !== ''), url]
-                    }));
-                }
-            } catch (error) {
-                console.error("Error managing Google Photo:", error);
-                alert("Error al procesar la imagen de Google Photos.");
-            } finally {
-                setIsUploading(false);
-            }
-        });
-    };
-
-
-    const handleFaviconFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setIsFaviconUploading(true);
-            const file = e.target.files[0];
-            const url = await uploadProductImage(file, 'brand');
-
-            if (url) {
-                setConfigForm(prev => ({ ...prev, favicon: url }));
-            }
-
-            setIsFaviconUploading(false);
-            if (faviconFileInputRef.current) faviconFileInputRef.current.value = '';
-        }
-    };
 
     // --- Hero Handlers ---
     const handleHeroSave = async () => {
@@ -904,31 +448,9 @@ const AdminDashboard: React.FC = () => {
         setEditOpacity('');
     };
 
-    const handleBlogFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setIsBlogUploading(true);
-            const file = e.target.files[0];
-            const url = await uploadProductImage(file, 'blog');
-
-            if (url) {
-                setBlogForm(prev => ({ ...prev, image: url }));
-            }
-
-            setIsBlogUploading(false);
-            if (blogFileInputRef.current) blogFileInputRef.current.value = '';
-        }
-    };
 
 
-    const groupedProducts = products.reduce((acc, product) => {
-        const catName = product.category ? product.category.trim().toUpperCase() : 'SIN CATEGORÍA';
-        const subName = product.subcategory ? product.subcategory.trim().toUpperCase() : 'GENERAL';
 
-        if (!acc[catName]) acc[catName] = {};
-        if (!acc[catName][subName]) acc[catName][subName] = [];
-        acc[catName][subName].push(product);
-        return acc;
-    }, {} as Record<string, Record<string, Product[]>>);
 
     // --- Web Design Handlers ---
     const handleNavSave = async () => {
@@ -1036,34 +558,7 @@ const AdminDashboard: React.FC = () => {
         }));
     };
 
-    // --- Drop Handlers ---
-    const handleAddDrop = async (imageUrl: string) => {
-        if (!imageUrl) return;
 
-        await addDrop({
-            title: dropTitle,
-            image: imageUrl,
-            created_at: new Date().toISOString()
-        });
-
-        setDropTitle('');
-        alert('Drop Agregado!');
-    };
-
-    const handleDropFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            setIsDropUploading(true);
-            const file = e.target.files[0];
-            const url = await uploadProductImage(file, 'drops');
-
-            if (url) {
-                await handleAddDrop(url);
-            }
-
-            setIsDropUploading(false);
-            if (dropFileInputRef.current) dropFileInputRef.current.value = '';
-        }
-    };
 
 
     return (
@@ -1103,9 +598,7 @@ const AdminDashboard: React.FC = () => {
                     <button onClick={() => setActiveTab('analytics')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'analytics' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Activity size={20} className="text-primary" /> <span className="font-bold text-sm">Dashboard & Ventas</span>
                     </button>
-                    <button onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'products' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                        <ShoppingBag size={20} /> <span className="font-bold text-sm">Productos</span>
-                    </button>
+
                     <button onClick={() => setActiveTab('webDesign')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'webDesign' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Layout size={20} /> <span className="font-bold text-sm">Diseño Web / Banners</span>
                     </button>
@@ -1115,9 +608,7 @@ const AdminDashboard: React.FC = () => {
                     <button onClick={() => setActiveTab('hero')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'hero' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <ImageIcon size={20} /> <span className="font-bold text-sm">Carrusel Hero</span>
                     </button>
-                    <button onClick={() => setActiveTab('drops')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'drops' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                        <Layers size={20} /> <span className="font-bold text-sm">Próximos Drops (Hype)</span>
-                    </button>
+
                     <button onClick={() => setActiveTab('categories')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'categories' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Layers size={20} /> <span className="font-bold text-sm">Categorías</span>
                     </button>
@@ -1158,555 +649,9 @@ const AdminDashboard: React.FC = () => {
                     </div>
                 )}
 
-                {/* DROPS TAB */}
-                {activeTab === 'drops' && (
-                    <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">Próximos Drops (Hype)</h2>
-                                <p className="text-gray-400">Gestiona la sección de lanzamientos exclusivos. Se mostrarán los 6 más recientes.</p>
-                            </div>
-                            <div className="flex items-center gap-3 bg-gray-900 p-3 rounded-lg border border-gray-800">
-                                <span className="text-sm font-bold text-gray-400 uppercase">VISIBILIDAD EN WEB:</span>
-                                <button
-                                    onClick={() => updateDropsConfig({ isEnabled: !dropsConfig?.isEnabled })}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black ${dropsConfig?.isEnabled ? 'bg-green-500' : 'bg-gray-700'}`}
-                                >
-                                    <span
-                                        className={`${dropsConfig?.isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                                    />
-                                </button>
-                                <span className={`text-sm font-bold ${dropsConfig?.isEnabled ? 'text-green-500' : 'text-gray-500'}`}>
-                                    {dropsConfig?.isEnabled ? 'HABITILITADO' : 'DESHABILITADO'}
-                                </span>
-                            </div>
-                        </header>
 
-                        <div className="bg-[#0a0a0a] border border-gray-800 p-8 rounded-xl shadow-lg">
-                            <div className="flex flex-col md:flex-row gap-4 items-end mb-8">
-                                <div className="flex-1 space-y-2 w-full">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">Título (Opcional - ej: "Nike Nocta")</label>
-                                    <input
-                                        type="text"
-                                        value={dropTitle}
-                                        onChange={(e) => setDropTitle(e.target.value)}
-                                        className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary transition-colors"
-                                        placeholder="Nombre del Drop..."
-                                    />
-                                </div>
-                                <div className="w-full md:w-auto">
-                                    <input
-                                        type="file"
-                                        ref={dropFileInputRef}
-                                        onChange={handleDropFileSelect}
-                                        className="hidden"
-                                        accept="image/*"
-                                    />
-                                    <button
-                                        onClick={() => dropFileInputRef.current?.click()}
-                                        disabled={isDropUploading}
-                                        className="w-full bg-white text-black font-bold py-3 px-6 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-200 transition-all uppercase text-sm tracking-widest"
-                                    >
-                                        {isDropUploading ? <Loader2 className="animate-spin" size={20} /> : <Plus size={20} />}
-                                        {isDropUploading ? 'SUBIENDO...' : 'SUBIR IMAGEN Y CREAR'}
-                                    </button>
-                                </div>
-                            </div>
 
-                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-                                <span className="text-primary">•</span> Drops Activos
-                            </h3>
 
-                            {loading ? (
-                                <div className="text-center py-10 text-gray-500">Cargando...</div>
-                            ) : (
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    {drops.map((drop) => (
-                                        <div key={drop.id} className="group relative aspect-[3/4] bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
-                                            <img src={drop.image} alt="Drop" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4">
-                                                <button
-                                                    onClick={() => deleteDrop(drop.id)}
-                                                    className="bg-red-500/20 text-red-500 p-2 rounded-full hover:bg-red-500 hover:text-white transition-colors mb-2"
-                                                >
-                                                    <Trash2 size={20} />
-                                                </button>
-                                                <p className="text-xs text-white font-bold uppercase text-center">{drop.title || 'Sin Título'}</p>
-                                            </div>
-                                            <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur rounded text-[10px] font-mono text-gray-300">
-                                                {new Date(drop.created_at || '').toLocaleDateString()}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {drops.length === 0 && (
-                                        <div className="col-span-full py-12 text-center border-2 border-dashed border-gray-800 rounded-lg text-gray-500">
-                                            No hay drops activos. Sube una imagen para comenzar.
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                        </div>
-                    </div>
-                )}
-
-                {/* PRODUCTS TAB */}
-                {activeTab === 'products' && (
-                    <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header className="flex flex-col md:flex-row justify-between md:items-end border-b border-gray-800 pb-6 gap-4">
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2 uppercase italic tracking-tighter">Gestión de Productos</h2>
-                                <p className="text-gray-400 text-sm">Administra el inventario, precios y detalles por carpetas.</p>
-                            </div>
-                            {!showProductForm && !editingProductId && (
-                                <button
-                                    onClick={() => setShowProductForm(true)}
-                                    className="bg-primary text-black font-black py-4 px-8 rounded-lg flex items-center gap-2 hover:bg-yellow-500 transition-all uppercase text-xs tracking-widest shadow-xl transform hover:translate-y-[-2px] shadow-primary/20"
-                                >
-                                    <Plus size={20} /> AGREGAR PRODUCTO
-                                </button>
-                            )}
-                        </header>
-
-                        {/* Add/Edit Product Form */}
-                        {(showProductForm || editingProductId) && (
-                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl animate-in fade-in slide-in-from-top-4">
-                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-primary">
-                                    {editingProductId ? <Edit size={24} /> : <Plus size={24} />}
-                                    {editingProductId ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}
-                                </h3>
-                                <form onSubmit={handleAddProduct} className="space-y-8">
-                                    {/* Form Tabs (Stock App Style) */}
-                                    <div className="flex gap-1 bg-black p-1 rounded-xl border border-gray-800 w-fit mb-4 overflow-x-auto max-w-full">
-                                        {['ESTÁNDAR', 'INFANTIL', 'CALZADOS', 'ACCESORIOS'].map(tab => (
-                                            <button
-                                                key={tab}
-                                                type="button"
-                                                onClick={() => setActiveFormTab(tab as any)}
-                                                className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
-                                            >
-                                                {tab}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="space-y-8">
-                                        {/* Name Line */}
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Nombre del Producto</label>
-                                            <input
-                                                type="text"
-                                                value={newProduct.name}
-                                                onChange={e => {
-                                                    const val = e.target.value;
-                                                    setNewProduct(prev => ({
-                                                        ...prev,
-                                                        name: val,
-                                                        slug: !editingProductId ? generateSlug(val) : prev.slug
-                                                    }));
-                                                }}
-                                                className="w-full bg-transparent border-b border-gray-800 text-xl font-bold text-white placeholder-gray-800 focus:border-white focus:outline-none transition-colors py-2"
-                                                placeholder="Ej. Camiseta Titular 2024"
-                                            />
-                                        </div>
-
-                                        {/* Slug Line (SEO) */}
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">URL Slug (SEO)</label>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setNewProduct(prev => ({ ...prev, slug: generateSlug(prev.name) }))}
-                                                    className="text-[10px] text-primary hover:underline font-bold uppercase"
-                                                >
-                                                    Regenerar desde Nombre
-                                                </button>
-                                            </div>
-                                            <div className="flex items-center gap-2 bg-[#0F0F0F] border border-gray-800 rounded-lg px-4 py-3 opacity-80 focus-within:opacity-100 transition-opacity focus-within:border-primary/50">
-                                                <span className="text-gray-500 text-xs font-mono select-none">savageeepy.com/product/</span>
-                                                <input
-                                                    type="text"
-                                                    value={newProduct.slug}
-                                                    onChange={e => setNewProduct({ ...newProduct, slug: e.target.value })}
-                                                    className="w-full bg-transparent border-none text-sm font-mono text-white focus:outline-none placeholder-gray-700"
-                                                    placeholder="nombre-del-producto-seo"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Categories Grid */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Categoría</label>
-                                                <input
-                                                    type="text"
-                                                    list="categories-list"
-                                                    value={newProduct.category}
-                                                    onChange={e => setNewProduct({ ...newProduct, category: e.target.value.toUpperCase() })}
-                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
-                                                    placeholder="Seleccionar..."
-                                                />
-                                                <datalist id="categories-list">
-                                                    {categories.map(cat => (
-                                                        <option key={cat.id} value={cat.name.toUpperCase()} />
-                                                    ))}
-                                                </datalist>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Subcategoría</label>
-                                                <input
-                                                    type="text"
-                                                    list="subcategories-list"
-                                                    value={newProduct.subcategory}
-                                                    onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value.toUpperCase() })}
-                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
-                                                    placeholder="Seleccionar..."
-                                                />
-                                                <datalist id="subcategories-list">
-                                                    {categories.find(c => c.name.toUpperCase() === newProduct.category)?.subcategories?.map(sub => (
-                                                        <option key={sub} value={sub.toUpperCase()} />
-                                                    ))}
-                                                </datalist>
-                                            </div>
-                                        </div>
-
-                                        {/* Pricing Section */}
-                                        <div className="space-y-6 pt-4 border-t border-gray-900">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Costo Proveedor (Gs.)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newProduct.costPrice || ''}
-                                                    onChange={e => setNewProduct({ ...newProduct, costPrice: e.target.value })}
-                                                    className="w-full bg-[#050510] border border-blue-900/30 rounded-lg p-4 text-sm focus:border-blue-500 focus:outline-none transition-colors text-blue-200 font-mono"
-                                                    placeholder="Costo de adquisición"
-                                                />
-                                                <p className="text-[9px] text-gray-600">* Solo visible para administración.</p>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-8">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Precio Regular (Gs.)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newProduct.originalPrice}
-                                                        onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                                                        className="w-full bg-black border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors font-mono text-gray-300"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Precio Oferta (Gs.)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newProduct.price}
-                                                        onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                        className="w-full bg-black border border-red-900/50 rounded-lg p-4 text-sm focus:border-red-500 focus:outline-none transition-colors font-bold font-mono text-white"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Description Section */}
-                                        <div className="space-y-2 pt-4 border-t border-gray-900">
-                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Descripción del Producto</label>
-                                            <textarea
-                                                value={newProduct.description}
-                                                onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
-                                                className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white placeholder-gray-600 min-h-[100px]"
-                                                placeholder="Detalles del producto, materiales, cuidados..."
-                                            />
-                                        </div>
-
-                                        {/* Settings Section (Imported / Featured) - Row Layout */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-900">
-
-                                            <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
-                                                <span className="text-xs font-bold text-gray-400 uppercase">¿Es Producto Importado?</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setIsImported(prev => !prev)}
-                                                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${isImported ? 'bg-purple-600' : 'bg-gray-800'}`}
-                                                >
-                                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isImported ? 'translate-x-6' : 'translate-x-0'}`} />
-                                                </button>
-                                            </div>
-
-                                            {/* Featured Toggles */}
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
-                                                    <span className="text-xs font-bold text-yellow-500 uppercase flex items-center gap-2">
-                                                        <span className="material-symbols-outlined text-xs">star</span> Destacar en Home
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, isFeatured: !newProduct.isFeatured })}
-                                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isFeatured ? 'bg-yellow-500 border-yellow-500 text-black' : 'border-gray-600 bg-transparent'}`}
-                                                    >
-                                                        {newProduct.isFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
-                                                    </button>
-                                                </div>
-                                                <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
-                                                    <span className="text-xs font-bold text-blue-500 uppercase flex items-center gap-2">
-                                                        <span className="material-symbols-outlined text-xs">category</span> Destacar en Categoría
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, isCategoryFeatured: !newProduct.isCategoryFeatured })}
-                                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isCategoryFeatured ? 'bg-blue-500 border-blue-500 text-black' : 'border-gray-600 bg-transparent'}`}
-                                                    >
-                                                        {newProduct.isCategoryFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                        {isImported && (
-                                            <div className="mt-2 text-[10px] text-purple-400 bg-purple-900/10 p-3 rounded border border-purple-500/20 animate-in fade-in slide-in-from-top-1">
-                                                <p className="font-bold mb-1">INFO IMPORTACIÓN:</p>
-                                                <ul className="list-disc pl-4 space-y-1 opacity-80">
-                                                    <li>Se mostrará la etiqueta "25 a 30 días".</li>
-                                                    <li>Requiere seña mínima del 50%.</li>
-                                                </ul>
-                                            </div>
-                                        )}
-
-                                        <div className="flex justify-center pt-2">
-                                            <div className="inline-flex bg-gray-900 rounded-lg p-1">
-                                                <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'clothing' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'clothing' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Ropa (Talles)</button>
-                                                <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'footwear' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'footwear' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Calzado (Num)</button>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                    {/* Stock Matrix Section */}
-                                    <div className="space-y-4 pt-4 border-t border-gray-800">
-                                        <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                                            <Layers size={14} className="text-primary" /> Matriz de Stock (Sincronización Directa)
-                                        </h3>
-                                        {stockMatrix.length > 0 ? (
-                                            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3">
-                                                {stockMatrix.map((item, idx) => (
-                                                    <div key={idx} className="bg-black border border-gray-800 rounded p-2 text-center group focus-within:border-primary transition-colors">
-                                                        <span className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{item.size}</span>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
-                                                            value={item.quantity}
-                                                            onChange={(e) => {
-                                                                const val = parseInt(e.target.value) || 0;
-                                                                const newMatrix = [...stockMatrix];
-                                                                newMatrix[idx].quantity = val;
-                                                                setStockMatrix(newMatrix);
-                                                            }}
-                                                            className="w-full bg-transparent text-center font-mono text-lg font-bold text-white focus:outline-none"
-                                                        />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-4 text-gray-600 text-xs italic border border-dashed border-gray-800 rounded">
-                                                Selecciona una categoría para generar la matriz de talles.
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Etiquetas</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {availableTags.map(tag => (
-                                                <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${newProduct.tags.includes(tag) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-500'}`}>
-                                                    {tag}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Galería de Imágenes</label>
-                                            <div className="flex gap-2">
-                                                <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-white bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
-                                                    {isUploading ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
-                                                    {isUploading ? 'SUBIENDO...' : 'SUBIR DESDE PC'}
-                                                </button>
-                                                <button type="button" onClick={addImageField} className="text-xs text-primary font-bold hover:underline">+ Agregar URL Manual</button>
-                                                <input
-                                                    type="file"
-                                                    ref={fileInputRef}
-                                                    onChange={handleFileSelect}
-                                                    multiple
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                                            {newProduct.images.map((img, idx) => (
-                                                <div key={idx} className="flex gap-2 items-start group bg-gray-900/50 p-3 rounded border border-gray-800">
-                                                    <span className="text-gray-600 font-mono text-xs w-4 mt-3">{idx + 1}</span>
-                                                    <div className="flex flex-col gap-2 flex-1">
-                                                        <div className="flex gap-2">
-                                                            <div className="relative w-10 h-10 bg-gray-900 rounded overflow-hidden flex-shrink-0 border border-gray-800">
-                                                                {img && <img src={img} alt="" className="w-full h-full object-cover" />}
-                                                            </div>
-                                                            <input
-                                                                type="text"
-                                                                value={img}
-                                                                onChange={e => handleImageChange(idx, e.target.value)}
-                                                                className="flex-1 bg-black border border-gray-800 rounded p-2 text-xs focus:border-primary focus:outline-none transition-colors"
-                                                                placeholder="URL de la imagen (https://...)"
-                                                            />
-                                                        </div>
-                                                        <input
-                                                            type="text"
-                                                            value={newProduct.imageAlts?.[idx] || ''}
-                                                            onChange={e => handleAltChange(idx, e.target.value)}
-                                                            className="w-full bg-black/50 border border-gray-800/50 rounded p-1.5 text-[10px] text-gray-300 focus:border-gray-500 focus:outline-none transition-colors placeholder:text-gray-700"
-                                                            placeholder={`Texto Alternativo (ALT) para imagen #${idx + 1} - Dejar vacío para usar nombre del producto`}
-                                                        />
-                                                    </div>
-                                                    <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button type="button" onClick={() => moveImageUp(idx)} disabled={idx === 0} className="text-gray-500 hover:text-white disabled:opacity-0"><ChevronUp size={12} /></button>
-                                                    </div>
-                                                    <button type="button" onClick={() => removeImageField(idx)} className="text-gray-600 hover:text-red-500"><X size={14} /></button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="md:col-span-2 pt-4 border-t border-gray-800">
-                                        <button type="submit" className={`w-full font-black py-4 rounded-lg transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px] ${editingProductId ? 'bg-yellow-500 hover:bg-yellow-400 text-black' : 'bg-white hover:bg-gray-200 text-black'}`}>
-                                            {editingProductId ? 'ACTUALIZAR PRODUCTO' : 'PUBLICAR PRODUCTO'}
-                                        </button>
-                                        <button type="button" onClick={resetForm} className="w-full bg-transparent border border-gray-800 text-gray-500 font-bold py-3 mt-3 rounded-lg hover:border-white hover:text-white transition-all uppercase text-xs tracking-widest">
-                                            {editingProductId ? 'CANCELAR EDICIÓN' : 'CANCELAR'}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
-
-                        {/* Folder-based Product List */}
-                        {!showProductForm && !editingProductId && (
-                            <div className="space-y-6">
-                                {Object.entries(groupedProducts).length === 0 ? (
-                                    <div className="text-center py-20 bg-[#0a0a0a] border border-gray-800 rounded-xl">
-                                        <div className="mb-4 flex justify-center">
-                                            <ShoppingBag size={48} className="text-gray-800" />
-                                        </div>
-                                        <p className="text-gray-500 italic">No hay productos publicados aún.</p>
-                                    </div>
-                                ) : (
-                                    Object.entries(groupedProducts).map(([category, subcategories]) => (
-                                        <div key={category} className="bg-[#0a0a0a] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in slide-in-from-left-4">
-                                            {/* Category Header (Folder) */}
-                                            <button
-                                                onClick={() => toggleCategory(category)}
-                                                className="w-full flex items-center justify-between p-5 bg-black hover:bg-white/5 transition-colors border-b border-gray-900"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    {openCategories[category] ? <FolderOpen className="text-primary" size={24} /> : <Folder className="text-gray-600" size={24} />}
-                                                    <h3 className="text-lg font-black uppercase tracking-widest italic">{category}</h3>
-                                                    <span className="bg-gray-900 text-[10px] font-bold text-gray-400 px-3 py-1 rounded-full border border-gray-800">
-                                                        {Object.values(subcategories).flat().length} {Object.values(subcategories).flat().length === 1 ? 'PRODUCTO' : 'PRODUCTOS'}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    {openCategories[category] ? <ChevronDown size={20} className="text-gray-500" /> : <ChevronRight size={20} className="text-gray-500" />}
-                                                </div>
-                                            </button>
-
-                                            {/* Subcategories (Inner Folders) */}
-                                            {openCategories[category] && (
-                                                <div className="p-4 space-y-4 bg-[#050505]">
-                                                    {Object.entries(subcategories).map(([subcategory, subProducts]) => {
-                                                        const subKey = `${category}-${subcategory}`;
-                                                        return (
-                                                            <div key={subcategory} className="border border-gray-900 rounded-lg overflow-hidden bg-black/40">
-                                                                <button
-                                                                    onClick={() => toggleSubcategory(subKey)}
-                                                                    className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-gray-900/50"
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <Layers size={18} className={openSubcategories[subKey] ? "text-primary" : "text-gray-700"} />
-                                                                        <h4 className="text-sm font-bold uppercase tracking-wider text-gray-300">{subcategory}</h4>
-                                                                        <span className="text-[10px] text-gray-600 font-mono">({subProducts.length})</span>
-                                                                    </div>
-                                                                    {openSubcategories[subKey] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                                                                </button>
-
-                                                                {openSubcategories[subKey] && (
-                                                                    <div className="overflow-x-auto animate-in fade-in slide-in-from-top-2 duration-300">
-                                                                        <table className="w-full text-left text-xs min-w-[600px]">
-                                                                            <thead className="bg-[#0f0f0f] text-gray-600 font-bold uppercase tracking-tighter border-b border-gray-900">
-                                                                                <tr>
-                                                                                    <th className="p-4 w-20 text-center">Preview</th>
-                                                                                    <th className="p-4">Producto</th>
-                                                                                    <th className="p-4">Precio</th>
-                                                                                    <th className="p-4 text-center">Stock Total</th>
-                                                                                    <th className="p-4 text-right">Acciones</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody className="divide-y divide-gray-900">
-                                                                                {subProducts.map(product => (
-                                                                                    <tr key={product.id} className="hover:bg-primary/5 transition-colors group">
-                                                                                        <td className="p-4">
-                                                                                            <div className="w-12 h-16 bg-gray-900 rounded overflow-hidden border border-gray-800 mx-auto group-hover:border-primary/30">
-                                                                                                <img src={product.images[0]} className="w-full h-full object-cover" />
-                                                                                            </div>
-                                                                                        </td>
-                                                                                        <td className="p-4">
-                                                                                            <p className="font-black uppercase text-gray-200 group-hover:text-white truncate max-w-[200px]">{product.name}</p>
-                                                                                            <p className="text-[10px] text-gray-600 font-mono mt-1">ID: {product.id.toString().slice(-8)}</p>
-                                                                                        </td>
-                                                                                        <td className="p-4">
-                                                                                            <p className="font-bold text-primary">Gs. {product.price.toLocaleString()}</p>
-                                                                                            {product.originalPrice && product.originalPrice > product.price && (
-                                                                                                <p className="text-[10px] text-gray-600 line-through">Gs. {product.originalPrice.toLocaleString()}</p>
-                                                                                            )}
-                                                                                        </td>
-                                                                                        <td className="p-4 text-center">
-                                                                                            <span className={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest ${product.stock > 10 ? 'bg-green-500/10 text-green-500' : product.stock > 0 ? 'bg-yellow-500/10 text-yellow-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                                                                {product.stock} UNI
-                                                                                            </span>
-                                                                                        </td>
-                                                                                        <td className="p-4 text-right">
-                                                                                            <div className="flex justify-end gap-2">
-                                                                                                <button
-                                                                                                    onClick={() => { setEditingProductId(product.id); loadProductData(product); }}
-                                                                                                    className="p-2.5 bg-gray-900 hover:bg-white hover:text-black rounded-lg transition-all border border-gray-800"
-                                                                                                    title="Editar"
-                                                                                                >
-                                                                                                    <Edit size={14} />
-                                                                                                </button>
-                                                                                                <button
-                                                                                                    onClick={() => { if (window.confirm('¿Eliminar producto?')) deleteProduct(product.id); }}
-                                                                                                    className="p-2.5 bg-red-900/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all border border-red-900/30"
-                                                                                                    title="Eliminar"
-                                                                                                >
-                                                                                                    <Trash2 size={14} />
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        </td>
-                                                                                    </tr>
-                                                                                ))}
-                                                                            </tbody>
-                                                                        </table>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
 
 
                 {/* ORDERS TAB */}
