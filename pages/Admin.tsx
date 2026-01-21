@@ -355,12 +355,15 @@ const AdminDashboard: React.FC = () => {
             // Calculate total stock from matrix
             const totalStock = Object.values(stockMatrix).reduce((acc: number, curr: number) => acc + (curr || 0), 0);
 
+            const sellingPrice = newProduct.price ? parseFloat(newProduct.price) : parseFloat(newProduct.originalPrice);
+            const regularPrice = newProduct.price ? parseFloat(newProduct.originalPrice) : null;
+
             const productData = {
                 id: editingProductId || Date.now().toString(),
                 name: newProduct.name,
                 description: newProduct.description,
-                price: parseFloat(newProduct.price),
-                originalPrice: newProduct.originalPrice ? parseFloat(newProduct.originalPrice) : null,
+                price: sellingPrice,
+                originalPrice: regularPrice,
                 category: newProduct.category,
                 subcategory: newProduct.subcategory,
                 slug: newProduct.slug,
@@ -883,24 +886,24 @@ const AdminDashboard: React.FC = () => {
                                         {/* Categories and Price */}
                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 font-bold">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-400">Precio Regular (Gs.)</label>
+                                                <label className="text-[10px] uppercase tracking-widest text-primary">Precio Regular (Gs.)</label>
                                                 <input
                                                     type="number"
                                                     value={newProduct.originalPrice}
                                                     onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800"
+                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 shadow-[0_0_15px_rgba(255,215,0,0.05)]"
                                                     placeholder="Ej: 280000"
+                                                    required
                                                 />
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-primary">Precio Oferta (Gs.)</label>
+                                                <label className="text-[10px] uppercase tracking-widest text-gray-400">Precio Oferta (Gs.)</label>
                                                 <input
                                                     type="number"
                                                     value={newProduct.price}
                                                     onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 shadow-[0_0_15px_rgba(255,0,0,0.1)]"
+                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800"
                                                     placeholder="Ej: 250000"
-                                                    required
                                                 />
                                             </div>
                                             <div className="space-y-2">
