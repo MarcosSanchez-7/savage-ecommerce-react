@@ -391,6 +391,11 @@ const AdminDashboard: React.FC = () => {
 
 
     const loadProductData = async (product: Product) => {
+        // Set editing ID immediately to prevent auto-reset effects
+        setEditingProductId(product.id);
+        setIsImported(product.tags.includes('Importado'));
+        setShowProductForm(true);
+
         // 1. Fill Form
         setNewProduct({
             name: product.name,
@@ -417,38 +422,43 @@ const AdminDashboard: React.FC = () => {
         else if (['ACCESORIOS', 'RELOJES', 'HUÉRFANOS'].includes(product.category)) setActiveFormTab('ACCESORIOS');
         else setActiveFormTab('ESTÁNDAR');
 
-        setEditingProductId(product.id);
-        setIsImported(product.tags.includes('Importado'));
-        setShowProductForm(true);
+        // 3. Load Inventory Breakdown
+        const defaultMatrix = getDefaultMatrix(product.type || 'clothing', product.category);
 
-        // 3. Server-First Inventory Fetch
-        setStockMatrix([]); // Clear first
-        try {
-            const { data: inventoryData, error } = await supabase
-                .from('inventory')
-                .select('*')
-                .eq('product_id', product.id);
+        // Prefer already loaded inventory from context
+        const existingInventory = product.inventory || [];
 
-            if (error) {
-                console.error('Error fetching inventory:', error);
-                // Fallback to default
-                setStockMatrix(getDefaultMatrix(product.type || 'clothing', product.category));
-            } else if (inventoryData && inventoryData.length > 0) {
-                // Determine all possible sizes to show complete matrix (even 0s)
-                const defaultMatrix = getDefaultMatrix(product.type || 'clothing', product.category);
+        if (existingInventory.length > 0) {
+            const mergedMatrix = defaultMatrix.map(item => {
+                const found = existingInventory.find(inv =>
+                    inv.size.toString().trim().toUpperCase() === item.size.toString().trim().toUpperCase()
+                );
+                return found ? { size: item.size, quantity: Number(found.quantity) } : item;
+            });
+            setStockMatrix(mergedMatrix);
+        } else {
+            // Only if missing in context, try a direct fetch
+            try {
+                const { data: serverInv } = await supabase
+                    .from('inventory')
+                    .select('*')
+                    .eq('product_id', product.id);
 
-                // Merge fetched data into default matrix to ensure all sizes are visible
-                const mergedMatrix = defaultMatrix.map(item => {
-                    const found = inventoryData.find(inv => inv.size === item.size);
-                    return found ? { size: item.size, quantity: found.quantity } : item;
-                });
-                setStockMatrix(mergedMatrix);
-            } else {
-                setStockMatrix(getDefaultMatrix(product.type || 'clothing', product.category));
+                if (serverInv && serverInv.length > 0) {
+                    const mergedMatrix = defaultMatrix.map(item => {
+                        const found = serverInv.find(inv =>
+                            inv.size.toString().trim().toUpperCase() === item.size.toString().trim().toUpperCase()
+                        );
+                        return found ? { size: item.size, quantity: Number(found.quantity) } : item;
+                    });
+                    setStockMatrix(mergedMatrix);
+                } else {
+                    setStockMatrix(defaultMatrix);
+                }
+            } catch (err) {
+                console.error("Direct inventory fetch failed:", err);
+                setStockMatrix(defaultMatrix);
             }
-        } catch (err) {
-            console.error('Fetch error:', err);
-            setStockMatrix(getDefaultMatrix(product.type || 'clothing', product.category));
         }
 
         // Scroll
@@ -524,7 +534,7 @@ const AdminDashboard: React.FC = () => {
             images: validImages.length > 0 ? validImages : ['https://via.placeholder.com/300'],
             sizes: stockMatrix.map(s => s.size), // Maintain size list for reference
             stock: totalStock,
-            inventory: [], // Deprecated in local object
+            inventory: stockMatrix.map(item => ({ size: item.size, quantity: Number(item.quantity) })),
             tags: finalTags,
             fit: newProduct.fit,
             isNew: finalTags.includes('Nuevo'),
