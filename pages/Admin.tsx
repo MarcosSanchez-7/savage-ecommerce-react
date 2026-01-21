@@ -59,6 +59,11 @@ const generateSlug = (text: string) => {
         .replace(/-+$/, ''); // Trim - from end
 };
 
+const generateAltText = (text: string) => {
+    if (!text) return '';
+    return `${text.trim()} - Savage Store Paraguay | Urbano & Deportivo`;
+};
+
 const AdminDashboard: React.FC = () => {
     // --- AUTH PROTECTION ---
     const { session, loading: authLoading, signInWithEmail } = useAuth();
@@ -302,6 +307,7 @@ const AdminDashboard: React.FC = () => {
         category: '',
         subcategory: '',
         slug: '',
+        seoAlt: '',
         images: [''],
         tags: [] as string[],
         isFeatured: false,
@@ -343,7 +349,11 @@ const AdminDashboard: React.FC = () => {
 
     useEffect(() => {
         if (newProduct.name) {
-            setNewProduct(prev => ({ ...prev, slug: generateSlug(prev.name) }));
+            setNewProduct(prev => ({
+                ...prev,
+                slug: generateSlug(prev.name),
+                seoAlt: generateAltText(prev.name)
+            }));
         }
     }, [newProduct.name]);
 
@@ -372,6 +382,7 @@ const AdminDashboard: React.FC = () => {
                 inventory: Object.entries(stockMatrix).map(([size, quantity]) => ({ size, quantity })),
                 stock: totalStock,
                 tags: newProduct.tags,
+                seoAlt: newProduct.seoAlt,
                 isFeatured: newProduct.isFeatured,
                 isCategoryFeatured: newProduct.isCategoryFeatured
             } as any;
@@ -397,6 +408,7 @@ const AdminDashboard: React.FC = () => {
                 category: '',
                 subcategory: '',
                 slug: '',
+                seoAlt: '',
                 images: [''],
                 tags: [],
                 isFeatured: false,
@@ -871,6 +883,13 @@ const AdminDashboard: React.FC = () => {
                                                     <span className="text-xs text-gray-400 font-mono truncate">{newProduct.slug || '...'}</span>
                                                 </div>
                                             </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-widest text-green-500">ALT SEO Automático</label>
+                                                <div className="flex items-center gap-2 bg-black/40 border border-gray-800 rounded-xl px-4 py-3 opacity-60">
+                                                    <FileText size={14} className="text-green-600" />
+                                                    <span className="text-xs text-gray-400 italic truncate">{newProduct.seoAlt || '...'}</span>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2">
@@ -1279,6 +1298,7 @@ const AdminDashboard: React.FC = () => {
                                                                                             category: product.category,
                                                                                             subcategory: product.subcategory || '',
                                                                                             slug: product.slug || generateSlug(product.name),
+                                                                                            seoAlt: (product as any).seoAlt || '',
                                                                                             images: product.images.length > 0 ? product.images : [''],
                                                                                             tags: product.tags || [],
                                                                                             isFeatured: (product as any).isFeatured || false,
