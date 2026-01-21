@@ -308,6 +308,11 @@ const AdminDashboard: React.FC = () => {
         isCategoryFeatured: false
     });
     const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({});
+    const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+
+    const toggleCategory = (catId: string) => {
+        setOpenCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
+    };
 
     const SIZES_CONFIG: Record<string, string[]> = {
         'CAMISETAS': ['P', 'M', 'G', 'XL', 'XXL'],
@@ -829,10 +834,10 @@ const AdminDashboard: React.FC = () => {
                         </header>
 
                         {showProductForm && (
-                            <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col backdrop-blur-md overflow-hidden animate-in fade-in zoom-in duration-300">
-                                <div className="bg-[#080808] w-full h-full flex flex-col overflow-y-auto custom-scrollbar">
-                                    <div className="p-8 border-b border-gray-800 flex justify-between items-center sticky top-0 bg-[#080808] z-10">
-                                        <h2 className="text-2xl font-black italic text-primary">
+                            <div className="fixed inset-0 bg-black/90 z-[100] flex items-start justify-center p-4 backdrop-blur-xl overflow-y-auto pt-10 pb-20 animate-in fade-in transition-all duration-300">
+                                <div className="bg-[#080808] border border-gray-800 rounded-3xl w-full max-w-5xl overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.5)] animate-in zoom-in-95 duration-300">
+                                    <div className="p-8 border-b border-gray-800 flex justify-between items-center sticky top-0 bg-[#080808]/80 backdrop-blur-md z-10">
+                                        <h2 className="text-2xl font-black italic text-primary tracking-tighter">
                                             {editingProductId ? 'EDITAR PRODUCTO' : 'REGISTRAR NUEVO PRODUCTO'}
                                         </h2>
                                         <button onClick={() => setShowProductForm(false)} className="text-gray-500 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-lg transition-all">
@@ -1166,105 +1171,146 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         )}
 
-                        {/* List/Overview of Stock */}
-                        <div className="bg-[#080808] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
-                            <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-black/40">
-                                <h3 className="font-black italic text-sm text-gray-400 uppercase tracking-widest">Inventario Activo</h3>
-                                <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{products.length} PRODUCTOS REGISTRADOS</span>
+                        {/* List/Overview of Stock - FOLDER VIEW */}
+                        <div className="space-y-8">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter">Gestión de Productos</h3>
+                                    <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Administra el inventario, precios y detalles.</p>
+                                </div>
+                                <div className="bg-black/40 border border-gray-800 px-4 py-2 rounded-xl">
+                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{products.length} PRODUCTOS REGISTRADOS</span>
+                                </div>
                             </div>
 
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left font-bold">
-                                    <thead className="text-[10px] uppercase tracking-widest text-gray-600 bg-white/2 border-b border-gray-800/50">
-                                        <tr>
-                                            <th className="px-6 py-4">Producto</th>
-                                            <th className="px-6 py-4">Categoría</th>
-                                            <th className="px-6 py-4">Precio</th>
-                                            <th className="px-6 py-4 text-center">Stock Total</th>
-                                            <th className="px-6 py-4 text-right">Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-800/50">
-                                        {products.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={5} className="px-6 py-20 text-center text-gray-600 italic">
-                                                    No hay productos registrados en el inventario.
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            products.map(product => (
-                                                <tr key={product.id} className="hover:bg-white/2 transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-12 h-12 bg-gray-900 rounded-lg overflow-hidden border border-gray-800">
-                                                                {product.images?.[0] ? <img src={product.images[0]} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-700"><ImageIcon size={16} /></div>}
+                            <div className="space-y-6">
+                                <h4 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-2">
+                                    Inventario
+                                </h4>
+
+                                {categories.map(category => {
+                                    const categoryProducts = products.filter(p => p.category === category.id);
+                                    if (categoryProducts.length === 0) return null;
+
+                                    const isOpen = openCategories[category.id] ?? true;
+
+                                    // Group by subcategory
+                                    const subcategories = Array.from(new Set(categoryProducts.map(p => p.subcategory || 'General')));
+
+                                    return (
+                                        <div key={category.id} className="bg-[#0c0c0c] border border-gray-800/50 rounded-2xl overflow-hidden shadow-xl transition-all">
+                                            {/* Category Folder Header */}
+                                            <button
+                                                onClick={() => toggleCategory(category.id)}
+                                                className="w-full p-5 flex items-center justify-between bg-black/40 hover:bg-black/60 transition-colors border-b border-gray-800/30"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                                                        <ChevronDown size={20} className="text-gray-500" />
+                                                    </div>
+                                                    <span className="text-base font-black text-white italic uppercase tracking-tighter">{category.name}</span>
+                                                    <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded text-[10px] font-bold text-gray-400">{categoryProducts.length} items</span>
+                                                </div>
+                                            </button>
+
+                                            {/* Subcategories & Products Grid */}
+                                            {isOpen && (
+                                                <div className="p-6 space-y-10 animate-in slide-in-from-top-2 duration-300">
+                                                    {subcategories.map(sub => {
+                                                        const subProducts = categoryProducts.filter(p => (p.subcategory || 'General') === sub);
+
+                                                        return (
+                                                            <div key={sub} className="space-y-6">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                                                    <span className="text-xs font-black text-gray-400 italic uppercase tracking-widest">{sub}</span>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+                                                                    {subProducts.map(product => (
+                                                                        <div key={product.id} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4 group hover:border-gray-700 transition-all hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative">
+                                                                            <div className="flex gap-4">
+                                                                                <div className="w-24 aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 flex-shrink-0">
+                                                                                    <img src={product.images?.[0]} alt="" className="w-full h-full object-cover" />
+                                                                                </div>
+                                                                                <div className="flex-1 min-w-0">
+                                                                                    <div className="flex justify-between items-start gap-2">
+                                                                                        <h5 className="text-sm font-black text-white italic uppercase tracking-tighter truncate">{product.name}</h5>
+                                                                                        <span className="text-[10px] font-black text-primary">Gs. {product.price.toLocaleString()}</span>
+                                                                                    </div>
+
+                                                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                                                        <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
+                                                                                        <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
+                                                                                        {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
+                                                                                    </div>
+
+                                                                                    <p className="text-[8px] text-gray-600 font-mono mt-2">ID: {product.id.toString().slice(0, 8).toUpperCase()}</p>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Stock Preview */}
+                                                                            <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-800/50">
+                                                                                {product.inventory?.map(inv => (
+                                                                                    <div key={inv.size} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${inv.quantity > 0 ? 'bg-white/5 border-gray-800' : 'bg-red-500/5 border-red-500/20 opacity-50'}`}>
+                                                                                        <span className={`text-[9px] font-black ${inv.quantity > 0 ? 'text-gray-400' : 'text-red-400'}`}>{inv.size}</span>
+                                                                                        <span className={`text-[10px] font-black ${inv.quantity > 0 ? 'text-blue-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+
+                                                                            {/* Floating Actions */}
+                                                                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        setEditingProductId(product.id);
+                                                                                        setNewProduct({
+                                                                                            name: product.name,
+                                                                                            description: product.description || '',
+                                                                                            price: product.price.toString(),
+                                                                                            originalPrice: (product as any).originalPrice?.toString() || '',
+                                                                                            category: product.category,
+                                                                                            subcategory: product.subcategory || '',
+                                                                                            slug: product.slug || generateSlug(product.name),
+                                                                                            images: product.images.length > 0 ? product.images : [''],
+                                                                                            tags: product.tags || [],
+                                                                                            isFeatured: (product as any).isFeatured || false,
+                                                                                            isCategoryFeatured: (product as any).isCategoryFeatured || false
+                                                                                        });
+                                                                                        const matrix: Record<string, number> = {};
+                                                                                        product.inventory?.forEach(item => {
+                                                                                            matrix[item.size] = item.quantity;
+                                                                                        });
+                                                                                        setStockMatrix(matrix);
+                                                                                        setShowProductForm(true);
+                                                                                    }}
+                                                                                    className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-lg"
+                                                                                >
+                                                                                    <Edit size={14} />
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        if (window.confirm('¿ELIMINAR PRODUCTO?')) {
+                                                                                            // @ts-ignore
+                                                                                            deleteProduct(product.id);
+                                                                                        }
+                                                                                    }}
+                                                                                    className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors shadow-lg"
+                                                                                >
+                                                                                    <Trash2 size={14} />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             </div>
-                                                            <div>
-                                                                <p className="text-white text-sm">{product.name}</p>
-                                                                <p className="text-[10px] text-gray-600 font-mono">#{product.id.toString().slice(0, 8)}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="px-2 py-1 bg-white/5 border border-gray-800 rounded text-[10px] text-gray-400 uppercase">
-                                                            {product.category}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-sm text-gray-300">
-                                                        Gs. {product.price?.toLocaleString()}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black ${product.stock && product.stock > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
-                                                            {product.stock || 0} UNI.
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <div className="flex justify-end gap-2">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setEditingProductId(product.id);
-                                                                    setNewProduct({
-                                                                        name: product.name,
-                                                                        description: product.description || '',
-                                                                        price: product.price.toString(),
-                                                                        originalPrice: (product as any).originalPrice?.toString() || '',
-                                                                        category: product.category,
-                                                                        subcategory: product.subcategory || '',
-                                                                        slug: product.slug || generateSlug(product.name),
-                                                                        images: product.images.length > 0 ? product.images : [''],
-                                                                        tags: product.tags || [],
-                                                                        isFeatured: (product as any).isFeatured || false,
-                                                                        isCategoryFeatured: (product as any).isCategoryFeatured || false
-                                                                    });
-                                                                    const matrix: Record<string, number> = {};
-                                                                    product.inventory?.forEach(item => {
-                                                                        matrix[item.size] = item.quantity;
-                                                                    });
-                                                                    setStockMatrix(matrix);
-                                                                    setShowProductForm(true);
-                                                                }}
-                                                                className="p-2 text-gray-500 hover:text-white transition-colors"
-                                                            >
-                                                                <Edit size={18} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    if (window.confirm('¿ELIMINAR PRODUCTO? Esta acción no se puede deshacer.')) {
-                                                                        // @ts-ignore
-                                                                        deleteProduct(product.id);
-                                                                    }
-                                                                }}
-                                                                className="p-2 text-gray-500 hover:text-red-500 transition-colors"
-                                                            >
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
