@@ -254,7 +254,7 @@ const AdminDashboard: React.FC = () => {
         }
 
         // Auto-Generate Stock Matrix for New Products
-        if (!editingProductId && newProduct.category) {
+        if (!editingProductId && !isLoadingProductRef.current && newProduct.category) {
             setStockMatrix(getDefaultMatrix(newProduct.type, newProduct.category));
         }
 
@@ -391,16 +391,22 @@ const AdminDashboard: React.FC = () => {
 
 
     const loadProductData = async (product: Product) => {
+        isLoadingProductRef.current = true;
+
         // Set editing ID immediately to prevent auto-reset effects
         setEditingProductId(product.id);
         setIsImported(product.tags.includes('Importado'));
         setShowProductForm(true);
 
+        // Price Mapping: 
+        // If it's a normal price (no offer), it should show up in "Precio Regular"
+        const hasOffer = product.originalPrice && product.originalPrice > product.price;
+
         // 1. Fill Form
         setNewProduct({
             name: product.name,
-            price: product.price.toString(),
-            originalPrice: product.originalPrice?.toString() || '',
+            price: hasOffer ? product.price.toString() : '',
+            originalPrice: hasOffer ? product.originalPrice.toString() : product.price.toString(),
             costPrice: product.costPrice ? product.costPrice.toString() : '',
             category: product.category,
             subcategory: product.subcategory || '',
@@ -428,14 +434,15 @@ const AdminDashboard: React.FC = () => {
         // Prefer already loaded inventory from context
         const existingInventory = product.inventory || [];
 
+        let targetMatrix = defaultMatrix;
+
         if (existingInventory.length > 0) {
-            const mergedMatrix = defaultMatrix.map(item => {
+            targetMatrix = defaultMatrix.map(item => {
                 const found = existingInventory.find(inv =>
                     inv.size.toString().trim().toUpperCase() === item.size.toString().trim().toUpperCase()
                 );
                 return found ? { size: item.size, quantity: Number(found.quantity) } : item;
             });
-            setStockMatrix(mergedMatrix);
         } else {
             // Only if missing in context, try a direct fetch
             try {
@@ -445,21 +452,19 @@ const AdminDashboard: React.FC = () => {
                     .eq('product_id', product.id);
 
                 if (serverInv && serverInv.length > 0) {
-                    const mergedMatrix = defaultMatrix.map(item => {
+                    targetMatrix = defaultMatrix.map(item => {
                         const found = serverInv.find(inv =>
                             inv.size.toString().trim().toUpperCase() === item.size.toString().trim().toUpperCase()
                         );
                         return found ? { size: item.size, quantity: Number(found.quantity) } : item;
                     });
-                    setStockMatrix(mergedMatrix);
-                } else {
-                    setStockMatrix(defaultMatrix);
                 }
             } catch (err) {
                 console.error("Direct inventory fetch failed:", err);
-                setStockMatrix(defaultMatrix);
             }
         }
+
+        setStockMatrix(targetMatrix);
 
         // Scroll
         const mainContent = document.getElementById('admin-main-content');
@@ -468,6 +473,11 @@ const AdminDashboard: React.FC = () => {
             mainContent.scrollTop = 0;
         }
         window.scrollTo({ top: 0, behavior: 'instant' });
+
+        // Release lock after a short delay to allow state to settle
+        setTimeout(() => {
+            isLoadingProductRef.current = false;
+        }, 100);
     };
 
 
@@ -492,16 +502,25 @@ const AdminDashboard: React.FC = () => {
         }
 
         // Determine final prices
-        let price = Number(newProduct.price) || 0;
-        let originalPrice = Number(newProduct.originalPrice) || 0;
+        const regularDisplayPrice = Number(newProduct.originalPrice) || 0;
+        const offerDisplayPrice = Number(newProduct.price) || 0;
 
-        if (price === 0 && originalPrice > 0) {
-            price = originalPrice;
-            originalPrice = 0;
+        let price = 0;
+        let originalPrice: number | undefined = undefined;
+
+        if (offerDisplayPrice > 0) {
+            // It's an offer: Regular is the old price, Oferta is the new one
+            price = offerDisplayPrice;
+            originalPrice = regularDisplayPrice > offerDisplayPrice ? regularDisplayPrice : undefined;
+        } else {
+            // Normal price: Handled in "Precio Regular" field usually, or "Precio Oferta"
+            // If they only filled one, that's the final price.
+            price = regularDisplayPrice || offerDisplayPrice;
+            originalPrice = undefined;
         }
 
         // Tag Logic for 'Oferta'
-        if (originalPrice > price) {
+        if (originalPrice && originalPrice > price) {
             if (!finalTags.includes('Oferta')) finalTags.push('Oferta');
         } else {
             finalTags = finalTags.filter(t => t !== 'Oferta');
