@@ -481,7 +481,9 @@ const AdminDashboard: React.FC = () => {
     };
 
     const removeSlide = (id: string) => {
-        setHeroForm(heroForm.filter(s => s.id !== id));
+        if (window.confirm('¿ELIMINAR ESTA DIAPOSITIVA DEL CARRUSEL?')) {
+            setHeroForm(heroForm.filter(s => s.id !== id));
+        }
     };
 
     const updateSlide = (id: string, field: keyof HeroSlide, value: string) => {
@@ -638,7 +640,9 @@ const AdminDashboard: React.FC = () => {
     };
 
     const removeNavLink = (id: string) => {
-        setNavForm(navForm.filter(l => l.id !== id));
+        if (window.confirm('¿ELIMINAR ESTE ENLACE DE NAVEGACIÓN?')) {
+            setNavForm(navForm.filter(l => l.id !== id));
+        }
     };
 
     const updateNavLink = (id: string, field: keyof NavbarLink, value: any) => {
@@ -657,7 +661,9 @@ const AdminDashboard: React.FC = () => {
     };
 
     const removeBentoItem = (id: string) => {
-        setBentoForm(prev => prev.filter(b => b.id !== id));
+        if (window.confirm('¿ELIMINAR ESTE ELEMENTO DEL GRID?')) {
+            setBentoForm(prev => prev.filter(b => b.id !== id));
+        }
     };
 
     const updateBentoItem = (id: string, field: keyof BannerBento, value: string) => {
@@ -709,12 +715,14 @@ const AdminDashboard: React.FC = () => {
     };
 
     const removeFooterLink = (colId: string, linkId: string) => {
-        setFooterForm(prev => prev.map(col => {
-            if (col.id === colId) {
-                return { ...col, links: col.links.filter(l => l.id !== linkId) };
-            }
-            return col;
-        }));
+        if (window.confirm('¿ELIMINAR ESTE ENLACE DEL PIE DE PÁGINA?')) {
+            setFooterForm(prev => prev.map(col => {
+                if (col.id === colId) {
+                    return { ...col, links: col.links.filter(l => l.id !== linkId) };
+                }
+                return col;
+            }));
+        }
     };
 
     const updateFooterLink = (colId: string, linkId: string, field: 'label' | 'url', value: string) => {
@@ -910,7 +918,7 @@ const AdminDashboard: React.FC = () => {
                                                     type="number"
                                                     value={newProduct.originalPrice}
                                                     onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 shadow-[0_0_15px_rgba(255,215,0,0.05)]"
+                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all shadow-[0_0_15px_rgba(255,215,0,0.05)]"
                                                     placeholder="Ej: 280000"
                                                     required
                                                 />
@@ -921,7 +929,7 @@ const AdminDashboard: React.FC = () => {
                                                     type="number"
                                                     value={newProduct.price}
                                                     onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800"
+                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all"
                                                     placeholder="Ej: 250000"
                                                 />
                                             </div>
@@ -1023,8 +1031,10 @@ const AdminDashboard: React.FC = () => {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => {
-                                                                    const imgs = newProduct.images.filter((_, i) => i !== idx);
-                                                                    setNewProduct({ ...newProduct, images: imgs.length > 0 ? imgs : [''] });
+                                                                    if (window.confirm('¿ELIMINAR ESTA IMAGEN POR URL?')) {
+                                                                        const imgs = newProduct.images.filter((_, i) => i !== idx);
+                                                                        setNewProduct({ ...newProduct, images: imgs.length > 0 ? imgs : [''] });
+                                                                    }
                                                                 }}
                                                                 className="p-4 text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                                                             >
@@ -1083,8 +1093,10 @@ const AdminDashboard: React.FC = () => {
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => {
-                                                                            const imgs = newProduct.images.filter((_, i) => i !== idx);
-                                                                            setNewProduct({ ...newProduct, images: imgs.length > 0 ? imgs : [''] });
+                                                                            if (window.confirm('¿REMOVER ESTA IMAGEN DEL PRODUCTO?')) {
+                                                                                const imgs = newProduct.images.filter((_, i) => i !== idx);
+                                                                                setNewProduct({ ...newProduct, images: imgs.length > 0 ? imgs : [''] });
+                                                                            }
                                                                         }}
                                                                         className="p-1.5 bg-red-900/40 rounded text-red-500 hover:bg-red-500 hover:text-white transition-colors"
                                                                     >
@@ -1399,7 +1411,9 @@ const AdminDashboard: React.FC = () => {
                                                         type="button"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            deleteOrder(order.id);
+                                                            if (window.confirm('¿ELIMINAR ESTE PEDIDO? ESTA ACCIÓN NO SE PUEDE DESHACER.')) {
+                                                                deleteOrder(order.id);
+                                                            }
                                                         }}
                                                         className="p-3 text-red-500 hover:bg-red-900/20 rounded-lg transition-all ml-auto md:ml-2 border border-red-900/30"
                                                         title="Eliminar DEFINITIVAMENTE"
@@ -1550,7 +1564,11 @@ const AdminDashboard: React.FC = () => {
                                                 <span className="text-xs text-gray-600">Por {post.author} • {post.date}</span>
                                                 <div className="flex gap-2">
                                                     <button onClick={() => handleEditBlogPost(post)} className="text-gray-400 hover:text-white text-xs font-bold uppercase hover:underline">Editar</button>
-                                                    <button onClick={() => deleteBlogPost(post.id)} className="text-red-500 hover:text-red-400 text-xs font-bold uppercase hover:underline">Eliminar</button>
+                                                    <button onClick={() => {
+                                                        if (window.confirm('¿ELIMINAR ESTA PUBLICACIÓN DEL BLOG?')) {
+                                                            deleteBlogPost(post.id);
+                                                        }
+                                                    }} className="text-red-500 hover:text-red-400 text-xs font-bold uppercase hover:underline">Eliminar</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1758,7 +1776,11 @@ const AdminDashboard: React.FC = () => {
                                                     </button>
                                                     {cat.id !== 'huerfanos' && (
                                                         <button
-                                                            onClick={() => deleteCategory(cat.id)}
+                                                            onClick={() => {
+                                                                if (window.confirm('¿ELIMINAR ESTA CATEGORÍA? ESTA ACCIÓN NO SE PUEDE DESHACER.')) {
+                                                                    deleteCategory(cat.id);
+                                                                }
+                                                            }}
                                                             className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
                                                             title="Eliminar Categoría"
                                                         >
