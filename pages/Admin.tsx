@@ -1228,24 +1228,26 @@ const AdminDashboard: React.FC = () => {
 
                                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                                                                     {subProducts.map(product => (
-                                                                        <div key={product.id} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4 group hover:border-gray-700 transition-all hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative">
+                                                                        <div key={product.id} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4 group hover:border-gray-700 transition-all hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative overflow-hidden">
                                                                             <div className="flex gap-4">
                                                                                 <div className="w-24 aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 flex-shrink-0">
                                                                                     <img src={product.images?.[0]} alt="" className="w-full h-full object-cover" />
                                                                                 </div>
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <div className="flex justify-between items-start gap-2">
+                                                                                <div className="flex-1 min-w-0 flex flex-col">
+                                                                                    <div className="pr-16">
                                                                                         <h5 className="text-sm font-black text-white italic uppercase tracking-tighter truncate">{product.name}</h5>
-                                                                                        <span className="text-[10px] font-black text-primary">Gs. {product.price.toLocaleString()}</span>
+                                                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                                                            <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
+                                                                                            <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
+                                                                                            {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
+                                                                                        </div>
                                                                                     </div>
 
-                                                                                    <div className="flex flex-wrap gap-1 mt-2">
-                                                                                        <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
-                                                                                        <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
-                                                                                        {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
+                                                                                    <div className="flex-1 flex items-center justify-center py-2">
+                                                                                        <span className="text-sm font-black text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/10">Gs. {product.price.toLocaleString()}</span>
                                                                                     </div>
 
-                                                                                    <p className="text-[8px] text-gray-600 font-mono mt-2">ID: {product.id.toString().slice(0, 8).toUpperCase()}</p>
+                                                                                    <p className="text-[8px] text-gray-600 font-mono">ID: {product.id.toString().slice(0, 8).toUpperCase()}</p>
                                                                                 </div>
                                                                             </div>
 
@@ -1259,8 +1261,8 @@ const AdminDashboard: React.FC = () => {
                                                                                 ))}
                                                                             </div>
 
-                                                                            {/* Floating Actions */}
-                                                                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                            {/* Actions - Positioned to the side */}
+                                                                            <div className="absolute top-4 right-4 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
                                                                                 <button
                                                                                     onClick={() => {
                                                                                         setEditingProductId(product.id);
@@ -1284,7 +1286,8 @@ const AdminDashboard: React.FC = () => {
                                                                                         setStockMatrix(matrix);
                                                                                         setShowProductForm(true);
                                                                                     }}
-                                                                                    className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors shadow-lg"
+                                                                                    className="p-2.5 bg-blue-600/90 text-white rounded-xl hover:bg-blue-500 transition-all shadow-xl backdrop-blur-md"
+                                                                                    title="Editar"
                                                                                 >
                                                                                     <Edit size={14} />
                                                                                 </button>
@@ -1295,7 +1298,8 @@ const AdminDashboard: React.FC = () => {
                                                                                             deleteProduct(product.id);
                                                                                         }
                                                                                     }}
-                                                                                    className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-500 transition-colors shadow-lg"
+                                                                                    className="p-2.5 bg-red-600/90 text-white rounded-xl hover:bg-red-500 transition-all shadow-xl backdrop-blur-md"
+                                                                                    title="Eliminar"
                                                                                 >
                                                                                     <Trash2 size={14} />
                                                                                 </button>
