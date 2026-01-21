@@ -315,9 +315,15 @@ const AdminDashboard: React.FC = () => {
     });
     const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({});
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+    const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
 
     const toggleCategory = (catId: string) => {
         setOpenCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
+    };
+
+    const toggleSubcategory = (catId: string, subName: string) => {
+        const key = `${catId}-${subName}`;
+        setOpenSubcategories(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
     const SIZES_CONFIG: Record<string, string[]> = {
@@ -1231,7 +1237,7 @@ const AdminDashboard: React.FC = () => {
                                     const isOpen = openCategories[category.id] ?? true;
 
                                     // Group by subcategory
-                                    const subcategories = Array.from(new Set(categoryProducts.map(p => p.subcategory || 'General')));
+                                    const subcategories = Array.from(new Set(categoryProducts.map(p => p.subcategory || 'General'))) as string[];
 
                                     return (
                                         <div key={category.id} className="bg-[#0c0c0c] border border-gray-800/50 rounded-2xl overflow-hidden shadow-xl transition-all">
@@ -1254,96 +1260,112 @@ const AdminDashboard: React.FC = () => {
                                                 <div className="p-6 space-y-10 animate-in slide-in-from-top-2 duration-300">
                                                     {subcategories.map(sub => {
                                                         const subProducts = categoryProducts.filter(p => (p.subcategory || 'General') === sub);
+                                                        const subKey = `${category.id}-${sub}`;
+                                                        const isSubOpen = openSubcategories[subKey] ?? true;
 
                                                         return (
-                                                            <div key={sub} className="space-y-6">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                                                    <span className="text-xs font-black text-gray-400 italic uppercase tracking-widest">{sub}</span>
-                                                                </div>
+                                                            <div key={sub} className="space-y-4">
+                                                                {/* Subcategory Header */}
+                                                                <button
+                                                                    onClick={() => toggleSubcategory(category.id, sub)}
+                                                                    className={`flex items-center gap-3 w-full p-3 rounded-xl border transition-all ${isSubOpen ? 'bg-white/5 border-gray-800' : 'bg-transparent border-gray-900/50 hover:bg-white/2'}`}
+                                                                >
+                                                                    <div className={`transition-transform duration-300 ${isSubOpen ? 'rotate-180' : ''}`}>
+                                                                        <ChevronDown size={14} className={isSubOpen ? 'text-primary' : 'text-gray-600'} />
+                                                                    </div>
+                                                                    <Folder size={14} className={isSubOpen ? 'text-primary' : 'text-gray-700'} />
+                                                                    <span className={`text-xs font-black italic uppercase tracking-widest transition-colors ${isSubOpen ? 'text-white' : 'text-gray-500'}`}>
+                                                                        {sub}
+                                                                    </span>
+                                                                    <span className="bg-black/50 border border-white/5 px-2 py-0.5 rounded text-[8px] font-black text-gray-400">
+                                                                        {subProducts.length} ITEMS
+                                                                    </span>
+                                                                </button>
 
-                                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-                                                                    {subProducts.map(product => (
-                                                                        <div key={product.id} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4 group hover:border-gray-700 transition-all hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative overflow-hidden">
-                                                                            <div className="flex gap-4">
-                                                                                <div className="w-24 aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 flex-shrink-0">
-                                                                                    <img src={product.images?.[0]} alt="" className="w-full h-full object-cover" />
-                                                                                </div>
-                                                                                <div className="flex-1 min-w-0 flex flex-col">
-                                                                                    <div className="pr-16">
-                                                                                        <h5 className="text-sm font-black text-white italic uppercase tracking-tighter truncate">{product.name}</h5>
-                                                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                                                            <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
-                                                                                            <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
-                                                                                            {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
+                                                                {isSubOpen && (
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 animate-in slide-in-from-top-1 duration-200">
+                                                                        {subProducts.map(product => (
+                                                                            <div key={product.id} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4 group hover:border-gray-700 transition-all hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                                                                                <div className="flex gap-4">
+                                                                                    <div className="w-24 aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 flex-shrink-0">
+                                                                                        <img src={product.images?.[0]} alt="" className="w-full h-full object-cover" />
+                                                                                    </div>
+                                                                                    <div className="flex-1 min-w-0 flex flex-col">
+                                                                                        <div className="pr-16">
+                                                                                            <h5 className="text-sm font-black text-white italic uppercase tracking-tighter truncate">{product.name}</h5>
+                                                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                                                <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
+                                                                                                <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
+                                                                                                {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
+                                                                                            </div>
                                                                                         </div>
-                                                                                    </div>
 
-                                                                                    <div className="flex-1 flex items-center justify-center py-2">
-                                                                                        <span className="text-sm font-black text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/10">Gs. {product.price.toLocaleString()}</span>
-                                                                                    </div>
+                                                                                        <div className="flex-1 flex items-center justify-center py-2">
+                                                                                            <span className="text-sm font-black text-primary bg-primary/5 px-3 py-1 rounded-full border border-primary/10">Gs. {product.price.toLocaleString()}</span>
+                                                                                        </div>
 
-                                                                                    <p className="text-[8px] text-gray-600 font-mono">ID: {product.id.toString().slice(0, 8).toUpperCase()}</p>
+                                                                                        <p className="text-[8px] text-gray-600 font-mono">ID: {product.id.toString().slice(0, 8).toUpperCase()}</p>
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {/* Stock Preview */}
+                                                                                <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-800/50">
+                                                                                    {product.inventory?.map(inv => (
+                                                                                        <div key={inv.size} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${inv.quantity > 0 ? 'bg-white/5 border-gray-800' : 'bg-red-500/5 border-red-500/20 opacity-50'}`}>
+                                                                                            <span className={`text-[9px] font-black ${inv.quantity > 0 ? 'text-gray-400' : 'text-red-400'}`}>{inv.size}</span>
+                                                                                            <span className={`text-[10px] font-black ${inv.quantity > 0 ? 'text-blue-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+
+                                                                                {/* Actions - Positioned to the side */}
+                                                                                <div className="absolute top-4 right-4 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            setEditingProductId(product.id);
+                                                                                            setNewProduct({
+                                                                                                name: product.name,
+                                                                                                description: product.description || '',
+                                                                                                price: product.price.toString(),
+                                                                                                originalPrice: (product as any).originalPrice?.toString() || '',
+                                                                                                category: product.category,
+                                                                                                subcategory: product.subcategory || '',
+                                                                                                slug: product.slug || generateSlug(product.name),
+                                                                                                seoAlt: (product as any).seoAlt || '',
+                                                                                                images: product.images.length > 0 ? product.images : [''],
+                                                                                                tags: product.tags || [],
+                                                                                                isFeatured: (product as any).isFeatured || false,
+                                                                                                isCategoryFeatured: (product as any).isCategoryFeatured || false
+                                                                                            });
+                                                                                            const matrix: Record<string, number> = {};
+                                                                                            product.inventory?.forEach(item => {
+                                                                                                matrix[item.size] = item.quantity;
+                                                                                            });
+                                                                                            setStockMatrix(matrix);
+                                                                                            setShowProductForm(true);
+                                                                                        }}
+                                                                                        className="p-2.5 bg-blue-600/90 text-white rounded-xl hover:bg-blue-500 transition-all shadow-xl backdrop-blur-md"
+                                                                                        title="Editar"
+                                                                                    >
+                                                                                        <Edit size={14} />
+                                                                                    </button>
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            if (window.confirm('¿ELIMINAR PRODUCTO?')) {
+                                                                                                // @ts-ignore
+                                                                                                deleteProduct(product.id);
+                                                                                            }
+                                                                                        }}
+                                                                                        className="p-2.5 bg-red-600/90 text-white rounded-xl hover:bg-red-500 transition-all shadow-xl backdrop-blur-md"
+                                                                                        title="Eliminar"
+                                                                                    >
+                                                                                        <Trash2 size={14} />
+                                                                                    </button>
                                                                                 </div>
                                                                             </div>
-
-                                                                            {/* Stock Preview */}
-                                                                            <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-800/50">
-                                                                                {product.inventory?.map(inv => (
-                                                                                    <div key={inv.size} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${inv.quantity > 0 ? 'bg-white/5 border-gray-800' : 'bg-red-500/5 border-red-500/20 opacity-50'}`}>
-                                                                                        <span className={`text-[9px] font-black ${inv.quantity > 0 ? 'text-gray-400' : 'text-red-400'}`}>{inv.size}</span>
-                                                                                        <span className={`text-[10px] font-black ${inv.quantity > 0 ? 'text-blue-400' : 'text-red-500'}`}>{inv.quantity}</span>
-                                                                                    </div>
-                                                                                ))}
-                                                                            </div>
-
-                                                                            {/* Actions - Positioned to the side */}
-                                                                            <div className="absolute top-4 right-4 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-                                                                                <button
-                                                                                    onClick={() => {
-                                                                                        setEditingProductId(product.id);
-                                                                                        setNewProduct({
-                                                                                            name: product.name,
-                                                                                            description: product.description || '',
-                                                                                            price: product.price.toString(),
-                                                                                            originalPrice: (product as any).originalPrice?.toString() || '',
-                                                                                            category: product.category,
-                                                                                            subcategory: product.subcategory || '',
-                                                                                            slug: product.slug || generateSlug(product.name),
-                                                                                            seoAlt: (product as any).seoAlt || '',
-                                                                                            images: product.images.length > 0 ? product.images : [''],
-                                                                                            tags: product.tags || [],
-                                                                                            isFeatured: (product as any).isFeatured || false,
-                                                                                            isCategoryFeatured: (product as any).isCategoryFeatured || false
-                                                                                        });
-                                                                                        const matrix: Record<string, number> = {};
-                                                                                        product.inventory?.forEach(item => {
-                                                                                            matrix[item.size] = item.quantity;
-                                                                                        });
-                                                                                        setStockMatrix(matrix);
-                                                                                        setShowProductForm(true);
-                                                                                    }}
-                                                                                    className="p-2.5 bg-blue-600/90 text-white rounded-xl hover:bg-blue-500 transition-all shadow-xl backdrop-blur-md"
-                                                                                    title="Editar"
-                                                                                >
-                                                                                    <Edit size={14} />
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={() => {
-                                                                                        if (window.confirm('¿ELIMINAR PRODUCTO?')) {
-                                                                                            // @ts-ignore
-                                                                                            deleteProduct(product.id);
-                                                                                        }
-                                                                                    }}
-                                                                                    className="p-2.5 bg-red-600/90 text-white rounded-xl hover:bg-red-500 transition-all shadow-xl backdrop-blur-md"
-                                                                                    title="Eliminar"
-                                                                                >
-                                                                                    <Trash2 size={14} />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         );
                                                     })}
