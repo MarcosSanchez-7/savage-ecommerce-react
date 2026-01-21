@@ -30,13 +30,17 @@ import {
     Package,
     Box,
     Globe,
-    Zap
+    Zap,
+    ArrowLeft,
+    ArrowRight,
+    Star,
+    UploadCloud,
+    Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
 import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
-import { Loader2, UploadCloud } from 'lucide-react';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
 import { uploadProductImage as uploadImage } from '../services/uploadService';
 
@@ -293,12 +297,15 @@ const AdminDashboard: React.FC = () => {
     const [newProduct, setNewProduct] = useState({
         name: '',
         description: '',
-        price: '',
+        price: '', // This will be the current/sale price
+        originalPrice: '', // This will be the regular price (higher)
         category: '',
         subcategory: '',
         slug: '',
         images: [''],
-        tags: [] as string[]
+        tags: [] as string[],
+        isFeatured: false,
+        isCategoryFeatured: false
     });
     const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({});
 
@@ -346,6 +353,7 @@ const AdminDashboard: React.FC = () => {
                 name: newProduct.name,
                 description: newProduct.description,
                 price: parseFloat(newProduct.price),
+                originalPrice: newProduct.originalPrice ? parseFloat(newProduct.originalPrice) : null,
                 category: newProduct.category,
                 subcategory: newProduct.subcategory,
                 slug: newProduct.slug,
@@ -353,7 +361,9 @@ const AdminDashboard: React.FC = () => {
                 sizes: Object.keys(stockMatrix).filter(s => stockMatrix[s] > 0),
                 inventory: Object.entries(stockMatrix).map(([size, quantity]) => ({ size, quantity })),
                 stock: totalStock,
-                tags: newProduct.tags
+                tags: newProduct.tags,
+                isFeatured: newProduct.isFeatured,
+                isCategoryFeatured: newProduct.isCategoryFeatured
             } as any;
 
             if (editingProductId) {
@@ -369,7 +379,19 @@ const AdminDashboard: React.FC = () => {
             // Reset
             setShowProductForm(false);
             setEditingProductId(null);
-            setNewProduct({ name: '', description: '', price: '', category: '', subcategory: '', slug: '', images: [''], tags: [] });
+            setNewProduct({
+                name: '',
+                description: '',
+                price: '',
+                originalPrice: '',
+                category: '',
+                subcategory: '',
+                slug: '',
+                images: [''],
+                tags: [],
+                isFeatured: false,
+                isCategoryFeatured: false
+            });
             setStockMatrix({});
         } catch (error) {
             console.error(error);
@@ -784,7 +806,19 @@ const AdminDashboard: React.FC = () => {
                             <button
                                 onClick={() => {
                                     setEditingProductId(null);
-                                    setNewProduct({ name: '', description: '', price: '', category: '', subcategory: '', slug: '', images: [''], tags: [] });
+                                    setNewProduct({
+                                        name: '',
+                                        description: '',
+                                        price: '',
+                                        originalPrice: '',
+                                        category: '',
+                                        subcategory: '',
+                                        slug: '',
+                                        images: [''],
+                                        tags: [],
+                                        isFeatured: false,
+                                        isCategoryFeatured: false
+                                    });
                                     setStockMatrix({});
                                     setShowProductForm(true);
                                 }}
@@ -795,8 +829,8 @@ const AdminDashboard: React.FC = () => {
                         </header>
 
                         {showProductForm && (
-                            <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4 backdrop-blur-md overflow-y-auto pt-20 pb-20">
-                                <div className="bg-[#080808] border border-gray-800 rounded-2xl w-full max-w-4xl max-h-full overflow-y-auto custom-scrollbar shadow-[0_0_100px_rgba(255,215,0,0.05)]">
+                            <div className="fixed inset-0 bg-black/95 z-[100] flex flex-col backdrop-blur-md overflow-hidden animate-in fade-in zoom-in duration-300">
+                                <div className="bg-[#080808] w-full h-full flex flex-col overflow-y-auto custom-scrollbar">
                                     <div className="p-8 border-b border-gray-800 flex justify-between items-center sticky top-0 bg-[#080808] z-10">
                                         <h2 className="text-2xl font-black italic text-primary">
                                             {editingProductId ? 'EDITAR PRODUCTO' : 'REGISTRAR NUEVO PRODUCTO'}
@@ -840,15 +874,25 @@ const AdminDashboard: React.FC = () => {
                                         </div>
 
                                         {/* Categories and Price */}
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 font-bold">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 font-bold">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-500">Precio (Gs.)</label>
+                                                <label className="text-[10px] uppercase tracking-widest text-gray-400">Precio Regular (Gs.)</label>
+                                                <input
+                                                    type="number"
+                                                    value={newProduct.originalPrice}
+                                                    onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800"
+                                                    placeholder="Ej: 280000"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-widest text-primary">Precio Oferta (Gs.)</label>
                                                 <input
                                                     type="number"
                                                     value={newProduct.price}
                                                     onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800"
-                                                    placeholder="250000"
+                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 shadow-[0_0_15px_rgba(255,0,0,0.1)]"
+                                                    placeholder="Ej: 250000"
                                                     required
                                                 />
                                             </div>
@@ -890,52 +934,49 @@ const AdminDashboard: React.FC = () => {
                                         {/* Image Upload System */}
                                         <div className="space-y-6 pt-6 border-t border-gray-800/50">
                                             <div className="flex justify-between items-center">
-                                                <label className="text-sm font-black italic uppercase tracking-tighter text-white">Galería de Imágenes</label>
-                                                <div className="bg-black border border-gray-800 rounded-lg p-1 flex gap-1">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setUploadType('PC')}
-                                                        className={`px-4 py-1.5 rounded-md text-[10px] font-black tracking-widest transition-all ${uploadType === 'PC' ? 'bg-primary text-black' : 'text-gray-500 hover:text-white'}`}
-                                                    >
-                                                        PC
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setUploadType('URL')}
-                                                        className={`px-4 py-1.5 rounded-md text-[10px] font-black tracking-widest transition-all ${uploadType === 'URL' ? 'bg-primary text-black' : 'text-gray-500 hover:text-white'}`}
-                                                    >
-                                                        URL
-                                                    </button>
+                                                <div className="flex items-center gap-4">
+                                                    <label className="text-sm font-black italic uppercase tracking-tighter text-white">Galería de Imágenes</label>
+                                                    <div className="bg-black border border-gray-800 rounded-lg p-1 flex gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setUploadType('PC')}
+                                                            className={`px-4 py-1.5 rounded-md text-[10px] font-black tracking-widest transition-all ${uploadType === 'PC' ? 'bg-primary text-black' : 'text-gray-500 hover:text-white'}`}
+                                                        >
+                                                            PC
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setUploadType('URL')}
+                                                            className={`px-4 py-1.5 rounded-md text-[10px] font-black tracking-widest transition-all ${uploadType === 'URL' ? 'bg-primary text-black' : 'text-gray-500 hover:text-white'}`}
+                                                        >
+                                                            URL
+                                                        </button>
+                                                    </div>
                                                 </div>
+
+                                                {uploadType === 'PC' && (
+                                                    <div>
+                                                        <input
+                                                            type="file"
+                                                            onChange={handleFileSelect}
+                                                            multiple
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            id="product-file-upload-small"
+                                                            disabled={isUploading}
+                                                        />
+                                                        <label
+                                                            htmlFor="product-file-upload-small"
+                                                            className="bg-primary hover:bg-yellow-500 text-black text-[10px] font-black px-6 py-3 rounded-lg flex items-center gap-2 cursor-pointer transition-all uppercase tracking-widest shadow-lg active:scale-95"
+                                                        >
+                                                            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                                                            {isUploading ? 'Subiendo...' : 'Subir de Galería'}
+                                                        </label>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {uploadType === 'PC' ? (
-                                                <div className="relative group">
-                                                    <input
-                                                        type="file"
-                                                        onChange={handleFileSelect}
-                                                        multiple
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        id="product-file-upload"
-                                                        disabled={isUploading}
-                                                    />
-                                                    <label
-                                                        htmlFor="product-file-upload"
-                                                        className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-800 hover:border-primary/50 bg-black/20 rounded-2xl cursor-pointer transition-all gap-4 group-hover:bg-primary/5 shadow-inner"
-                                                    >
-                                                        {isUploading ? (
-                                                            <Loader2 size={40} className="animate-spin text-primary" />
-                                                        ) : (
-                                                            <UploadCloud size={40} className="text-gray-700 group-hover:text-primary transition-colors" />
-                                                        )}
-                                                        <div className="text-center">
-                                                            <p className="text-sm font-black text-white italic">CLICK PARA SUBIR IMÁGENES</p>
-                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">PNG, JPG, WEBP (Se optimizarán automáticamente)</p>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            ) : (
+                                            {uploadType === 'URL' && (
                                                 <div className="space-y-4">
                                                     {newProduct.images.map((img, idx) => (
                                                         <div key={idx} className="flex gap-2">
@@ -972,26 +1013,103 @@ const AdminDashboard: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            {/* Preview Grid */}
-                                            {newProduct.images.some(img => img !== '') && (
-                                                <div className="grid grid-cols-4 md:grid-cols-6 gap-4 py-4">
-                                                    {newProduct.images.filter(img => img !== '').map((img, idx) => (
-                                                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-800 shadow-lg group">
-                                                            <img src={img} alt="" className="w-full h-full object-cover" />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const imgs = newProduct.images.filter((_, i) => i !== idx);
-                                                                    setNewProduct({ ...newProduct, images: imgs.length > 0 ? imgs : [''] });
-                                                                }}
-                                                                className="absolute top-1 right-1 p-1 bg-black/80 text-red-500 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                                            >
-                                                                <X size={12} />
-                                                            </button>
-                                                        </div>
-                                                    ))}
+                                            {/* Advanced Image Grid with Reordering */}
+                                            {newProduct.images.filter(img => img !== '').length > 0 && (
+                                                <div className="bg-black/40 border border-gray-800 p-6 rounded-2xl">
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-6">
+                                                        {newProduct.images.filter(img => img !== '').map((img, idx) => (
+                                                            <div key={idx} className={`relative aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all group ${idx === 0 ? 'border-primary shadow-[0_0_20px_rgba(255,215,0,0.1)] scale-105 z-10' : 'border-gray-800'}`}>
+                                                                <img src={img} alt="" className="w-full h-full object-cover" />
+
+                                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity flex justify-between gap-1">
+                                                                    <div className="flex gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                if (idx === 0) return;
+                                                                                const imgs = [...newProduct.images.filter(img => img !== '')];
+                                                                                [imgs[idx], imgs[idx - 1]] = [imgs[idx - 1], imgs[idx]];
+                                                                                setNewProduct({ ...newProduct, images: imgs });
+                                                                            }}
+                                                                            disabled={idx === 0}
+                                                                            className="p-1.5 bg-black/60 rounded text-white hover:bg-primary hover:text-black disabled:opacity-30 transition-colors"
+                                                                        >
+                                                                            <ArrowLeft size={14} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const activeImgs = newProduct.images.filter(img => img !== '');
+                                                                                if (idx === activeImgs.length - 1) return;
+                                                                                const imgs = [...activeImgs];
+                                                                                [imgs[idx], imgs[idx + 1]] = [imgs[idx + 1], imgs[idx]];
+                                                                                setNewProduct({ ...newProduct, images: imgs });
+                                                                            }}
+                                                                            disabled={idx === newProduct.images.filter(img => img !== '').length - 1}
+                                                                            className="p-1.5 bg-black/60 rounded text-white hover:bg-primary hover:text-black disabled:opacity-30 transition-colors"
+                                                                        >
+                                                                            <ArrowRight size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const imgs = newProduct.images.filter((_, i) => i !== idx);
+                                                                            setNewProduct({ ...newProduct, images: imgs.length > 0 ? imgs : [''] });
+                                                                        }}
+                                                                        className="p-1.5 bg-red-900/40 rounded text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+
+                                                                {idx === 0 && (
+                                                                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary text-black text-[8px] font-black uppercase rounded shadow-lg">Portada</div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             )}
+                                        </div>
+
+                                        {/* Status & Featured Options */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-800/50">
+                                            <div
+                                                onClick={() => setNewProduct(prev => ({ ...prev, isFeatured: !prev.isFeatured }))}
+                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isFeatured ? 'bg-primary/5 border-primary shadow-[0_0_20px_rgba(255,215,0,0.05)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isFeatured ? 'bg-primary text-black' : 'bg-gray-900 text-gray-500'}`}>
+                                                        <Star size={24} fill={newProduct.isFeatured ? "currentColor" : "none"} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">DESTACADO HOME</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en sección "Destacados" principal</p>
+                                                    </div>
+                                                </div>
+                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isFeatured ? 'bg-primary' : 'bg-gray-800'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isFeatured ? 'left-7' : 'left-1'}`} />
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                onClick={() => setNewProduct(prev => ({ ...prev, isCategoryFeatured: !prev.isCategoryFeatured }))}
+                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isCategoryFeatured ? 'bg-white/5 border-white shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isCategoryFeatured ? 'bg-white text-black' : 'bg-gray-900 text-gray-500'}`}>
+                                                        <Layers size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">DESTACADO CATEGORÍA</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Top 8 principales de su categoría</p>
+                                                    </div>
+                                                </div>
+                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isCategoryFeatured ? 'bg-white' : 'bg-gray-800'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-black rounded-full transition-all duration-300 ${newProduct.isCategoryFeatured ? 'left-7' : 'left-1'}`} />
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {/* Dynamic Stock Section */}
@@ -1109,11 +1227,14 @@ const AdminDashboard: React.FC = () => {
                                                                         name: product.name,
                                                                         description: product.description || '',
                                                                         price: product.price.toString(),
+                                                                        originalPrice: (product as any).originalPrice?.toString() || '',
                                                                         category: product.category,
                                                                         subcategory: product.subcategory || '',
                                                                         slug: product.slug || generateSlug(product.name),
                                                                         images: product.images.length > 0 ? product.images : [''],
-                                                                        tags: product.tags || []
+                                                                        tags: product.tags || [],
+                                                                        isFeatured: (product as any).isFeatured || false,
+                                                                        isCategoryFeatured: (product as any).isCategoryFeatured || false
                                                                     });
                                                                     const matrix: Record<string, number> = {};
                                                                     product.inventory?.forEach(item => {

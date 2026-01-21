@@ -104,8 +104,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
         )}
 
         {product.originalPrice && product.originalPrice > product.price && (
-          <div className="absolute top-14 right-3 bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 uppercase tracking-wider rounded-sm z-20">
-            -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+          <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+            <div className="bg-red-600 text-white text-[8px] md:text-[10px] font-black px-2 py-1 uppercase tracking-widest rounded-sm z-20 animate-pulse shadow-lg">
+              OFERTA
+            </div>
+            <div className="bg-black/80 backdrop-blur-md text-primary text-[8px] md:text-[10px] font-black px-2 py-1 uppercase tracking-widest rounded-sm z-20 border border-primary/20">
+              -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
+            </div>
           </div>
         )}
       </div>
