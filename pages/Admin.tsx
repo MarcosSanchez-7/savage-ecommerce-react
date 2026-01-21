@@ -12,6 +12,9 @@ import {
     LogOut,
     ChevronDown,
     ChevronUp,
+    ChevronRight,
+    Folder,
+    FolderOpen,
     X,
     FileText,
     Settings,
@@ -158,6 +161,13 @@ const AdminDashboard: React.FC = () => {
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Folder State for Products
+    const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
+    const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
+
+    const toggleCategory = (cat: string) => setOpenCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+    const toggleSubcategory = (key: string) => setOpenSubcategories(prev => ({ ...prev, [key]: !prev[key] }));
 
     // Product Form State
     const [newProduct, setNewProduct] = useState({
@@ -881,14 +891,15 @@ const AdminDashboard: React.FC = () => {
     };
 
 
-    const productsByCategory = products.reduce((acc, product) => {
-        // Use raw columns from database as requested, mirroring Stock App
+    const groupedProducts = products.reduce((acc, product) => {
         const catName = product.category ? product.category.trim().toUpperCase() : 'SIN CATEGORÍA';
+        const subName = product.subcategory ? product.subcategory.trim().toUpperCase() : 'GENERAL';
 
-        if (!acc[catName]) acc[catName] = [];
-        acc[catName].push(product);
+        if (!acc[catName]) acc[catName] = {};
+        if (!acc[catName][subName]) acc[catName][subName] = [];
+        acc[catName][subName].push(product);
         return acc;
-    }, {} as Record<string, Product[]>);
+    }, {} as Record<string, Record<string, Product[]>>);
 
     // --- Web Design Handlers ---
     const handleNavSave = async () => {
@@ -1215,20 +1226,20 @@ const AdminDashboard: React.FC = () => {
                     <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <header className="flex flex-col md:flex-row justify-between md:items-end border-b border-gray-800 pb-6 gap-4">
                             <div>
-                                <h2 className="text-3xl font-bold mb-2">Gestión de Productos</h2>
-                                <p className="text-gray-400">Administra el inventario, precios y detalles.</p>
+                                <h2 className="text-3xl font-bold mb-2 uppercase italic tracking-tighter">Gestión de Productos</h2>
+                                <p className="text-gray-400 text-sm">Administra el inventario, precios y detalles por carpetas.</p>
                             </div>
                             {!showProductForm && !editingProductId && (
                                 <button
                                     onClick={() => setShowProductForm(true)}
-                                    className="bg-primary text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px]"
+                                    className="bg-primary text-black font-black py-4 px-8 rounded-lg flex items-center gap-2 hover:bg-yellow-500 transition-all uppercase text-xs tracking-widest shadow-xl transform hover:translate-y-[-2px] shadow-primary/20"
                                 >
                                     <Plus size={20} /> AGREGAR PRODUCTO
                                 </button>
                             )}
                         </header>
 
-                        {/* Add Product Form */}
+                        {/* Add/Edit Product Form */}
                         {(showProductForm || editingProductId) && (
                             <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl animate-in fade-in slide-in-from-top-4">
                                 <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-primary">
@@ -1433,13 +1444,6 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         )}
 
-                                        {/* Keep Type (Clothing/Footwear) but hidden if possible or discreet? 
-                                            Image 2 didn't show it but it affects logic. 
-                                            Let's keep it very minimal or infer it. 
-                                            Actually, let's infer it! 
-                                            If Category is 'CALZADOS', set type='footwear'. Else 'clothing'.
-                                            I'll add a useEffect for this in a separate step or leave the visual toggle for now but cleaner.
-                                        */}
                                         <div className="flex justify-center pt-2">
                                             <div className="inline-flex bg-gray-900 rounded-lg p-1">
                                                 <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'clothing' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'clothing' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Ropa (Talles)</button>
@@ -1497,10 +1501,6 @@ const AdminDashboard: React.FC = () => {
                                                     {isUploading ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
                                                     {isUploading ? 'SUBIENDO...' : 'SUBIR DESDE PC'}
                                                 </button>
-                                                {/* <button type="button" onClick={handleGooglePhotosSelect} className="text-xs text-white bg-green-600 hover:bg-green-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
-                                                        <GoogleIcon size={12} />
-                                                        GOOGLE PHOTOS
-                                                    </button> */}
                                                 <button type="button" onClick={addImageField} className="text-xs text-primary font-bold hover:underline">+ Agregar URL Manual</button>
                                                 <input
                                                     type="file"
@@ -1544,8 +1544,6 @@ const AdminDashboard: React.FC = () => {
                                                 </div>
                                             ))}
                                         </div>
-                                        <p className="text-[10px] text-gray-500 italic">
-                                            * La imagen #1 será la portada. Incluye descripciones ALT para mejorar el SEO.</p>
                                     </div>
 
                                     <div className="md:col-span-2 pt-4 border-t border-gray-800">
@@ -1557,6 +1555,125 @@ const AdminDashboard: React.FC = () => {
                                         </button>
                                     </div>
                                 </form>
+                            </div>
+                        )}
+
+                        {/* Folder-based Product List */}
+                        {!showProductForm && !editingProductId && (
+                            <div className="space-y-6">
+                                {Object.entries(groupedProducts).length === 0 ? (
+                                    <div className="text-center py-20 bg-[#0a0a0a] border border-gray-800 rounded-xl">
+                                        <div className="mb-4 flex justify-center">
+                                            <ShoppingBag size={48} className="text-gray-800" />
+                                        </div>
+                                        <p className="text-gray-500 italic">No hay productos publicados aún.</p>
+                                    </div>
+                                ) : (
+                                    Object.entries(groupedProducts).map(([category, subcategories]) => (
+                                        <div key={category} className="bg-[#0a0a0a] border border-gray-800 rounded-xl overflow-hidden shadow-lg animate-in fade-in slide-in-from-left-4">
+                                            {/* Category Header (Folder) */}
+                                            <button
+                                                onClick={() => toggleCategory(category)}
+                                                className="w-full flex items-center justify-between p-5 bg-black hover:bg-white/5 transition-colors border-b border-gray-900"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    {openCategories[category] ? <FolderOpen className="text-primary" size={24} /> : <Folder className="text-gray-600" size={24} />}
+                                                    <h3 className="text-lg font-black uppercase tracking-widest italic">{category}</h3>
+                                                    <span className="bg-gray-900 text-[10px] font-bold text-gray-400 px-3 py-1 rounded-full border border-gray-800">
+                                                        {Object.values(subcategories).flat().length} {Object.values(subcategories).flat().length === 1 ? 'PRODUCTO' : 'PRODUCTOS'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    {openCategories[category] ? <ChevronDown size={20} className="text-gray-500" /> : <ChevronRight size={20} className="text-gray-500" />}
+                                                </div>
+                                            </button>
+
+                                            {/* Subcategories (Inner Folders) */}
+                                            {openCategories[category] && (
+                                                <div className="p-4 space-y-4 bg-[#050505]">
+                                                    {Object.entries(subcategories).map(([subcategory, subProducts]) => {
+                                                        const subKey = `${category}-${subcategory}`;
+                                                        return (
+                                                            <div key={subcategory} className="border border-gray-900 rounded-lg overflow-hidden bg-black/40">
+                                                                <button
+                                                                    onClick={() => toggleSubcategory(subKey)}
+                                                                    className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-gray-900/50"
+                                                                >
+                                                                    <div className="flex items-center gap-3">
+                                                                        <Layers size={18} className={openSubcategories[subKey] ? "text-primary" : "text-gray-700"} />
+                                                                        <h4 className="text-sm font-bold uppercase tracking-wider text-gray-300">{subcategory}</h4>
+                                                                        <span className="text-[10px] text-gray-600 font-mono">({subProducts.length})</span>
+                                                                    </div>
+                                                                    {openSubcategories[subKey] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                                </button>
+
+                                                                {openSubcategories[subKey] && (
+                                                                    <div className="overflow-x-auto animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                        <table className="w-full text-left text-xs min-w-[600px]">
+                                                                            <thead className="bg-[#0f0f0f] text-gray-600 font-bold uppercase tracking-tighter border-b border-gray-900">
+                                                                                <tr>
+                                                                                    <th className="p-4 w-20 text-center">Preview</th>
+                                                                                    <th className="p-4">Producto</th>
+                                                                                    <th className="p-4">Precio</th>
+                                                                                    <th className="p-4 text-center">Stock Total</th>
+                                                                                    <th className="p-4 text-right">Acciones</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody className="divide-y divide-gray-900">
+                                                                                {subProducts.map(product => (
+                                                                                    <tr key={product.id} className="hover:bg-primary/5 transition-colors group">
+                                                                                        <td className="p-4">
+                                                                                            <div className="w-12 h-16 bg-gray-900 rounded overflow-hidden border border-gray-800 mx-auto group-hover:border-primary/30">
+                                                                                                <img src={product.images[0]} className="w-full h-full object-cover" />
+                                                                                            </div>
+                                                                                        </td>
+                                                                                        <td className="p-4">
+                                                                                            <p className="font-black uppercase text-gray-200 group-hover:text-white truncate max-w-[200px]">{product.name}</p>
+                                                                                            <p className="text-[10px] text-gray-600 font-mono mt-1">ID: {product.id.toString().slice(-8)}</p>
+                                                                                        </td>
+                                                                                        <td className="p-4">
+                                                                                            <p className="font-bold text-primary">Gs. {product.price.toLocaleString()}</p>
+                                                                                            {product.originalPrice && product.originalPrice > product.price && (
+                                                                                                <p className="text-[10px] text-gray-600 line-through">Gs. {product.originalPrice.toLocaleString()}</p>
+                                                                                            )}
+                                                                                        </td>
+                                                                                        <td className="p-4 text-center">
+                                                                                            <span className={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest ${product.stock > 10 ? 'bg-green-500/10 text-green-500' : product.stock > 0 ? 'bg-yellow-500/10 text-yellow-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                                                                {product.stock} UNI
+                                                                                            </span>
+                                                                                        </td>
+                                                                                        <td className="p-4 text-right">
+                                                                                            <div className="flex justify-end gap-2">
+                                                                                                <button
+                                                                                                    onClick={() => { setEditingProductId(product.id); loadProductData(product); }}
+                                                                                                    className="p-2.5 bg-gray-900 hover:bg-white hover:text-black rounded-lg transition-all border border-gray-800"
+                                                                                                    title="Editar"
+                                                                                                >
+                                                                                                    <Edit size={14} />
+                                                                                                </button>
+                                                                                                <button
+                                                                                                    onClick={() => { if (window.confirm('¿Eliminar producto?')) deleteProduct(product.id); }}
+                                                                                                    className="p-2.5 bg-red-900/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all border border-red-900/30"
+                                                                                                    title="Eliminar"
+                                                                                                >
+                                                                                                    <Trash2 size={14} />
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
                     </div>
