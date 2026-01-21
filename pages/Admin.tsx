@@ -320,7 +320,9 @@ const AdminDashboard: React.FC = () => {
         'INFANTIL': ['4', '6', '8', '10', '12', '14', '16'],
         'ACCESORIOS': ['UNICO'],
         'RELOJES': ['UNICO'],
-        'JERSEYS': ['P', 'M', 'G', 'XL', 'XXL']
+        'JERSEYS': ['P', 'M', 'G', 'XL', 'XXL'],
+        'INVIERNO': ['P', 'M', 'G', 'XL', 'XXL'],
+        'SHORTS': ['P', 'M', 'G', 'XL', 'XXL']
     };
 
     const getSizesForCategory = (catName: string): string[] => {
@@ -329,7 +331,7 @@ const AdminDashboard: React.FC = () => {
         if (SIZES_CONFIG[normalized]) return SIZES_CONFIG[normalized];
         if (normalized.includes('NIÑO') || normalized.includes('KIDS') || normalized.includes('INFANTIL')) return SIZES_CONFIG['INFANTIL'];
         if (normalized.includes('CALZADO') || normalized.includes('ZAPATO')) return SIZES_CONFIG['CALZADOS'];
-        if (normalized.includes('CAMISETA') || normalized.includes('REMERA') || normalized.includes('JERSEY')) return SIZES_CONFIG['CAMISETAS'];
+        if (normalized.includes('CAMISETA') || normalized.includes('REMERA') || normalized.includes('JERSEY') || normalized.includes('INVIERNO') || normalized.includes('SHORT')) return SIZES_CONFIG['CAMISETAS'];
         if (normalized.includes('RELOJ')) return SIZES_CONFIG['RELOJES'];
         // Default to unique size for accessories or unknown
         return ['UNICO'];
