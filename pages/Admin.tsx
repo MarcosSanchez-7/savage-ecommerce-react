@@ -385,6 +385,9 @@ const AdminDashboard: React.FC = () => {
                 subcategory: newProduct.subcategory,
                 slug: newProduct.slug,
                 images: newProduct.images.filter(img => img !== ''),
+                sizes: newProduct.isImported
+                    ? getSizesForCategory(categories.find(c => c.id === newProduct.category)?.name || '')
+                    : Object.keys(stockMatrix).filter(s => stockMatrix[s] > 0),
                 stock: newProduct.isImported ? 0 : totalStock,
                 inventory: newProduct.isImported ? [] : Object.entries(stockMatrix).map(([size, quantity]) => ({ size, quantity })),
                 tags: newProduct.tags,
@@ -585,7 +588,7 @@ const AdminDashboard: React.FC = () => {
                 updateSocialConfig(configForm),
                 updateLifestyleConfig(lifestyleForm)
             ]);
-            alert('Añadido correctamente a la base de datos');
+            alert('Añadido correctamente a la base de datos.');
         } catch (error) {
             console.error(error);
             alert('Hubo un error guardando en la base de datos.');
@@ -855,7 +858,8 @@ const AdminDashboard: React.FC = () => {
                                         images: [''],
                                         tags: [],
                                         isFeatured: false,
-                                        isCategoryFeatured: false
+                                        isCategoryFeatured: false,
+                                        isImported: false
                                     });
                                     setStockMatrix({});
                                     setShowProductForm(true);
@@ -1327,12 +1331,31 @@ const AdminDashboard: React.FC = () => {
                                                                                     </div>
                                                                                 </div>
 
+                                                                                {/* Tags for Imported Products */}
+                                                                                {product.isImported && (
+                                                                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+                                                                                        <div className="bg-blue-600 text-white text-[8px] md:text-[9px] font-black px-2 py-0.5 uppercase tracking-tighter rounded-sm flex items-center gap-1 shadow-lg border border-blue-400/20 shadow-blue-500/20">
+                                                                                            <span className="material-symbols-outlined text-[10px] md:text-xs">globe</span>
+                                                                                            IMPORTADO
+                                                                                        </div>
+                                                                                        <div className="bg-white/90 backdrop-blur-sm text-blue-600 text-[8px] md:text-[9px] font-black px-2 py-0.5 uppercase tracking-tighter rounded-sm flex items-center gap-1 shadow-lg border border-blue-200">
+                                                                                            BAJO PEDIDO
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+
                                                                                 {/* Stock Preview */}
                                                                                 <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-800/50">
                                                                                     {product.inventory?.map(inv => (
                                                                                         <div key={inv.size} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${inv.quantity > 0 ? 'bg-white/5 border-gray-800' : 'bg-red-500/5 border-red-500/20 opacity-50'}`}>
                                                                                             <span className={`text-[9px] font-black ${inv.quantity > 0 ? 'text-gray-400' : 'text-red-400'}`}>{inv.size}</span>
                                                                                             <span className={`text-[10px] font-black ${inv.quantity > 0 ? 'text-blue-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                    {product.isImported && product.sizes && product.sizes.map(size => (
+                                                                                        <div key={size} className="flex items-center gap-1.5 px-2 py-1 rounded-lg border bg-blue-500/5 border-blue-500/20 opacity-70">
+                                                                                            <span className="text-[9px] font-black text-blue-400">{size}</span>
+                                                                                            <span className="text-[10px] font-black text-blue-500">0</span>
                                                                                         </div>
                                                                                     ))}
                                                                                 </div>
@@ -2073,6 +2096,7 @@ const AdminDashboard: React.FC = () => {
                                                             value={link.path}
                                                             onChange={(e) => updateNavLink(link.id, 'path', e.target.value)}
                                                             className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-gray-300 font-mono focus:border-primary focus:outline-none"
+                                                            placeholder="/category/..."
                                                         />
                                                     </div>
                                                     <div>

@@ -150,7 +150,7 @@ const ProductDetail: React.FC = () => {
                                     <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle (Opcional)</span>
                                 </div>
                                 <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                                    {product.sizes.map(size => {
+                                    {product.sizes?.map(size => {
                                         const normalizedSize = size.trim().toUpperCase();
                                         // Check inventory for this specific size
                                         const invItem = product.inventory?.find(i => i.size.trim().toUpperCase() === normalizedSize);
