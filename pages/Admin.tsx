@@ -311,7 +311,8 @@ const AdminDashboard: React.FC = () => {
         images: [''],
         tags: [] as string[],
         isFeatured: false,
-        isCategoryFeatured: false
+        isCategoryFeatured: false,
+        isImported: false
     });
     const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({});
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
@@ -384,13 +385,13 @@ const AdminDashboard: React.FC = () => {
                 subcategory: newProduct.subcategory,
                 slug: newProduct.slug,
                 images: newProduct.images.filter(img => img !== ''),
-                sizes: Object.keys(stockMatrix).filter(s => stockMatrix[s] > 0),
-                inventory: Object.entries(stockMatrix).map(([size, quantity]) => ({ size, quantity })),
-                stock: totalStock,
+                stock: newProduct.isImported ? 0 : totalStock,
+                inventory: newProduct.isImported ? [] : Object.entries(stockMatrix).map(([size, quantity]) => ({ size, quantity })),
                 tags: newProduct.tags,
                 seoAlt: newProduct.seoAlt,
                 isFeatured: newProduct.isFeatured,
-                isCategoryFeatured: newProduct.isCategoryFeatured
+                isCategoryFeatured: newProduct.isCategoryFeatured,
+                isImported: newProduct.isImported
             } as any;
 
             if (editingProductId) {
@@ -418,7 +419,8 @@ const AdminDashboard: React.FC = () => {
                 images: [''],
                 tags: [],
                 isFeatured: false,
-                isCategoryFeatured: false
+                isCategoryFeatured: false,
+                isImported: false
             });
             setStockMatrix({});
         } catch (error) {
@@ -1157,6 +1159,23 @@ const AdminDashboard: React.FC = () => {
                                                     <div className={`absolute top-1 w-4 h-4 bg-black rounded-full transition-all duration-300 ${newProduct.isCategoryFeatured ? 'left-7' : 'left-1'}`} />
                                                 </div>
                                             </div>
+                                            <div
+                                                onClick={() => setNewProduct(prev => ({ ...prev, isImported: !prev.isImported }))}
+                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isImported ? 'bg-blue-500/10 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isImported ? 'bg-blue-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                        <Globe size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">PRODUCTO IMPORTADO</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Bajo pedido (Sin stock local / 25-30 días)</p>
+                                                    </div>
+                                                </div>
+                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isImported ? 'bg-blue-500' : 'bg-gray-800'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isImported ? 'left-7' : 'left-1'}`} />
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {/* Dynamic Stock Section */}
@@ -1335,7 +1354,8 @@ const AdminDashboard: React.FC = () => {
                                                                                                 images: product.images.length > 0 ? product.images : [''],
                                                                                                 tags: product.tags || [],
                                                                                                 isFeatured: (product as any).isFeatured || false,
-                                                                                                isCategoryFeatured: (product as any).isCategoryFeatured || false
+                                                                                                isCategoryFeatured: (product as any).isCategoryFeatured || false,
+                                                                                                isImported: (product as any).isImported || false
                                                                                             });
                                                                                             const matrix: Record<string, number> = {};
                                                                                             product.inventory?.forEach(item => {

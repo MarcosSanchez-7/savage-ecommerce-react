@@ -19,6 +19,7 @@ export interface Product {
   costPrice?: number;
   slug?: string;
   imageAlts?: string[];
+  isImported?: boolean;
 }
 
 export interface InventoryItem {

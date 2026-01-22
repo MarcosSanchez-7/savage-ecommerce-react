@@ -353,6 +353,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     subcategory: p.subcategory || p.Subcategory || p.sub_category || '',
                     stock: p.stock_quantity,
                     costPrice: Number(p.cost_price || p.unit_cost || 0),
+                    imageAlts: p.image_alts,
+                    isImported: p.is_imported,
                     inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
                 })));
             }
@@ -585,7 +587,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 stock_quantity: product.stock || 0,
                 cost_price: product.costPrice || 0,
                 slug: product.slug,
-                image_alts: product.imageAlts
+                image_alts: product.imageAlts,
+                is_imported: product.isImported
             };
 
             const { data, error } = await supabase
@@ -649,7 +652,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 stock_quantity: updatedProduct.stock || 0,
                 cost_price: updatedProduct.costPrice || 0,
                 slug: updatedProduct.slug,
-                image_alts: updatedProduct.imageAlts
+                image_alts: updatedProduct.imageAlts,
+                is_imported: updatedProduct.isImported
             };
 
             const { error } = await supabase

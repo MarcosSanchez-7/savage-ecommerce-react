@@ -33,9 +33,9 @@ const ProductDetail: React.FC = () => {
 
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
 
-    const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
+    const isTotallyOutOfStock = !product.isImported && (product.inventory && product.inventory.length > 0
         ? product.inventory.every(i => Number(i.quantity) === 0)
-        : product.stock === 0;
+        : product.stock === 0);
 
     const handleAddToCart = () => {
         if (isTotallyOutOfStock) return;
@@ -156,10 +156,11 @@ const ProductDetail: React.FC = () => {
                                         const invItem = product.inventory?.find(i => i.size.trim().toUpperCase() === normalizedSize);
                                         // If inventory exists, check quantity. If not, fallback to assuming available (or use global stock)
                                         // User confirmed they use the matrix, so we should trust 'inventory' if present.
-                                        const isOutOfStock = invItem ? Number(invItem.quantity) <= 0 : (product.inventory && product.inventory.length > 0);
                                         // Logic: if valid inventory array exists but size not found, it implies 0? Or just checking explicitly found item.
                                         // Let's assume if it is found and 0, it is out.
                                         // If product has inventory but this size isn't in it, treat as out? Yes.
+                                        // BUT if product is imported, nothing is out of stock.
+                                        const isOutOfStock = !product.isImported && (invItem ? Number(invItem.quantity) <= 0 : (product.inventory && product.inventory.length > 0));
 
                                         return (
                                             <button
@@ -180,6 +181,12 @@ const ProductDetail: React.FC = () => {
                                         );
                                     })}
                                 </div>
+                                {product.isImported && (
+                                    <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/5 p-2 rounded border border-blue-500/20">
+                                        <span className="material-symbols-outlined text-xs">info</span>
+                                        Elige el talle que deseas importar
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -193,16 +200,48 @@ const ProductDetail: React.FC = () => {
                             </div>
                         )}
 
+                        {/* Import Conditions */}
+                        {product.isImported && (
+                            <div className="mb-6 bg-blue-500/5 border border-blue-500/20 rounded-xl p-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-700">
+                                <div className="flex items-center gap-2 text-blue-400 border-b border-blue-500/20 pb-3">
+                                    <span className="material-symbols-outlined">globe</span>
+                                    <h3 className="text-xs font-black uppercase tracking-[2px]">Condiciones de Compra y Envío</h3>
+                                </div>
+                                <div className="space-y-4 text-[13px] leading-relaxed text-gray-300 font-light">
+                                    <p>Para garantizar la mejor gestión de tu pedido, operamos bajo los siguientes términos:</p>
+
+                                    <div>
+                                        <p className="font-black text-blue-400 text-[10px] uppercase tracking-wider mb-1">Tiempo de Entrega</p>
+                                        <p>Al ser un producto importado, el tiempo estimado de espera es de <span className="text-white font-bold">25 a 30 días</span>.</p>
+                                    </div>
+
+                                    <div>
+                                        <p className="font-black text-blue-400 text-[10px] uppercase tracking-wider mb-1">Reserva</p>
+                                        <p>Se requiere el pago de una <span className="text-white font-bold">seña del 50%</span> del valor total para procesar el pedido y asegurar el cupo de importación.</p>
+                                    </div>
+
+                                    <div>
+                                        <p className="font-black text-blue-400 text-[10px] uppercase tracking-wider mb-1">Políticas de Pedido</p>
+                                        <p>Una vez abonada la seña, el pedido se considera definitivo. Debido a los costos logísticos y de gestión, no se realizan devoluciones de dinero ni del producto en caso de cancelaciones una vez efectuado el pago.</p>
+                                    </div>
+
+                                    <div className="bg-black/40 p-3 rounded border border-white/5 italic text-[11px] text-gray-400">
+                                        Nota: Por favor, verifique todos los detalles (talle, color o modelo) antes de confirmar su seña.
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="mt-auto space-y-4">
                             <button
                                 onClick={handleAddToCart}
                                 disabled={isTotallyOutOfStock}
-                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded-sm transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-[#cda434] text-black shadow-[0_0_20px_rgba(212,175,55,0.3)] lg:hover:scale-[1.01]'}`}
+                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded-sm transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : product.isImported ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]' : 'bg-primary hover:bg-[#cda434] text-black shadow-[0_0_20px_rgba(212,175,55,0.3)] lg:hover:scale-[1.01]'}`}
                             >
                                 {isTotallyOutOfStock ? 'AGOTADO' : (
                                     <>
-                                        <ShoppingBag size={24} className="text-black" />
-                                        AÑADIR AL CARRITO
+                                        <ShoppingBag size={24} className={product.isImported ? "text-white" : "text-black"} />
+                                        {product.isImported ? 'RESERVAR BAJO PEDIDO' : 'AÑADIR AL CARRITO'}
                                     </>
                                 )}
                             </button>

@@ -21,7 +21,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
     ? product.inventory.reduce((acc, curr) => acc + Number(curr.quantity), 0)
     : product.stock || 0;
 
-  const isTotallyOutOfStock = totalStock <= 0;
+  const isTotallyOutOfStock = !product.isImported && totalStock <= 0;
+  const isImported = product.isImported;
 
   return (
     <div className="group flex flex-col gap-3">
@@ -60,6 +61,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
           </div>
         )}
 
+        {isImported && (
+          <div className="absolute inset-0 bg-blue-900/40 z-20 flex items-end justify-center pb-8 p-4">
+            <div className="bg-blue-600/90 backdrop-blur-md text-white font-black px-4 py-2 uppercase tracking-widest text-[10px] border-2 border-blue-400 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.5)] flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">globe</span>
+              BAJO PEDIDO
+            </div>
+          </div>
+        )}
+
         {!isTotallyOutOfStock && (
           <button
             onClick={(e) => {
@@ -73,6 +83,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
         )}
 
         <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {product.isImported && (
+            <div className="bg-blue-600 text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 uppercase tracking-wider rounded-sm flex items-center gap-1 shadow-lg">
+              <span className="material-symbols-outlined text-[10px] md:text-xs">globe</span>
+              Importado
+            </div>
+          )}
           {product.isNew && (
             <div className="bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 uppercase tracking-wider rounded-sm">
               Nuevo
