@@ -342,10 +342,22 @@ const AdminDashboard: React.FC = () => {
 
     const getSizesForCategory = (catName: string): string[] => {
         const normalized = catName.toUpperCase().trim();
-        if (normalized.includes('CALZADO') || normalized.includes('ZAPATO')) return SIZES_CONFIG['CALZADOS'];
-        if (normalized.includes('CAMISETA') || normalized.includes('REMERA') || normalized.includes('JERSEY') || normalized.includes('INVIERNO') || normalized.includes('SHORT')) return SIZES_CONFIG['CAMISETAS'];
-        if (normalized.includes('INFANTIL') || normalized.includes('KIDS')) return SIZES_CONFIG['INFANTIL'];
-        if (normalized.includes('RELOJ') || normalized.includes('ACCESORIO') || normalized.includes('JOYAS')) return SIZES_CONFIG['ACCESORIOS'];
+        // Calzados matches
+        if (normalized.includes('CALZADO') || normalized.includes('ZAPATO') || normalized.includes('SHOE') || normalized.includes('SNEAKER')) {
+            return SIZES_CONFIG['CALZADOS'];
+        }
+        // Camisetas / Ropa matches
+        if (normalized.includes('CAMISETA') || normalized.includes('REMERA') || normalized.includes('JERSEY') || normalized.includes('INVIERNO') || normalized.includes('SHORT') || normalized.includes('ROPA') || normalized.includes('VESTIMENTA')) {
+            return SIZES_CONFIG['CAMISETAS'];
+        }
+        // Infantil matches
+        if (normalized.includes('NIÑO') || normalized.includes('KIDS') || normalized.includes('INFANTIL')) {
+            return SIZES_CONFIG['INFANTIL'];
+        }
+        // Accesorios / Relojes matches (Unique size)
+        if (normalized.includes('RELOJ') || normalized.includes('ACCESORIO') || normalized.includes('JOYAS') || normalized.includes('LENTES')) {
+            return SIZES_CONFIG['ACCESORIOS'];
+        }
         return ['UNICO'];
     };
 
@@ -924,7 +936,7 @@ const AdminDashboard: React.FC = () => {
                                         </div>
 
                                         {/* Categories and Price */}
-                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 font-bold">
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 font-bold">
                                             <div className="space-y-2">
                                                 <label className="text-[10px] uppercase tracking-widest text-primary font-black">Categoría Principal</label>
                                                 <select
@@ -943,10 +955,13 @@ const AdminDashboard: React.FC = () => {
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black">Subcategoría / Rama</label>
+                                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black">Rama / Subcat.</label>
                                                 <select
                                                     value={newProduct.subcategory}
-                                                    onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value })}
+                                                    onChange={e => {
+                                                        setNewProduct({ ...newProduct, subcategory: e.target.value });
+                                                        setStockMatrix({});
+                                                    }}
                                                     className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30 font-bold"
                                                     disabled={!newProduct.category}
                                                 >
@@ -955,6 +970,27 @@ const AdminDashboard: React.FC = () => {
                                                         <option key={sub.id} value={sub.id}>{sub.name}</option>
                                                     ))}
                                                 </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-widest text-primary font-black">Precio Regular (Gs.)</label>
+                                                <input
+                                                    type="number"
+                                                    value={newProduct.originalPrice}
+                                                    onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all shadow-inner font-bold"
+                                                    placeholder="Ej: 280000"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Precio Oferta (Gs.)</label>
+                                                <input
+                                                    type="number"
+                                                    value={newProduct.price}
+                                                    onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold"
+                                                    placeholder="Ej: 250000"
+                                                />
                                             </div>
                                         </div>
 
