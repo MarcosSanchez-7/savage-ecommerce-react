@@ -39,7 +39,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
-import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
+import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Attribute, AttributeValue } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
 import { uploadProductImage as uploadImage } from '../services/uploadService';
@@ -163,7 +163,8 @@ const AdminDashboard: React.FC = () => {
         updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
         saveAllData, loading,
-        updateCategoryOrder, descriptionTemplates, updateDescriptionTemplates
+        updateCategoryOrder, descriptionTemplates, updateDescriptionTemplates,
+        attributes, attributeValues
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
@@ -312,7 +313,8 @@ const AdminDashboard: React.FC = () => {
         tags: [] as string[],
         isFeatured: false,
         isCategoryFeatured: false,
-        isImported: false
+        isImported: false,
+        selectedAttributes: {} as Record<string, string>
     });
     const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({});
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
@@ -340,13 +342,10 @@ const AdminDashboard: React.FC = () => {
 
     const getSizesForCategory = (catName: string): string[] => {
         const normalized = catName.toUpperCase().trim();
-        // Check for exact match or keywords
-        if (SIZES_CONFIG[normalized]) return SIZES_CONFIG[normalized];
-        if (normalized.includes('NIÑO') || normalized.includes('KIDS') || normalized.includes('INFANTIL')) return SIZES_CONFIG['INFANTIL'];
         if (normalized.includes('CALZADO') || normalized.includes('ZAPATO')) return SIZES_CONFIG['CALZADOS'];
         if (normalized.includes('CAMISETA') || normalized.includes('REMERA') || normalized.includes('JERSEY') || normalized.includes('INVIERNO') || normalized.includes('SHORT')) return SIZES_CONFIG['CAMISETAS'];
-        if (normalized.includes('RELOJ')) return SIZES_CONFIG['RELOJES'];
-        // Default to unique size for accessories or unknown
+        if (normalized.includes('INFANTIL') || normalized.includes('KIDS')) return SIZES_CONFIG['INFANTIL'];
+        if (normalized.includes('RELOJ') || normalized.includes('ACCESORIO') || normalized.includes('JOYAS')) return SIZES_CONFIG['ACCESORIOS'];
         return ['UNICO'];
     };
 
@@ -394,7 +393,8 @@ const AdminDashboard: React.FC = () => {
                 seoAlt: newProduct.seoAlt,
                 isFeatured: newProduct.isFeatured,
                 isCategoryFeatured: newProduct.isCategoryFeatured,
-                isImported: newProduct.isImported
+                isImported: newProduct.isImported,
+                selectedAttributes: newProduct.selectedAttributes
             } as any;
 
             if (editingProductId) {
@@ -423,7 +423,8 @@ const AdminDashboard: React.FC = () => {
                 tags: [],
                 isFeatured: false,
                 isCategoryFeatured: false,
-                isImported: false
+                isImported: false,
+                selectedAttributes: {}
             });
             setStockMatrix({});
         } catch (error) {
@@ -925,60 +926,69 @@ const AdminDashboard: React.FC = () => {
                                         {/* Categories and Price */}
                                         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 font-bold">
                                             <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-primary">Precio Regular (Gs.)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newProduct.originalPrice}
-                                                    onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all shadow-[0_0_15px_rgba(255,215,0,0.05)]"
-                                                    placeholder="Ej: 280000"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-400">Precio Oferta (Gs.)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newProduct.price}
-                                                    onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all"
-                                                    placeholder="Ej: 250000"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-500">Categoría</label>
+                                                <label className="text-[10px] uppercase tracking-widest text-primary font-black">Categoría Principal</label>
                                                 <select
                                                     value={newProduct.category}
                                                     onChange={e => {
-                                                        const cat = categories.find(c => c.id === e.target.value);
-                                                        setNewProduct({ ...newProduct, category: e.target.value, subcategory: '' });
-                                                        // Reset stock matrix when category changes as sizes might change
+                                                        setNewProduct({ ...newProduct, category: e.target.value, subcategory: '', selectedAttributes: {} });
                                                         setStockMatrix({});
                                                     }}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none"
+                                                    className="w-full bg-black border border-primary/30 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
                                                     required
                                                 >
                                                     <option value="">Seleccionar...</option>
-                                                    {categories.map(cat => (
+                                                    {categories.filter(c => !c.parent_id).map(cat => (
                                                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                                                     ))}
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-500">Subcategoría</label>
+                                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black">Subcategoría / Rama</label>
                                                 <select
                                                     value={newProduct.subcategory}
                                                     onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value })}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30"
+                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30 font-bold"
                                                     disabled={!newProduct.category}
                                                 >
                                                     <option value="">Ninguna</option>
-                                                    {categories.find(c => c.id === newProduct.category)?.subcategories?.map(sub => (
-                                                        <option key={sub} value={sub}>{sub}</option>
+                                                    {categories.filter(c => c.parent_id === newProduct.category).map(sub => (
+                                                        <option key={sub.id} value={sub.id}>{sub.name}</option>
                                                     ))}
                                                 </select>
                                             </div>
                                         </div>
+
+                                        {/* Attribute Funnel Section */}
+                                        {(categories.find(c => c.id === newProduct.category)?.name.match(/Camisetas|Jerseys|Relojes/i) || categories.find(c => c.id === newProduct.subcategory)?.name.match(/Camisetas|Jerseys|Relojes/i)) && (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-gray-800/30 animate-in fade-in slide-in-from-top-4 duration-500">
+                                                {attributes
+                                                    .filter(attr => {
+                                                        const catName = categories.find(c => c.id === newProduct.category)?.name || '';
+                                                        const subName = categories.find(c => c.id === newProduct.subcategory)?.name || '';
+                                                        if (catName.includes('Camisetas') || subName.includes('Camisetas')) return ['Liga', 'Equipo'].includes(attr.name);
+                                                        if (catName.includes('Relojes') || subName.includes('Relojes')) return ['Marca'].includes(attr.name);
+                                                        return false;
+                                                    })
+                                                    .map(attr => (
+                                                        <div key={attr.id} className="space-y-2">
+                                                            <label className="text-[10px] uppercase tracking-widest text-blue-400 font-black">{attr.name}</label>
+                                                            <select
+                                                                value={newProduct.selectedAttributes[attr.id] || ''}
+                                                                onChange={e => setNewProduct({
+                                                                    ...newProduct,
+                                                                    selectedAttributes: { ...newProduct.selectedAttributes, [attr.id]: e.target.value }
+                                                                })}
+                                                                className="w-full bg-black border border-blue-900/30 rounded-xl p-4 text-white focus:border-blue-500 focus:outline-none transition-all font-bold"
+                                                            >
+                                                                <option value="">Seleccionar {attr.name}...</option>
+                                                                {attributeValues.filter(v => v.attribute_id === attr.id).map(val => (
+                                                                    <option key={val.id} value={val.id}>{val.value}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        )}
 
                                         {/* Image Upload System */}
                                         <div className="space-y-6 pt-6 border-t border-gray-800/50">
@@ -1186,38 +1196,60 @@ const AdminDashboard: React.FC = () => {
                                         <div className="space-y-6 pt-6 border-t border-gray-800/50">
                                             <div className="flex items-center gap-3">
                                                 <Box size={24} className="text-primary" />
-                                                <label className="text-sm font-black italic uppercase tracking-tighter text-white">Gestión de Stock por Talles</label>
+                                                <label className="text-sm font-black italic uppercase tracking-tighter text-white">Gestión de Stock Condicional</label>
                                             </div>
 
                                             {!newProduct.category ? (
                                                 <div className="p-12 text-center border border-dashed border-gray-800 rounded-2xl bg-black/20">
                                                     <p className="text-gray-500 text-xs font-bold uppercase tracking-widest italic flex items-center justify-center gap-2">
-                                                        <Globe size={16} /> Selecciona una categoría para habilitar talles
+                                                        <Globe size={16} /> Selecciona una categoría para habilitar stock
                                                     </p>
                                                 </div>
                                             ) : (
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4">
-                                                    {getSizesForCategory(categories.find(c => c.id === newProduct.category)?.name || '').map(size => (
-                                                        <div key={size} className="space-y-2 group">
-                                                            <div className="p-3 bg-white/5 border border-gray-800 rounded-t-xl text-center text-[10px] font-black text-gray-500 group-focus-within:bg-primary group-focus-within:text-black transition-all">
-                                                                {size}
+                                                <>
+                                                    {(() => {
+                                                        const catName = categories.find(c => c.id === newProduct.category)?.name || '';
+                                                        const subName = categories.find(c => c.id === newProduct.subcategory)?.name || '';
+                                                        const targetName = subName || catName;
+                                                        const sizes = getSizesForCategory(targetName);
+
+                                                        if (sizes.length === 1 && sizes[0] === 'UNICO') {
+                                                            return (
+                                                                <div className="max-w-xs">
+                                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2 block">Cantidad Total (Stock General)</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        min="0"
+                                                                        value={stockMatrix['UNICO'] || ''}
+                                                                        onChange={e => handleStockChange('UNICO', parseInt(e.target.value) || 0)}
+                                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold"
+                                                                        placeholder="Ej: 50"
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        return (
+                                                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4">
+                                                                {sizes.map(size => (
+                                                                    <div key={size} className="space-y-2 group">
+                                                                        <div className="p-3 bg-white/5 border border-gray-800 rounded-t-xl text-center text-[10px] font-black text-gray-500 group-focus-within:bg-primary group-focus-within:text-black transition-all">
+                                                                            {size}
+                                                                        </div>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            value={stockMatrix[size] || ''}
+                                                                            onChange={e => handleStockChange(size, parseInt(e.target.value) || 0)}
+                                                                            className="w-full bg-black border border-t-0 border-gray-800 rounded-b-xl p-3 text-center text-sm font-bold text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-900"
+                                                                            placeholder="0"
+                                                                        />
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                value={stockMatrix[size] || ''}
-                                                                onChange={e => handleStockChange(size, parseInt(e.target.value) || 0)}
-                                                                className="w-full bg-black border border-t-0 border-gray-800 rounded-b-xl p-3 text-center text-sm font-bold text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-900"
-                                                                placeholder="0"
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            {newProduct.category && (
-                                                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest text-center mt-4 italic">
-                                                    * Los talles con valor 0 se mostrarán como "Agotado" automáticamente en la web.
-                                                </p>
+                                                        );
+                                                    })()}
+                                                </>
                                             )}
                                         </div>
 

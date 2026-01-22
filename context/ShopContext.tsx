@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, DescriptionTemplates } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, DescriptionTemplates, Attribute, AttributeValue, ProductAttributeValue } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 import { useAuth } from './AuthContext';
@@ -18,6 +18,8 @@ interface ShopContextType {
     blogPosts: BlogPost[];
     drops: Drop[];
     socialConfig: SocialConfig;
+    attributes: Attribute[];
+    attributeValues: AttributeValue[];
     isCartOpen: boolean;
     toggleCart: () => void;
     addToCart: (product: Product, size?: string) => void;
@@ -103,9 +105,9 @@ const DEFAULT_SOCIAL_CONFIG: SocialConfig = {
 };
 
 const DEFAULT_CATEGORIES: Category[] = [
-    { id: 'ropa', name: 'Ropa', image: '', subcategories: ['Remeras', 'Hoodies', 'Pantalones', 'Shorts'] },
-    { id: 'deportivo', name: 'Deportivo', image: '', subcategories: ['Player', 'Fan', 'Retro'] },
-    { id: 'calzados', name: 'Calzados', image: '', subcategories: ['Nike', 'Adidas', 'Puma', 'New Balance'] },
+    { id: 'ropa', name: 'Ropa', image: '' },
+    { id: 'deportivo', name: 'Deportivo', image: '' },
+    { id: 'calzados', name: 'Calzados', image: '' },
     { id: 'joyas', name: 'Joyas', image: '' },
     { id: 'accesorios', name: 'Accesorios', image: '' },
     { id: 'huerfanos', name: 'Huérfanos', image: '' }
@@ -146,6 +148,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Drops
     const [drops, setDrops] = useState<Drop[]>([]);
+
+    // Attributes
+    const [attributes, setAttributes] = useState<Attribute[]>([]);
+    const [attributeValues, setAttributeValues] = useState<AttributeValue[]>([]);
 
     const addDrop = async (drop: Omit<Drop, 'id'>) => {
         console.log("ShopContext: Adding drop:", drop);
@@ -436,6 +442,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const { data: drops } = await supabase.from('drops').select('*').order('created_at', { ascending: false });
             if (drops) setDrops(drops);
 
+            // 5. ATTRIBUTES (Dynamic funnel)
+            const { data: attrData } = await supabase.from('attributes').select('*');
+            const { data: valData } = await supabase.from('attribute_values').select('*');
+            if (attrData) setAttributes(attrData);
+            if (valData) setAttributeValues(valData);
+
         } catch (secondaryError) {
             console.warn("Non-critical error loading secondary data:", secondaryError);
         } finally {
@@ -611,13 +623,25 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setProducts(prev => prev.filter(p => p.id !== product.id));
                 return null;
             } else if (data) {
+                // Save Attributes
+                if (product.selectedAttributes) {
+                    const attrInserts = Object.values(product.selectedAttributes)
+                        .filter(valId => valId)
+                        .map(valId => ({
+                            product_id: data.id,
+                            attribute_value_id: valId
+                        }));
+                    if (attrInserts.length > 0) {
+                        await supabase.from('product_attribute_values').insert(attrInserts);
+                    }
+                }
+
                 // Save Inventory
                 if (product.inventory) {
                     await saveInventory(data.id, product.inventory);
                 }
 
                 // Success! Update the local state with the REAL UUID from the DB
-                // This replaces the temporary timestamp ID with the valid UUID
                 setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
                 return data.id;
             }
@@ -664,6 +688,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) {
                 console.error('Error updating product in Supabase:', error);
             } else {
+                // Save Attributes
+                if (updatedProduct.selectedAttributes) {
+                    // Delete existing first
+                    await supabase.from('product_attribute_values').delete().eq('product_id', updatedProduct.id);
+
+                    const attrInserts = Object.values(updatedProduct.selectedAttributes)
+                        .filter(valId => valId)
+                        .map(valId => ({
+                            product_id: updatedProduct.id,
+                            attribute_value_id: valId
+                        }));
+                    if (attrInserts.length > 0) {
+                        await supabase.from('product_attribute_values').insert(attrInserts);
+                    }
+                }
+
                 // Update Inventory
                 if (updatedProduct.inventory) {
                     await saveInventory(updatedProduct.id, updatedProduct.inventory);
@@ -1505,7 +1545,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             favorites,
             toggleFavorite,
             descriptionTemplates,
-            updateDescriptionTemplates
+            updateDescriptionTemplates,
+            attributes,
+            attributeValues
 
         }}>
             {children}

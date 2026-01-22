@@ -20,6 +20,7 @@ export interface Product {
   slug?: string;
   imageAlts?: string[];
   isImported?: boolean;
+  selectedAttributes?: Record<string, string>;
 }
 
 export interface InventoryItem {
@@ -33,8 +34,24 @@ export interface Category {
   id: string;
   name: string;
   image?: string;
-  subcategories?: string[];
+  parent_id?: string | null;
   opacity?: number;
+}
+
+export interface Attribute {
+  id: string;
+  name: string; // e.g., 'Liga', 'Equipo', 'Marca'
+}
+
+export interface AttributeValue {
+  id: string;
+  attribute_id: string;
+  value: string; // e.g., 'Premier League', 'Real Madrid', 'Nike'
+}
+
+export interface ProductAttributeValue {
+  product_id: string;
+  attribute_value_id: string;
 }
 
 export interface HeroSlide {
