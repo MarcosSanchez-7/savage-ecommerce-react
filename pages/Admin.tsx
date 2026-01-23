@@ -111,7 +111,7 @@ const AdminDashboard: React.FC = () => {
                                 type="email"
                                 value={loginEmail}
                                 onChange={(e) => setLoginEmail(e.target.value)}
-                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 text-sm"
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 text-sm relative z-50 pointer-events-auto"
                                 placeholder="ceo@savage.com"
                             />
                         </div>
@@ -121,7 +121,7 @@ const AdminDashboard: React.FC = () => {
                                 type="password"
                                 value={loginPassword}
                                 onChange={(e) => setLoginPassword(e.target.value)}
-                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 text-sm"
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 text-sm relative z-50 pointer-events-auto"
                                 placeholder="••••••••••••"
                             />
                         </div>
