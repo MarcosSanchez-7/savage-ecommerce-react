@@ -96,6 +96,7 @@ const ProductDetail: React.FC = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                     {/* Gallery Section (Kept Same) */}
+                    {/* Gallery Section with Arrows */}
                     <div className="space-y-6">
                         <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface-dark border border-white/5 relative group">
                             <img
@@ -103,6 +104,31 @@ const ProductDetail: React.FC = () => {
                                 alt={product.name}
                                 className={`w-full h-full object-cover ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
                             />
+
+                            {/* Navigation Arrows */}
+                            {product.images.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedImage(prev => prev === 0 ? product.images.length - 1 : prev - 1);
+                                        }}
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                                    >
+                                        <ArrowLeft size={20} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedImage(prev => prev === product.images.length - 1 ? 0 : prev + 1);
+                                        }}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+                                    >
+                                        <ArrowLeft size={20} className="rotate-180" />
+                                    </button>
+                                </>
+                            )}
+
                             {isTotallyOutOfStock && (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <span className="bg-black text-white font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-white transform -rotate-12 shadow-2xl">
@@ -111,7 +137,7 @@ const ProductDetail: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        {/* Thumbnails code kept implicity if not removed */}
+                        {/* Thumbnails code */}
                         {product.images.length > 1 && (
                             <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                                 {product.images.map((img, idx) => (
@@ -143,44 +169,61 @@ const ProductDetail: React.FC = () => {
                             <span className="text-4xl font-bold font-mono text-primary">Gs. {product.price.toLocaleString()}</span>
                         </div>
 
-                        {/* Size Selector (Kept same) */}
+                        {/* Size Selector */}
                         {!isAccessory && (
                             <div className="mb-10">
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle (Opcional)</span>
+                                    <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
+                                        {product.isImported ? 'SELECCIONA TU TALLE' : (product.category?.toUpperCase() === 'CALZADOS' ? 'CALCE' : 'TALLE')}
+                                    </span>
                                 </div>
-                                <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                                    {product.sizes?.map(size => {
-                                        const normalizedSize = size.trim().toUpperCase();
-                                        // Check inventory for this specific size
-                                        const invItem = product.inventory?.find(i => i.size.trim().toUpperCase() === normalizedSize);
-                                        // If inventory exists, check quantity. If not, fallback to assuming available (or use global stock)
-                                        // User confirmed they use the matrix, so we should trust 'inventory' if present.
-                                        // Logic: if valid inventory array exists but size not found, it implies 0? Or just checking explicitly found item.
-                                        // Let's assume if it is found and 0, it is out.
-                                        // If product has inventory but this size isn't in it, treat as out? Yes.
-                                        // BUT if product is imported, nothing is out of stock.
-                                        const isOutOfStock = !product.isImported && (invItem ? Number(invItem.quantity) <= 0 : (product.inventory && product.inventory.length > 0));
 
-                                        return (
+                                {product.isImported ? (
+                                    // Imported Logic: Fixed Sizes P-XXL, No Stock Check
+                                    <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+                                        {['P', 'M', 'G', 'XL', 'XXL'].map(size => (
                                             <button
                                                 key={size}
-                                                onClick={() => !isOutOfStock && setSelectedSize(size)}
-                                                disabled={isOutOfStock}
+                                                onClick={() => setSelectedSize(size)}
                                                 className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden 
-                                                ${isOutOfStock
-                                                        ? 'bg-gray-900 border-gray-800 text-gray-700 cursor-not-allowed opacity-50 relative'
-                                                        : selectedSize === size
-                                                            ? 'bg-white text-black border-white'
-                                                            : 'border-gray-800 text-gray-400 hover:border-gray-600'
+                                                ${selectedSize === size
+                                                        ? 'bg-blue-600 text-white border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+                                                        : 'border-gray-800 text-gray-400 hover:border-blue-500/50 hover:text-blue-400'
                                                     }`}
                                             >
-                                                <span className={`text-xs sm:text-base ${isOutOfStock ? 'opacity-20' : ''}`}>{size}</span>
-                                                {isOutOfStock && <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[10px] font-bold text-red-500 bg-black/10">AGOTADO</span>}
+                                                <span className="text-xs sm:text-base">{size}</span>
                                             </button>
-                                        );
-                                    })}
-                                </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    // Standard Logic: Dynamic Sizes with Stock Check
+                                    <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+                                        {product.sizes?.map(size => {
+                                            const normalizedSize = size.trim().toUpperCase();
+                                            const invItem = product.inventory?.find(i => i.size.trim().toUpperCase() === normalizedSize);
+                                            const isOutOfStock = !product.isImported && (invItem ? Number(invItem.quantity) <= 0 : (product.inventory && product.inventory.length > 0));
+
+                                            return (
+                                                <button
+                                                    key={size}
+                                                    onClick={() => !isOutOfStock && setSelectedSize(size)}
+                                                    disabled={isOutOfStock}
+                                                    className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden 
+                                                    ${isOutOfStock
+                                                            ? 'bg-gray-900 border-gray-800 text-gray-700 cursor-not-allowed opacity-50 relative'
+                                                            : selectedSize === size
+                                                                ? 'bg-white text-black border-white'
+                                                                : 'border-gray-800 text-gray-400 hover:border-gray-600'
+                                                        }`}
+                                                >
+                                                    <span className={`text-xs sm:text-base ${isOutOfStock ? 'opacity-20' : ''}`}>{size}</span>
+                                                    {isOutOfStock && <span className="absolute inset-0 flex items-center justify-center text-[8px] sm:text-[10px] font-bold text-red-500 bg-black/10">AGOTADO</span>}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+
                                 {product.isImported && (
                                     <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/5 p-2 rounded border border-blue-500/20">
                                         <span className="material-symbols-outlined text-xs">info</span>
