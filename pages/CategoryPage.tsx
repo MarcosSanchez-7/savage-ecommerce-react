@@ -25,39 +25,39 @@ const CategoryPage: React.FC = () => {
     const currentCategoryInfo = categories.find(c => c.id.toLowerCase() === category?.toLowerCase() || c.name.toLowerCase() === category?.toLowerCase());
 
     const categoryProducts = products.filter(p => {
-        const matchesCategory = p.category.toLowerCase() === category?.toLowerCase();
+        const matchesCategory = p.category === currentCategoryInfo?.id;
         if (!matchesCategory) return false;
         if (activeSubcategory === 'ALL') return true;
-        return p.subcategory?.toLowerCase() === activeSubcategory.toLowerCase();
+        return p.subcategory === activeSubcategory;
     });
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    const getSEOInfo = (cat: string | undefined) => {
-        const c = cat?.toLowerCase();
-        if (c?.includes('camisetas') || c === 'ropa') return {
+    const getSEOInfo = (catInfo: typeof categories[0] | undefined) => {
+        const name = catInfo?.name.toLowerCase() || '';
+        if (name.includes('camisetas') || name === 'ropa') return {
             title: 'Camisetas de Fútbol Premium',
             desc: 'La mejor selección de camisetas de fútbol retro y actuales en Paraguay.',
             docTitle: 'Camisetas de Fútbol - Savage Store Paraguay'
         };
-        if (c?.includes('calzado')) return {
+        if (name.includes('calzado')) return {
             title: 'Calzado Urbano & Sneakers',
             desc: 'Zapatillas y sneakers exclusivos para completar tu outfit Savage.',
             docTitle: 'Calzado Urbano - Savage Store Paraguay'
         };
-        if (c?.includes('relojes') || c?.includes('accesorios') || c?.includes('joyas')) return {
+        if (name.includes('relojes') || name.includes('accesorios') || name.includes('joyas')) return {
             title: 'Relojes y Accesorios Premium',
             desc: 'Complementos de lujo: Relojes, cadenas y accesorios para destacar.',
             docTitle: 'Accesorios y Relojes - Savage Store Paraguay'
         };
         return {
-            title: category,
+            title: catInfo?.name || 'Categoría',
             desc: `${categoryProducts.length} productos disponibles`,
-            docTitle: `${category} - Savage Store Paraguay`
+            docTitle: `${catInfo?.name || 'Categoría'} - Savage Store Paraguay`
         };
     };
 
-    const seoInfo = getSEOInfo(category);
+    const seoInfo = getSEOInfo(currentCategoryInfo);
 
     React.useEffect(() => {
         document.title = seoInfo.docTitle;
@@ -78,26 +78,31 @@ const CategoryPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Subcategories Filter */}
-                {currentCategoryInfo?.subcategories && currentCategoryInfo.subcategories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-8 animate-in fade-in slide-in-from-left-4 duration-500">
-                        <button
-                            onClick={() => navigate(`/category/${category}`)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === 'ALL' ? 'bg-primary border-primary text-white' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
-                        >
-                            VER TODO
-                        </button>
-                        {currentCategoryInfo.subcategories.map(sub => (
+                {/* Subcategories Filter (Hierarchical) */}
+                {(() => {
+                    const subCats = categories.filter(c => c.parent_id === currentCategoryInfo?.id);
+                    if (subCats.length === 0) return null;
+
+                    return (
+                        <div className="flex flex-wrap gap-2 mb-12 animate-in fade-in slide-in-from-left-4 duration-500 overflow-x-auto pb-4 scrollbar-hide">
                             <button
-                                key={sub}
-                                onClick={() => navigate(`/category/${category}/${sub}`)}
-                                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === sub ? 'bg-white text-black border-white' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
+                                onClick={() => navigate(`/category/${category}`)}
+                                className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${activeSubcategory === 'ALL' ? 'bg-primary border-primary text-white shadow-[0_10px_20px_rgba(212,175,55,0.3)]' : 'bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white'}`}
                             >
-                                {sub}
+                                VER TODO
                             </button>
-                        ))}
-                    </div>
-                )}
+                            {subCats.map(sub => (
+                                <button
+                                    key={sub.id}
+                                    onClick={() => navigate(`/category/${category}/${sub.id}`)}
+                                    className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${activeSubcategory === sub.id ? 'bg-white text-black border-white shadow-[0_10px_20px_rgba(255,255,255,0.1)]' : 'bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white'}`}
+                                >
+                                    {sub.name}
+                                </button>
+                            ))}
+                        </div>
+                    );
+                })()}
 
                 {categoryProducts.length > 0 ? (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">

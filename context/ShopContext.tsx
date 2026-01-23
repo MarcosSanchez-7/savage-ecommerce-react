@@ -70,6 +70,11 @@ interface ShopContextType {
     toggleFavorite: (productId: string) => void;
     descriptionTemplates: DescriptionTemplates;
     updateDescriptionTemplates: (templates: DescriptionTemplates) => void;
+    addAttribute: (attribute: Omit<Attribute, 'id'>) => Promise<void>;
+    deleteAttribute: (id: string) => Promise<void>;
+    addAttributeValue: (value: Omit<AttributeValue, 'id'>) => Promise<void>;
+    deleteAttributeValue: (id: string) => Promise<void>;
+    updateAttributeValue: (id: string, value: string) => Promise<void>;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -452,6 +457,63 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.warn("Non-critical error loading secondary data:", secondaryError);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // --- ATTRIBUTE CRUD ---
+    const addAttribute = async (attribute: Omit<Attribute, 'id'>) => {
+        try {
+            const { data, error } = await supabase.from('attributes').insert([attribute]).select().single();
+            if (error) throw error;
+            if (data) setAttributes(prev => [...prev, data]);
+        } catch (e) {
+            console.error('Error adding attribute:', e);
+            alert('Error al añadir atributo');
+        }
+    };
+
+    const deleteAttribute = async (id: string) => {
+        try {
+            const { error } = await supabase.from('attributes').delete().eq('id', id);
+            if (error) throw error;
+            setAttributes(prev => prev.filter(a => a.id !== id));
+            setAttributeValues(prev => prev.filter(v => v.attribute_id !== id));
+        } catch (e) {
+            console.error('Error deleting attribute:', e);
+            alert('Error al eliminar atributo');
+        }
+    };
+
+    const addAttributeValue = async (value: Omit<AttributeValue, 'id'>) => {
+        try {
+            const { data, error } = await supabase.from('attribute_values').insert([value]).select().single();
+            if (error) throw error;
+            if (data) setAttributeValues(prev => [...prev, data]);
+        } catch (e) {
+            console.error('Error adding value:', e);
+            alert('Error al añadir valor');
+        }
+    };
+
+    const deleteAttributeValue = async (id: string) => {
+        try {
+            const { error } = await supabase.from('attribute_values').delete().eq('id', id);
+            if (error) throw error;
+            setAttributeValues(prev => prev.filter(v => v.id !== id));
+        } catch (e) {
+            console.error('Error deleting value:', e);
+            alert('Error al eliminar valor');
+        }
+    };
+
+    const updateAttributeValue = async (id: string, value: string) => {
+        try {
+            const { error } = await supabase.from('attribute_values').update({ value }).eq('id', id);
+            if (error) throw error;
+            setAttributeValues(prev => prev.map(v => v.id === id ? { ...v, value } : v));
+        } catch (e) {
+            console.error('Error updating value:', e);
+            alert('Error al actualizar valor');
         }
     };
 
@@ -1547,7 +1609,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             descriptionTemplates,
             updateDescriptionTemplates,
             attributes,
-            attributeValues
+            attributeValues,
+            addAttribute,
+            deleteAttribute,
+            addAttributeValue,
+            deleteAttributeValue,
+            updateAttributeValue
 
         }}>
             {children}

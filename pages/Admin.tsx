@@ -41,6 +41,7 @@ import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
 import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Attribute, AttributeValue } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
+import MasterInventoryManager from '../components/MasterInventoryManager';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
 import { uploadProductImage as uploadImage } from '../services/uploadService';
 
@@ -169,7 +170,7 @@ const AdminDashboard: React.FC = () => {
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
-    const [activeTab, setActiveTab] = useState<'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'texts' | 'stock'>('stock');
+    const [activeTab, setActiveTab] = useState<'hero' | 'orders' | 'blog' | 'config' | 'inventory_master' | 'delivery' | 'webDesign' | 'texts' | 'stock'>('stock');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -347,7 +348,7 @@ const AdminDashboard: React.FC = () => {
             return SIZES_CONFIG['CALZADOS'];
         }
         // Camisetas / Ropa matches
-        if (normalized.includes('CAMISETA') || normalized.includes('REMERA') || normalized.includes('JERSEY') || normalized.includes('INVIERNO') || normalized.includes('SHORT') || normalized.includes('ROPA') || normalized.includes('VESTIMENTA')) {
+        if (normalized.includes('CAMISETA') || normalized.includes('REMERA') || normalized.includes('JERSEY') || normalized.includes('INVIERNO') || normalized.includes('SHORT') || normalized.includes('ROPA') || normalized.includes('VESTIMENTA') || normalized.includes('DEPORTIVO') || normalized.includes('DEPORTE')) {
             return SIZES_CONFIG['CAMISETAS'];
         }
         // Infantil matches
@@ -355,7 +356,7 @@ const AdminDashboard: React.FC = () => {
             return SIZES_CONFIG['INFANTIL'];
         }
         // Accesorios / Relojes matches (Unique size)
-        if (normalized.includes('RELOJ') || normalized.includes('ACCESORIO') || normalized.includes('JOYAS') || normalized.includes('LENTES')) {
+        if (normalized.includes('RELOJ') || normalized.includes('ACCESORIO') || normalized.includes('JOYAS') || normalized.includes('LENTES') || normalized.includes('BOLSO')) {
             return SIZES_CONFIG['ACCESORIOS'];
         }
         return ['UNICO'];
@@ -383,22 +384,26 @@ const AdminDashboard: React.FC = () => {
             // Calculate total stock from matrix
             const totalStock = Object.values(stockMatrix).reduce((acc: number, curr: number) => acc + (curr || 0), 0);
 
-            const sellingPrice = newProduct.price ? parseFloat(newProduct.price) : parseFloat(newProduct.originalPrice);
-            const regularPrice = newProduct.price ? parseFloat(newProduct.originalPrice) : null;
+            const sPrice = parseFloat(newProduct.price) || parseFloat(newProduct.originalPrice) || 0;
+            const rPrice = newProduct.price ? parseFloat(newProduct.originalPrice) : null;
+
+            const targetCategory = categories.find(c => c.id === (newProduct.subcategory || newProduct.category));
+            const categoryName = targetCategory?.name || '';
+            const finalSizes = newProduct.isImported
+                ? getSizesForCategory(categoryName)
+                : Object.keys(stockMatrix).filter(s => stockMatrix[s] > 0);
 
             const productData = {
                 id: editingProductId || Date.now().toString(),
                 name: newProduct.name,
                 description: newProduct.description,
-                price: sellingPrice,
-                originalPrice: regularPrice,
+                price: sPrice,
+                originalPrice: rPrice,
                 category: newProduct.category,
                 subcategory: newProduct.subcategory,
                 slug: newProduct.slug,
                 images: newProduct.images.filter(img => img !== ''),
-                sizes: newProduct.isImported
-                    ? getSizesForCategory(categories.find(c => c.id === newProduct.category)?.name || '')
-                    : Object.keys(stockMatrix).filter(s => stockMatrix[s] > 0),
+                sizes: finalSizes,
                 stock: newProduct.isImported ? 0 : totalStock,
                 inventory: newProduct.isImported ? [] : Object.entries(stockMatrix).map(([size, quantity]) => ({ size, quantity })),
                 tags: newProduct.tags,
@@ -813,8 +818,8 @@ const AdminDashboard: React.FC = () => {
                         <ImageIcon size={20} /> <span className="font-bold text-sm">Carrusel Hero</span>
                     </button>
 
-                    <button onClick={() => setActiveTab('categories')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'categories' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-                        <Layers size={20} /> <span className="font-bold text-sm">Categorías</span>
+                    <button onClick={() => setActiveTab('inventory_master')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'inventory_master' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                        <Layers size={20} /> <span className="font-bold text-sm">Gestión Maestra</span>
                     </button>
                     <button onClick={() => setActiveTab('delivery')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'delivery' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Map size={20} /> <span className="font-bold text-sm">Zonas de Entrega</span>
@@ -936,61 +941,65 @@ const AdminDashboard: React.FC = () => {
                                         </div>
 
                                         {/* Categories and Price */}
-                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 font-bold">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-primary font-black">Categoría Principal</label>
-                                                <select
-                                                    value={newProduct.category}
-                                                    onChange={e => {
-                                                        setNewProduct({ ...newProduct, category: e.target.value, subcategory: '', selectedAttributes: {} });
-                                                        setStockMatrix({});
-                                                    }}
-                                                    className="w-full bg-black border border-primary/30 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
-                                                    required
-                                                >
-                                                    <option value="">Seleccionar...</option>
-                                                    {categories.filter(c => !c.parent_id).map(cat => (
-                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                    ))}
-                                                </select>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-bold">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-primary font-black">Categoría Principal</label>
+                                                    <select
+                                                        value={newProduct.category}
+                                                        onChange={e => {
+                                                            setNewProduct({ ...newProduct, category: e.target.value, subcategory: '', selectedAttributes: {} });
+                                                            setStockMatrix({});
+                                                        }}
+                                                        className="w-full bg-black border border-primary/30 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
+                                                        required
+                                                    >
+                                                        <option value="">Seleccionar...</option>
+                                                        {categories.filter(c => !c.parent_id).map(cat => (
+                                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black">Rama / Subcat.</label>
+                                                    <select
+                                                        value={newProduct.subcategory}
+                                                        onChange={e => {
+                                                            setNewProduct({ ...newProduct, subcategory: e.target.value });
+                                                            setStockMatrix({});
+                                                        }}
+                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30 font-bold"
+                                                        disabled={!newProduct.category}
+                                                    >
+                                                        <option value="">Ninguna</option>
+                                                        {categories.filter(c => c.parent_id === newProduct.category).map(sub => (
+                                                            <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black">Rama / Subcat.</label>
-                                                <select
-                                                    value={newProduct.subcategory}
-                                                    onChange={e => {
-                                                        setNewProduct({ ...newProduct, subcategory: e.target.value });
-                                                        setStockMatrix({});
-                                                    }}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30 font-bold"
-                                                    disabled={!newProduct.category}
-                                                >
-                                                    <option value="">Ninguna</option>
-                                                    {categories.filter(c => c.parent_id === newProduct.category).map(sub => (
-                                                        <option key={sub.id} value={sub.id}>{sub.name}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-primary font-black">Precio Regular (Gs.)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newProduct.originalPrice}
-                                                    onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                                                    className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all shadow-inner font-bold"
-                                                    placeholder="Ej: 280000"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Precio Oferta (Gs.)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newProduct.price}
-                                                    onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold"
-                                                    placeholder="Ej: 250000"
-                                                />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-primary font-black">Precio Regular (Gs.)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newProduct.originalPrice}
+                                                        onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                                                        className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all shadow-inner font-bold"
+                                                        placeholder="Ej: 280000"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Precio Oferta (Gs.)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newProduct.price}
+                                                        onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold"
+                                                        placeholder="Ej: 250000"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1827,137 +1836,11 @@ const AdminDashboard: React.FC = () => {
                     )
                 }
 
-                {/* CATEGORIES TAB */}
+                {/* MASTER INVENTORY TAB */}
                 {
-                    activeTab === 'categories' && (
-                        <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <header className="border-b border-gray-800 pb-6">
-                                <h2 className="text-3xl font-bold mb-2">Gestión de Categorías</h2>
-                                <p className="text-gray-400">Crea y elimina categorías para organizar tu tienda.</p>
-                            </header>
-
-                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl">
-                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-primary">
-                                    <Plus size={24} /> NUEVA CATEGORÍA
-                                </h3>
-                                <form onSubmit={handleAddCategory} className="flex flex-col md:flex-row gap-4 items-end">
-                                    <div className="space-y-2 flex-1 w-full">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Nombre de Categoría</label>
-                                        <input
-                                            type="text"
-                                            value={newCategoryName}
-                                            onChange={e => setNewCategoryName(e.target.value)}
-                                            className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors"
-                                            placeholder="Ej. Camperas"
-                                        />
-                                    </div>
-                                    <div className="space-y-2 flex-1 w-full">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Subcategorías (Separadas por comas)</label>
-                                        <input
-                                            type="text"
-                                            value={newCategorySubcats}
-                                            onChange={e => setNewCategorySubcats(e.target.value)}
-                                            className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors"
-                                            placeholder="Ej. Nike, Adidas, Puma..."
-                                        />
-                                    </div>
-                                    <button type="submit" className="bg-white text-black font-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-all uppercase text-sm tracking-widest shadow-lg h-[46px] w-full md:w-auto">
-                                        AGREGAR
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-bold border-b border-gray-800 pb-2">Categorías Existentes</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {categories.map((cat, index) => (
-                                        <div key={cat.id} className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4 flex flex-col gap-4 group">
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-3">
-                                                    {/* Sort Controls */}
-                                                    <div className="flex flex-col gap-1">
-                                                        <button
-                                                            onClick={() => handleMoveCategory(index, 'up')}
-                                                            disabled={index === 0}
-                                                            className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 transition-colors"
-                                                        >
-                                                            <ArrowUp size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleMoveCategory(index, 'down')}
-                                                            disabled={index === categories.length - 1}
-                                                            className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 transition-colors"
-                                                        >
-                                                            <ArrowDown size={14} />
-                                                        </button>
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-white text-lg">{cat.name}</h4>
-                                                        <span className="text-xs text-gray-500 font-mono">ID: {cat.id}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            setCategoryToEdit(cat.id);
-                                                            setEditSubcats(cat.subcategories ? cat.subcategories.join(', ') : '');
-                                                        }}
-                                                        className="p-2 text-gray-600 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                                                        title="Editar Subcategorías"
-                                                    >
-                                                        <Edit size={18} />
-                                                    </button>
-                                                    {cat.id !== 'huerfanos' && (
-                                                        <button
-                                                            onClick={() => {
-                                                                if (window.confirm('¿ELIMINAR ESTA CATEGORÍA? ESTA ACCIÓN NO SE PUEDE DESHACER.')) {
-                                                                    deleteCategory(cat.id);
-                                                                }
-                                                            }}
-                                                            className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                                                            title="Eliminar Categoría"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* Subcategories Display/Edit */}
-                                            {categoryToEdit === cat.id ? (
-                                                <div className="flex flex-col gap-2 animate-in fade-in">
-                                                    <input
-                                                        type="text"
-                                                        value={editSubcats}
-                                                        onChange={e => setEditSubcats(e.target.value)}
-                                                        className="w-full bg-black border border-gray-700 rounded p-2 text-xs text-white"
-                                                        placeholder="Subcategorías (Nike, Adidas...)"
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="number"
-                                                            value={editOpacity}
-                                                            onChange={e => setEditOpacity(e.target.value)}
-                                                            className="w-24 bg-black border border-gray-700 rounded p-2 text-xs text-white"
-                                                            placeholder="Opacidad (0.5)"
-                                                            step="0.1"
-                                                        />
-                                                        <button onClick={() => handleUpdateCategory(cat.id)} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold">OK</button>
-                                                        <button onClick={() => setCategoryToEdit(null)} className="bg-gray-700 text-white px-3 py-1 rounded text-xs">Cancelar</button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {cat.subcategories?.map(sub => (
-                                                        <span key={sub} className="px-2 py-1 bg-gray-900 text-gray-400 text-[10px] rounded uppercase border border-gray-800">{sub}</span>
-                                                    ))}
-                                                    {(!cat.subcategories || cat.subcategories.length === 0) && <span className="text-[10px] text-gray-700 italic">Sin subcategorías</span>}
-                                                    {cat.opacity !== undefined && <span className="text-[10px] text-yellow-500 ml-2">Opacidad: {cat.opacity}</span>}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                    activeTab === 'inventory_master' && (
+                        <div className="max-w-6xl mx-auto py-8">
+                            <MasterInventoryManager />
                         </div>
                     )
                 }
