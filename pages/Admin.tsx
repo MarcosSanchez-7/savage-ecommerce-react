@@ -344,7 +344,7 @@ const AdminDashboard: React.FC = () => {
     const getSizesForCategory = (catName: string): string[] => {
         const normalized = catName.toUpperCase().trim();
         // Calzados matches
-        if (normalized.includes('CALZADO') || normalized.includes('ZAPATO') || normalized.includes('SHOE') || normalized.includes('SNEAKER')) {
+        if (normalized.includes('CALZADO') || normalized.includes('ZAPATO') || normalized.includes('SHOE') || normalized.includes('SNEAKER') || normalized.includes('BOTIN')) {
             return SIZES_CONFIG['CALZADOS'];
         }
         // Camisetas / Ropa matches
@@ -1278,9 +1278,26 @@ const AdminDashboard: React.FC = () => {
                                                 <>
                                                     {(() => {
                                                         const catName = categories.find(c => c.id === newProduct.category)?.name || '';
-                                                        const subName = categories.find(c => c.id === newProduct.subcategory)?.name || '';
-                                                        const targetName = subName || catName;
-                                                        const sizes = getSizesForCategory(targetName);
+                                                        // Ensure we don't use 'Ninguna' or undefined for sizing logic if it's not a real subcategory
+                                                        const subCatObj = categories.find(c => c.id === newProduct.subcategory);
+                                                        const subName = subCatObj ? subCatObj.name : '';
+
+                                                        // Calculate sizes for both
+                                                        const parentSizes = getSizesForCategory(catName);
+                                                        const subSizes = subName && subName !== 'Ninguna' ? getSizesForCategory(subName) : null;
+
+                                                        // Logic: Use sub sizes if valid.
+                                                        // If sub sizes are 'UNICO' (default) but Parent has specific sizes (e.g. Calzados -> Botines), inherit Parent.
+                                                        let sizes = parentSizes;
+                                                        if (subSizes) {
+                                                            if (subSizes.length === 1 && subSizes[0] === 'UNICO' && (parentSizes.length > 1 || parentSizes[0] !== 'UNICO')) {
+                                                                // Sub matched nothing specific, keep Parent sizes
+                                                                sizes = parentSizes;
+                                                            } else {
+                                                                // Sub matched something specific OR Parent is also UNICO. Use Sub.
+                                                                sizes = subSizes;
+                                                            }
+                                                        }
 
                                                         if (sizes.length === 1 && sizes[0] === 'UNICO') {
                                                             return (
