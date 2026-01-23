@@ -979,11 +979,27 @@ const AdminDashboard: React.FC = () => {
                                                         value={newProduct.subcategory}
                                                         onChange={e => {
                                                             const newSubId = e.target.value;
-                                                            const currentTarget = categories.find(c => c.id === (newProduct.subcategory || newProduct.category));
-                                                            const newTarget = categories.find(c => c.id === (newSubId || newProduct.category));
 
-                                                            const currentSizes = getSizesForCategory(currentTarget?.name || '');
-                                                            const newSizes = getSizesForCategory(newTarget?.name || '');
+                                                            // Helper to resolve effective sizes with inheritance (mirrors rendering logic)
+                                                            const resolveEffectiveSizes = (catId: string, subId: string) => {
+                                                                const cat = categories.find(c => c.id === catId);
+                                                                const sub = categories.find(c => c.id === subId);
+                                                                const pSizes = getSizesForCategory(cat?.name || '');
+                                                                // Treat 'Ninguna' or empty as no subcategory
+                                                                const sSizes = (sub && sub.name !== 'Ninguna') ? getSizesForCategory(sub.name) : null;
+
+                                                                if (sSizes) {
+                                                                    // Inheritance check
+                                                                    if (sSizes.length === 1 && sSizes[0] === 'UNICO' && (pSizes.length > 1 || pSizes[0] !== 'UNICO')) {
+                                                                        return pSizes;
+                                                                    }
+                                                                    return sSizes;
+                                                                }
+                                                                return pSizes;
+                                                            };
+
+                                                            const currentSizes = resolveEffectiveSizes(newProduct.category, newProduct.subcategory);
+                                                            const newSizes = resolveEffectiveSizes(newProduct.category, newSubId);
 
                                                             setNewProduct({ ...newProduct, subcategory: newSubId });
                                                             if (JSON.stringify(currentSizes) !== JSON.stringify(newSizes)) {
