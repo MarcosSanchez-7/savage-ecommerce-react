@@ -143,7 +143,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                 children.map(child => (
                                   <Link
                                     key={child.id}
-                                    to={`/category/${child.id}`}
+                                    to={`/category/${parent.id}/${child.id}`}
                                     className="text-[13px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
                                   >
                                     <ChevronRight size={12} className="opacity-0 group-hover/item:opacity-100 -ml-5 transition-all text-primary" />
@@ -314,7 +314,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                         {children.map(child => (
                           <Link
                             key={child.id}
-                            to={`/category/${child.id}`}
+                            to={`/category/${parent.id}/${child.id}`}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="text-sm font-bold text-gray-500 hover:text-white uppercase tracking-wider"
                           >
