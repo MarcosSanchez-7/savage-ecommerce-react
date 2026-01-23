@@ -123,58 +123,40 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                   PRODUCTOS <ChevronDown size={14} className="group-hover:rotate-180 transition-transform" />
                 </button>
 
-                {/* Mega Menu Content */}
-                <div className="absolute top-[calc(100%-1rem)] -left-20 pt-6 hidden group-hover:block z-50">
-                  <div className="bg-[#0a0a0a]/95 border border-white/10 rounded-3xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex gap-16 min-w-[650px]">
-                    <div className="grid grid-cols-3 gap-x-12 gap-y-10 flex-1">
+                {/* Mega Menu Content (Expanded) */}
+                <div className="absolute top-[calc(100%-1rem)] -left-[450px] pt-6 hidden group-hover:block z-50">
+                  <div className="bg-[#0a0a0a]/95 border border-white/10 rounded-[32px] p-10 shadow-[0_40px_80px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-10 w-[1100px]">
+                    <div className="grid grid-cols-5 gap-x-8 gap-y-12 w-full">
                       {categories.filter(c => !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase())).map(parent => {
                         const children = categories.filter(c => c.parent_id === parent.id);
                         return (
-                          <div key={parent.id} className="space-y-4">
+                          <div key={parent.id} className="space-y-5">
                             <Link
                               to={`/category/${parent.id}`}
-                              className="group/cat flex items-center gap-2 text-[11px] font-black tracking-[0.2em] text-white uppercase"
+                              className="group/cat flex items-center gap-3 text-[12px] font-black tracking-[0.25em] text-white hover:text-primary uppercase transition-colors"
                             >
-                              <span className="w-6 h-[1px] bg-primary/50 group-hover/cat:w-10 transition-all"></span>
+                              <span className="w-5 h-[2px] bg-primary/40 group-hover/cat:w-8 group-hover/cat:bg-primary transition-all"></span>
                               {parent.name}
                             </Link>
-                            <div className="flex flex-col gap-2.5 pl-8 border-l border-white/5">
+                            <div className="flex flex-col gap-3 pl-8 border-l border-white/5">
                               {children.length > 0 ? (
                                 children.map(child => (
                                   <Link
                                     key={child.id}
                                     to={`/category/${child.id}`}
-                                    className="text-[12px] font-bold text-gray-400 hover:text-primary uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
+                                    className="text-[13px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
                                   >
-                                    <ChevronRight size={10} className="opacity-0 group-hover/item:opacity-100 -ml-4 transition-all" />
+                                    <ChevronRight size={12} className="opacity-0 group-hover/item:opacity-100 -ml-5 transition-all text-primary" />
                                     {child.name}
                                   </Link>
                                 ))
                               ) : (
-                                <span className="text-[10px] text-gray-600 italic tracking-[0.1em]">CATÁLOGO BASE</span>
+                                <span className="text-[10px] text-gray-700 italic tracking-[0.1em] uppercase">Propio</span>
                               )}
                             </div>
                           </div>
                         );
                       })}
-                    </div>
-
-                    {/* Featured Image Section in Mega Menu */}
-                    <div className="w-56 shrink-0 border-l border-white/10 pl-10 flex flex-col justify-center gap-4">
-                      <div className="aspect-[4/5] rounded-2xl overflow-hidden relative group/img cursor-pointer">
-                        <img
-                          src="https://images.unsplash.com/photo-1552066344-2464c1135c32?q=80&w=2070&auto=format&fit=crop"
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110"
-                          alt="Featured News"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
-                          <p className="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">Nueva Colección</p>
-                          <p className="text-sm font-black text-white leading-tight uppercase">Drop Invierno '24</p>
-                        </div>
-                      </div>
-                      <Link to="/category/all" className="text-center text-[10px] font-black tracking-widest text-gray-500 hover:text-white border border-white/10 py-3 rounded-xl transition-all hover:bg-white/5">
-                        VER TODO EL CATALOGO
-                      </Link>
                     </div>
                   </div>
                 </div>

@@ -384,8 +384,9 @@ const AdminDashboard: React.FC = () => {
             // Calculate total stock from matrix
             const totalStock = Object.values(stockMatrix).reduce((acc: number, curr: number) => acc + (curr || 0), 0);
 
-            const sPrice = parseFloat(newProduct.price) || parseFloat(newProduct.originalPrice) || 0;
-            const rPrice = newProduct.price ? parseFloat(newProduct.originalPrice) : null;
+            const hasOffer = newProduct.price && newProduct.price !== '';
+            const sPrice = hasOffer ? parseFloat(newProduct.price) : parseFloat(newProduct.originalPrice);
+            const rPrice = hasOffer ? parseFloat(newProduct.originalPrice) : null;
 
             const targetCategory = categories.find(c => c.id === (newProduct.subcategory || newProduct.category));
             const categoryName = targetCategory?.name || '';
@@ -948,8 +949,20 @@ const AdminDashboard: React.FC = () => {
                                                     <select
                                                         value={newProduct.category}
                                                         onChange={e => {
-                                                            setNewProduct({ ...newProduct, category: e.target.value, subcategory: '', selectedAttributes: {} });
-                                                            setStockMatrix({});
+                                                            const newCatId = e.target.value;
+                                                            const currentCat = categories.find(c => c.id === newProduct.category);
+                                                            const newCat = categories.find(c => c.id === newCatId);
+
+                                                            // Only reset matrix if the size set changed
+                                                            const currentSizes = getSizesForCategory(currentCat?.name || '');
+                                                            const newSizes = getSizesForCategory(newCat?.name || '');
+
+                                                            setNewProduct({ ...newProduct, category: newCatId, subcategory: '', selectedAttributes: {} });
+                                                            if (JSON.stringify(currentSizes) !== JSON.stringify(newSizes)) {
+                                                                const initialMatrix: Record<string, number> = {};
+                                                                newSizes.forEach(s => initialMatrix[s] = 0);
+                                                                setStockMatrix(initialMatrix);
+                                                            }
                                                         }}
                                                         className="w-full bg-black border border-primary/30 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
                                                         required
@@ -965,8 +978,19 @@ const AdminDashboard: React.FC = () => {
                                                     <select
                                                         value={newProduct.subcategory}
                                                         onChange={e => {
-                                                            setNewProduct({ ...newProduct, subcategory: e.target.value });
-                                                            setStockMatrix({});
+                                                            const newSubId = e.target.value;
+                                                            const currentTarget = categories.find(c => c.id === (newProduct.subcategory || newProduct.category));
+                                                            const newTarget = categories.find(c => c.id === (newSubId || newProduct.category));
+
+                                                            const currentSizes = getSizesForCategory(currentTarget?.name || '');
+                                                            const newSizes = getSizesForCategory(newTarget?.name || '');
+
+                                                            setNewProduct({ ...newProduct, subcategory: newSubId });
+                                                            if (JSON.stringify(currentSizes) !== JSON.stringify(newSizes)) {
+                                                                const initialMatrix: Record<string, number> = {};
+                                                                newSizes.forEach(s => initialMatrix[s] = 0);
+                                                                setStockMatrix(initialMatrix);
+                                                            }
                                                         }}
                                                         className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30 font-bold"
                                                         disabled={!newProduct.category}
@@ -1445,8 +1469,8 @@ const AdminDashboard: React.FC = () => {
                                                                                             setNewProduct({
                                                                                                 name: product.name,
                                                                                                 description: product.description || '',
-                                                                                                price: product.price.toString(),
-                                                                                                originalPrice: (product as any).originalPrice?.toString() || '',
+                                                                                                price: product.originalPrice ? product.price.toString() : '',
+                                                                                                originalPrice: product.originalPrice ? product.originalPrice.toString() : product.price.toString(),
                                                                                                 category: product.category,
                                                                                                 subcategory: product.subcategory || '',
                                                                                                 slug: product.slug || generateSlug(product.name),
