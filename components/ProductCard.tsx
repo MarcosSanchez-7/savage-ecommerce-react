@@ -2,7 +2,7 @@
 import React from 'react';
 import { Product } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Star } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 interface ProductCardProps {
@@ -147,9 +147,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               <span className="hidden opacity-0 w-0 h-0"> - Camiseta de Fútbol Premium</span>
             )}
           </h3>
-          <p className="text-accent-gray text-[10px] md:text-xs uppercase tracking-wide mt-1">
-            {/* Visual helper for SEO context without cluttering UI */}
+          <p className="text-accent-gray text-[10px] md:text-xs uppercase tracking-wide mt-1 flex items-center gap-1">
             {product.subcategory || product.category}
+            {product.isCategoryFeatured && <Star size={10} className="text-primary fill-primary" />}
           </p>
         </div>
         <div className="text-left sm:text-right flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-0">

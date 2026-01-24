@@ -1533,13 +1533,18 @@ const AdminDashboard: React.FC = () => {
 
                                                                                 {/* Footer Stats: Featured & Stock */}
                                                                                 <div className="mt-auto pt-4 border-t border-gray-800/50 space-y-3">
-                                                                                    {product.isFeatured && (
-                                                                                        <div className="flex">
+                                                                                    <div className="flex flex-wrap gap-2">
+                                                                                        {product.isFeatured && (
                                                                                             <span className="text-[10px] font-black text-primary flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
-                                                                                                <Star size={10} fill="currentColor" /> DESTACADO HOME
+                                                                                                <Star size={10} fill="currentColor" /> HOME
                                                                                             </span>
-                                                                                        </div>
-                                                                                    )}
+                                                                                        )}
+                                                                                        {product.isCategoryFeatured && (
+                                                                                            <span className="text-[10px] font-black text-white flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded border border-white/20">
+                                                                                                <Layers size={10} /> CAT.
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
 
                                                                                     <div className="flex flex-wrap gap-2">
                                                                                         {product.inventory?.map(inv => (

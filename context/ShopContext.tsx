@@ -366,6 +366,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     costPrice: Number(p.cost_price || p.unit_cost || 0),
                     imageAlts: p.image_alts,
                     isImported: p.is_imported,
+                    customTag: p.custom_tag,
                     inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
                 })));
             }
