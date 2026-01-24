@@ -366,7 +366,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     costPrice: Number(p.cost_price || p.unit_cost || 0),
                     imageAlts: p.image_alts,
                     isImported: p.is_imported,
-                    customTag: p.custom_tag,
+                    visualTag: p.visual_tag,
                     inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
                 })));
             }
@@ -663,7 +663,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 cost_price: product.costPrice || 0,
                 slug: product.slug,
                 image_alts: product.imageAlts,
-                is_imported: product.isImported
+                is_imported: product.isImported,
+                visual_tag: product.visualTag
             };
 
             const { data, error } = await supabase
@@ -740,7 +741,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 cost_price: updatedProduct.costPrice || 0,
                 slug: updatedProduct.slug,
                 image_alts: updatedProduct.imageAlts,
-                is_imported: updatedProduct.isImported
+                is_imported: updatedProduct.isImported,
+                visual_tag: updatedProduct.visualTag
             };
 
             const { error } = await supabase

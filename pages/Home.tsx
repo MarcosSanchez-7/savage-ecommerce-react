@@ -40,7 +40,11 @@ const Home: React.FC = () => {
 
                     {/* Featured Carousel */}
                     <FeaturedCarousel
-                        products={products.filter(p => p.isFeatured).sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))}
+                        products={products
+                            .filter(p => p.isFeatured)
+                            // Sort: Featured First (implicitly filtered), then by ID descending (newest first assumption) or specific date if available
+                            // Using ID string comparison for rough "newest" approximation if UUIDs/TimeIDs
+                            .sort((a, b) => b.id.localeCompare(a.id))}
                         onAddToCart={addToCart}
                     />
 
@@ -62,7 +66,13 @@ const Home: React.FC = () => {
                         if (categoryProducts.length === 0) return null;
 
                         const displayProducts = categoryProducts
-                            .sort((a, b) => (a.isCategoryFeatured === b.isCategoryFeatured ? 0 : a.isCategoryFeatured ? -1 : 1))
+                            // Sort: Category Featured First, then Newest (ID desc)
+                            .sort((a, b) => {
+                                if (a.isCategoryFeatured !== b.isCategoryFeatured) {
+                                    return a.isCategoryFeatured ? -1 : 1;
+                                }
+                                return b.id.localeCompare(a.id); // Newest first
+                            })
                             .slice(0, 8);
 
                         const hasMore = categoryProducts.length > 8;

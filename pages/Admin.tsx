@@ -317,7 +317,7 @@ const AdminDashboard: React.FC = () => {
         isCategoryFeatured: false,
         isImported: false,
         selectedAttributes: {} as Record<string, string>,
-        customTag: { text: '', color: '#000000' }
+        visualTag: { text: '', color: '#000000' }
     });
     const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({});
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
@@ -415,7 +415,7 @@ const AdminDashboard: React.FC = () => {
                 isCategoryFeatured: newProduct.isCategoryFeatured,
                 isImported: newProduct.isImported,
                 selectedAttributes: newProduct.selectedAttributes,
-                customTag: newProduct.customTag
+                visualTag: newProduct.visualTag
             } as any;
 
             if (editingProductId) {
@@ -446,7 +446,7 @@ const AdminDashboard: React.FC = () => {
                 isCategoryFeatured: false,
                 isImported: false,
                 selectedAttributes: {},
-                customTag: { text: '', color: '#000000' }
+                visualTag: { text: '', color: '#000000' }
             });
             setStockMatrix({});
         } catch (error) {
@@ -1532,11 +1532,13 @@ const AdminDashboard: React.FC = () => {
                                                                                 )}
 
                                                                                 {/* Footer Stats: Featured & Stock */}
+                                                                                {/* Footer Stats: Featured & Stock */}
                                                                                 <div className="mt-auto pt-4 border-t border-gray-800/50 space-y-3">
+                                                                                    {/* Featured Indicators */}
                                                                                     <div className="flex flex-wrap gap-2">
                                                                                         {product.isFeatured && (
-                                                                                            <span className="text-[10px] font-black text-primary flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
-                                                                                                <Star size={10} fill="currentColor" /> HOME
+                                                                                            <span className="text-[10px] font-black text-black bg-yellow-400 px-2 py-0.5 rounded border border-yellow-500/50 flex items-center gap-1 animate-pulse shadow-[0_0_10px_rgba(250,204,21,0.4)]">
+                                                                                                ★ DESTACADO HOME
                                                                                             </span>
                                                                                         )}
                                                                                         {product.isCategoryFeatured && (
@@ -1582,7 +1584,7 @@ const AdminDashboard: React.FC = () => {
                                                                                                 isCategoryFeatured: (product as any).isCategoryFeatured || false,
                                                                                                 isImported: (product as any).isImported || false,
                                                                                                 selectedAttributes: product.selectedAttributes || {},
-                                                                                                customTag: product.customTag || { text: '', color: '#000000' }
+                                                                                                visualTag: product.visualTag || { text: '', color: '#000000' }
                                                                                             });
                                                                                             const matrix: Record<string, number> = {};
                                                                                             product.inventory?.forEach(item => {

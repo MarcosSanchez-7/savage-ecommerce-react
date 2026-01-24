@@ -24,12 +24,21 @@ const CategoryPage: React.FC = () => {
 
     const currentCategoryInfo = categories.find(c => c.id.toLowerCase() === category?.toLowerCase() || c.name.toLowerCase() === category?.toLowerCase());
 
-    const categoryProducts = products.filter(p => {
-        const matchesCategory = p.category === currentCategoryInfo?.id;
-        if (!matchesCategory) return false;
-        if (activeSubcategory === 'ALL') return true;
-        return p.subcategory === activeSubcategory;
-    });
+    const categoryProducts = products
+        .filter(p => {
+            const matchesCategory = p.category === currentCategoryInfo?.id;
+            if (!matchesCategory) return false;
+            if (activeSubcategory === 'ALL') return true;
+            return p.subcategory === activeSubcategory;
+        })
+        .sort((a, b) => {
+            // Priority 1: Category Featured
+            if (a.isCategoryFeatured !== b.isCategoryFeatured) {
+                return a.isCategoryFeatured ? -1 : 1;
+            }
+            // Priority 2: Newest (ID Descending)
+            return b.id.localeCompare(a.id);
+        });
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
