@@ -1281,53 +1281,68 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        {/* Custom Tag Section */}
+                                        {/* Visual Tag Section */}
                                         <div className="space-y-4 pt-6 border-t border-gray-800/50">
                                             <div className="flex items-center gap-3">
                                                 <Tag size={24} className="text-primary" />
-                                                <label className="text-sm font-black italic uppercase tracking-tighter text-white">Etiqueta Personalizada (Badge)</label>
+                                                <label className="text-sm font-black italic uppercase tracking-tighter text-white">Etiqueta Visual (Badge)</label>
                                             </div>
-                                            <div className="flex gap-4 items-end">
-                                                <div className="flex-1 space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Texto (Ej: NUEVO)</label>
+
+                                            <div className="space-y-4 pt-4 border-t border-gray-800/50">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-sm font-black italic uppercase tracking-tighter text-white">Etiqueta Visual</label>
+                                                    {newProduct.visualTag?.text && (
+                                                        <div
+                                                            className="text-[10px] font-black px-2 py-1 uppercase tracking-wider rounded-sm shadow-md"
+                                                            style={{ backgroundColor: newProduct.visualTag.color, color: '#fff' }}
+                                                        >
+                                                            {newProduct.visualTag.text}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Etiqueta Rápida Buttons */}
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setNewProduct({ ...newProduct, visualTag: { text: 'NUEVO', color: '#0000FF' } })}
+                                                        className="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-500 transition-all border border-blue-400/30 shadow-lg shadow-blue-900/20"
+                                                    >
+                                                        NUEVO
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setNewProduct({ ...newProduct, visualTag: { text: 'LIMITADO', color: '#D4AF37' } })}
+                                                        className="px-4 py-2 bg-[#D4AF37] text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-[#C5A028] transition-all border border-yellow-400/30 shadow-lg shadow-yellow-900/20"
+                                                    >
+                                                        LIMITADO
+                                                    </button>
+                                                </div>
+
+                                                <div className="grid grid-cols-[1fr_auto] gap-4">
                                                     <input
                                                         type="text"
-                                                        value={newProduct.customTag?.text || ''}
+                                                        value={newProduct.visualTag?.text || ''}
                                                         onChange={e => setNewProduct({
                                                             ...newProduct,
-                                                            customTag: { ...newProduct.customTag!, text: e.target.value }
+                                                            visualTag: { ...newProduct.visualTag!, text: e.target.value }
                                                         })}
-                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold placeholder:text-gray-800"
-                                                        placeholder="Texto de la etiqueta"
+                                                        className="bg-black border border-gray-800 rounded-xl p-3 text-white focus:border-primary focus:outline-none font-bold placeholder:text-gray-800 text-sm uppercase"
+                                                        placeholder="TEXTO (EJ: PRE-VENTA)"
                                                     />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Color</label>
-                                                    <div className="h-[58px] w-[58px] rounded-xl overflow-hidden border border-gray-800 relative">
+                                                    <div className="flex items-center gap-2 bg-black border border-gray-800 rounded-xl px-2">
                                                         <input
                                                             type="color"
-                                                            value={newProduct.customTag?.color || '#000000'}
+                                                            value={newProduct.visualTag?.color || '#000000'}
                                                             onChange={e => setNewProduct({
                                                                 ...newProduct,
-                                                                customTag: { ...newProduct.customTag!, color: e.target.value }
+                                                                visualTag: { ...newProduct.visualTag!, color: e.target.value }
                                                             })}
-                                                            className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 border-0"
+                                                            className="w-8 h-8 rounded cursor-pointer bg-transparent"
                                                         />
                                                     </div>
                                                 </div>
                                             </div>
-                                            {/* Preview */}
-                                            {newProduct.customTag?.text && (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] text-gray-500 uppercase">Vista Previa:</span>
-                                                    <span
-                                                        className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider"
-                                                        style={{ backgroundColor: newProduct.customTag.color }}
-                                                    >
-                                                        {newProduct.customTag.text}
-                                                    </span>
-                                                </div>
-                                            )}
                                         </div>
 
                                         {/* Dynamic Stock Section */}
@@ -1532,22 +1547,27 @@ const AdminDashboard: React.FC = () => {
                                                                                 )}
 
                                                                                 {/* Footer Stats: Featured & Stock */}
-                                                                                {/* Footer Stats: Featured & Stock */}
-                                                                                <div className="mt-auto pt-4 border-t border-gray-800/50 space-y-3">
-                                                                                    {/* Featured Indicators */}
+                                                                                <div className="mt-auto pt-4 border-t border-gray-800/50 space-y-3 relative">
+                                                                                    {/* Featured Indicators & Floating Badge */}
                                                                                     <div className="flex flex-wrap gap-2">
-                                                                                        {product.isFeatured && (
-                                                                                            <span className="text-[10px] font-black text-black bg-yellow-400 px-2 py-0.5 rounded border border-yellow-500/50 flex items-center gap-1 animate-pulse shadow-[0_0_10px_rgba(250,204,21,0.4)]">
-                                                                                                ★ DESTACADO HOME
-                                                                                            </span>
-                                                                                        )}
+                                                                                        {/* Category Featured Badge */}
                                                                                         {product.isCategoryFeatured && (
                                                                                             <span className="text-[10px] font-black text-white flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded border border-white/20">
                                                                                                 <Layers size={10} /> CAT.
                                                                                             </span>
                                                                                         )}
+
                                                                                     </div>
 
+                                                                                </div>
+                                                                                <div className="relative mt-4">
+                                                                                    {product.isFeatured && (
+                                                                                        <div className="absolute -top-7 left-0 w-full flex justify-center pointer-events-none">
+                                                                                            <span className="text-[9px] font-black text-black bg-yellow-400 px-2 py-0.5 rounded border border-yellow-500/50 flex items-center gap-1 animate-pulse shadow-[0_0_10px_rgba(250,204,21,0.4)] z-20">
+                                                                                                ★ DESTACADO HOME
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    )}
                                                                                     <div className="flex flex-wrap gap-2">
                                                                                         {product.inventory?.map(inv => (
                                                                                             <div key={inv.size} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${inv.quantity > 0 ? 'bg-white/5 border-gray-800' : 'bg-red-500/5 border-red-500/20 opacity-50'}`}>
@@ -1619,21 +1639,25 @@ const AdminDashboard: React.FC = () => {
                                                         );
                                                     })}
                                                 </div>
-                                            )}
+                                            )
+                                            }
                                         </div>
                                     );
                                 })}
                             </div>
                         </div>
                     </div>
-                )}
+                )
+                }
 
                 {/* ANALYTICS TAB */}
-                {activeTab === 'analytics' && (
-                    <div className="max-w-7xl mx-auto space-y-12">
-                        <AdminAnalytics />
-                    </div>
-                )}
+                {
+                    activeTab === 'analytics' && (
+                        <div className="max-w-7xl mx-auto space-y-12">
+                            <AdminAnalytics />
+                        </div>
+                    )
+                }
 
 
 
@@ -2437,8 +2461,8 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )
                 }
-            </main>
-        </div>
+            </main >
+        </div >
     );
 };
 
