@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN custom_tag JSONB DEFAULT NULL;

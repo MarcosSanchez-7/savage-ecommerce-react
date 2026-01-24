@@ -91,6 +91,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               Nuevo
             </div>
           )}
+          {product.customTag && product.customTag.text && (
+            <div
+              className="text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 uppercase tracking-wider rounded-sm shadow-md"
+              style={{ backgroundColor: product.customTag.color, color: '#fff' }}
+            >
+              {product.customTag.text}
+            </div>
+          )}
           {product.tags && product.tags
             .filter(tag => {
               const t = tag.trim().toUpperCase();

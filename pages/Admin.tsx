@@ -34,6 +34,7 @@ import {
     ArrowLeft,
     ArrowRight,
     Star,
+    Tag,
     UploadCloud,
     Loader2
 } from 'lucide-react';
@@ -315,7 +316,8 @@ const AdminDashboard: React.FC = () => {
         isFeatured: false,
         isCategoryFeatured: false,
         isImported: false,
-        selectedAttributes: {} as Record<string, string>
+        selectedAttributes: {} as Record<string, string>,
+        customTag: { text: '', color: '#000000' }
     });
     const [stockMatrix, setStockMatrix] = useState<Record<string, number>>({});
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
@@ -412,7 +414,8 @@ const AdminDashboard: React.FC = () => {
                 isFeatured: newProduct.isFeatured,
                 isCategoryFeatured: newProduct.isCategoryFeatured,
                 isImported: newProduct.isImported,
-                selectedAttributes: newProduct.selectedAttributes
+                selectedAttributes: newProduct.selectedAttributes,
+                customTag: newProduct.customTag
             } as any;
 
             if (editingProductId) {
@@ -442,7 +445,8 @@ const AdminDashboard: React.FC = () => {
                 isFeatured: false,
                 isCategoryFeatured: false,
                 isImported: false,
-                selectedAttributes: {}
+                selectedAttributes: {},
+                customTag: { text: '', color: '#000000' }
             });
             setStockMatrix({});
         } catch (error) {
@@ -1277,6 +1281,55 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         </div>
 
+                                        {/* Custom Tag Section */}
+                                        <div className="space-y-4 pt-6 border-t border-gray-800/50">
+                                            <div className="flex items-center gap-3">
+                                                <Tag size={24} className="text-primary" />
+                                                <label className="text-sm font-black italic uppercase tracking-tighter text-white">Etiqueta Personalizada (Badge)</label>
+                                            </div>
+                                            <div className="flex gap-4 items-end">
+                                                <div className="flex-1 space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Texto (Ej: NUEVO)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={newProduct.customTag?.text || ''}
+                                                        onChange={e => setNewProduct({
+                                                            ...newProduct,
+                                                            customTag: { ...newProduct.customTag!, text: e.target.value }
+                                                        })}
+                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold placeholder:text-gray-800"
+                                                        placeholder="Texto de la etiqueta"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Color</label>
+                                                    <div className="h-[58px] w-[58px] rounded-xl overflow-hidden border border-gray-800 relative">
+                                                        <input
+                                                            type="color"
+                                                            value={newProduct.customTag?.color || '#000000'}
+                                                            onChange={e => setNewProduct({
+                                                                ...newProduct,
+                                                                customTag: { ...newProduct.customTag!, color: e.target.value }
+                                                            })}
+                                                            className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] cursor-pointer p-0 m-0 border-0"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {/* Preview */}
+                                            {newProduct.customTag?.text && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] text-gray-500 uppercase">Vista Previa:</span>
+                                                    <span
+                                                        className="px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wider"
+                                                        style={{ backgroundColor: newProduct.customTag.color }}
+                                                    >
+                                                        {newProduct.customTag.text}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
                                         {/* Dynamic Stock Section */}
                                         <div className="space-y-6 pt-6 border-t border-gray-800/50">
                                             <div className="flex items-center gap-3">
@@ -1478,20 +1531,30 @@ const AdminDashboard: React.FC = () => {
                                                                                     </div>
                                                                                 )}
 
-                                                                                {/* Stock Preview */}
-                                                                                <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-800/50">
-                                                                                    {product.inventory?.map(inv => (
-                                                                                        <div key={inv.size} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${inv.quantity > 0 ? 'bg-white/5 border-gray-800' : 'bg-red-500/5 border-red-500/20 opacity-50'}`}>
-                                                                                            <span className={`text-[9px] font-black ${inv.quantity > 0 ? 'text-gray-400' : 'text-red-400'}`}>{inv.size}</span>
-                                                                                            <span className={`text-[10px] font-black ${inv.quantity > 0 ? 'text-blue-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                {/* Footer Stats: Featured & Stock */}
+                                                                                <div className="mt-auto pt-4 border-t border-gray-800/50 space-y-3">
+                                                                                    {product.isFeatured && (
+                                                                                        <div className="flex">
+                                                                                            <span className="text-[10px] font-black text-primary flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                                                                                                <Star size={10} fill="currentColor" /> DESTACADO HOME
+                                                                                            </span>
                                                                                         </div>
-                                                                                    ))}
-                                                                                    {product.isImported && product.sizes && product.sizes.map(size => (
-                                                                                        <div key={size} className="flex items-center gap-1.5 px-2 py-1 rounded-lg border bg-blue-500/5 border-blue-500/20 opacity-70">
-                                                                                            <span className="text-[9px] font-black text-blue-400">{size}</span>
-                                                                                            <span className="text-[10px] font-black text-blue-500">0</span>
-                                                                                        </div>
-                                                                                    ))}
+                                                                                    )}
+
+                                                                                    <div className="flex flex-wrap gap-2">
+                                                                                        {product.inventory?.map(inv => (
+                                                                                            <div key={inv.size} className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border ${inv.quantity > 0 ? 'bg-white/5 border-gray-800' : 'bg-red-500/5 border-red-500/20 opacity-50'}`}>
+                                                                                                <span className={`text-[9px] font-black ${inv.quantity > 0 ? 'text-gray-400' : 'text-red-400'}`}>{inv.size}</span>
+                                                                                                <span className={`text-[10px] font-black ${inv.quantity > 0 ? 'text-blue-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                        {product.isImported && product.sizes && product.sizes.map(size => (
+                                                                                            <div key={size} className="flex items-center gap-1.5 px-2 py-1 rounded-lg border bg-blue-500/5 border-blue-500/20 opacity-70">
+                                                                                                <span className="text-[9px] font-black text-blue-400">{size}</span>
+                                                                                                <span className="text-[10px] font-black text-blue-500">0</span>
+                                                                                            </div>
+                                                                                        ))}
+                                                                                    </div>
                                                                                 </div>
 
                                                                                 {/* Actions - Positioned to the side */}
@@ -1512,7 +1575,9 @@ const AdminDashboard: React.FC = () => {
                                                                                                 tags: product.tags || [],
                                                                                                 isFeatured: (product as any).isFeatured || false,
                                                                                                 isCategoryFeatured: (product as any).isCategoryFeatured || false,
-                                                                                                isImported: (product as any).isImported || false
+                                                                                                isImported: (product as any).isImported || false,
+                                                                                                selectedAttributes: product.selectedAttributes || {},
+                                                                                                customTag: product.customTag || { text: '', color: '#000000' }
                                                                                             });
                                                                                             const matrix: Record<string, number> = {};
                                                                                             product.inventory?.forEach(item => {

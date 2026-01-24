@@ -21,6 +21,7 @@ export interface Product {
   imageAlts?: string[];
   isImported?: boolean;
   selectedAttributes?: Record<string, string>;
+  customTag?: { text: string; color: string };
 }
 
 export interface InventoryItem {
