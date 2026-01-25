@@ -4,7 +4,8 @@ import {
     Folder,
     Edit,
     Trash2,
-    Layers
+    Layers,
+    Search
 } from 'lucide-react';
 import { Category, Product } from '../types';
 
@@ -24,6 +25,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
     // Local state for folder toggles (Performance Optimization)
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
     const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
+    const [searchTerm, setSearchTerm] = useState('');
 
     const toggleCategory = (catId: string) => {
         setOpenCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
@@ -34,17 +36,45 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
         setOpenSubcategories(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
+    // Filter products globally if search term exists
+    const getFilteredProducts = (prods: Product[]) => {
+        if (!searchTerm) return prods;
+        const term = searchTerm.toLowerCase();
+        return prods.filter(p => p.name.toLowerCase().includes(term));
+    };
+
     return (
         <div className="space-y-6">
-            <h4 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-2">
-                Inventario
-            </h4>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h4 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-2">
+                    Inventario
+                </h4>
+                <div className="relative w-full md:w-96">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
+                    <input
+                        type="text"
+                        placeholder="Buscar producto por nombre..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-[#0c0c0c] border border-gray-800 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:border-primary focus:outline-none transition-colors"
+                    />
+                </div>
+            </div>
 
             {categories.map(category => {
-                const categoryProducts = products.filter(p => p.category === category.id);
+                // First filter by category
+                let categoryProducts = products.filter(p => p.category === category.id);
+
+                // Then apply search filter
+                categoryProducts = getFilteredProducts(categoryProducts);
+
+                // If no products match in this category, hide it
                 if (categoryProducts.length === 0) return null;
 
-                const isOpen = openCategories[category.id] ?? false;
+                // Force open if searching, otherwise use state or default closed
+                const isSearching = searchTerm.length > 0;
+                const isOpen = isSearching ? true : (openCategories[category.id] ?? false);
+
                 const subcategories = Array.from(new Set(categoryProducts.map(p => p.subcategory || 'General'))) as string[];
 
                 return (
@@ -76,7 +106,9 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                 {subcategories.map(sub => {
                                     const subProducts = categoryProducts.filter(p => (p.subcategory || 'General') === sub);
                                     const subKey = `${category.id}-${sub}`;
-                                    const isSubOpen = openSubcategories[subKey] ?? false;
+
+                                    // Force open subcategory if searching
+                                    const isSubOpen = isSearching ? true : (openSubcategories[subKey] ?? false);
 
                                     return (
                                         <div key={sub} className="space-y-4">
