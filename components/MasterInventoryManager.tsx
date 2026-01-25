@@ -94,7 +94,13 @@ const MasterInventoryManager: React.FC = () => {
                 >
                     <div className="flex items-center gap-3">
                         {hasSubcats ? (
-                            <button onClick={() => toggleExpand(category.id)} className="text-gray-500 hover:text-white transition-colors">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleExpand(category.id);
+                                }}
+                                className="text-gray-500 hover:text-white transition-all p-2 -m-2 cursor-pointer active:scale-90 transform duration-75"
+                            >
                                 {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
                             </button>
                         ) : (
@@ -246,8 +252,8 @@ const MasterInventoryManager: React.FC = () => {
                                     key={attr.id}
                                     onClick={() => setSelectedAttrId(attr.id)}
                                     className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group ${selectedAttrId === attr.id
-                                            ? 'bg-primary border-primary text-black shadow-lg shadow-primary/20'
-                                            : 'bg-black/40 border-gray-800 text-gray-400 hover:border-gray-600'
+                                        ? 'bg-primary border-primary text-black shadow-lg shadow-primary/20'
+                                        : 'bg-black/40 border-gray-800 text-gray-400 hover:border-gray-600'
                                         }`}
                                 >
                                     <span className="font-black italic uppercase tracking-tighter">{attr.name}</span>
