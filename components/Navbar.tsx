@@ -26,6 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const [expandedMobileCategories, setExpandedMobileCategories] = useState<Record<string, boolean>>({});
 
   const navigate = useNavigate();
 
@@ -300,29 +301,51 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-6 pl-2 ${isMobileCategoriesOpen ? 'max-h-[800px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
               {categories.filter(c => !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase())).map(parent => {
                 const children = categories.filter(c => c.parent_id === parent.id);
+                const isExpanded = expandedMobileCategories[parent.id];
+
                 return (
-                  <div key={parent.id} className="flex flex-col gap-3">
-                    <Link
-                      to={`/category/${parent.id}`}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-lg font-black text-primary uppercase tracking-widest border-l-2 border-primary/30 pl-3"
-                    >
-                      {parent.name}
-                    </Link>
-                    {children.length > 0 && (
-                      <div className="flex flex-col gap-3 pl-6 border-l border-gray-900 ml-0.5">
+                  <div key={parent.id} className="flex flex-col border-b border-gray-800/30 last:border-0">
+                    <div className="flex items-center justify-between py-1">
+                      <Link
+                        to={`/category/${parent.id}`}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-lg font-black text-white hover:text-primary uppercase tracking-widest py-2"
+                      >
+                        {parent.name}
+                      </Link>
+
+                      {children.length > 0 && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setExpandedMobileCategories(prev => ({
+                              ...prev,
+                              [parent.id]: !prev[parent.id]
+                            }));
+                          }}
+                          className="p-3 -mr-3 text-gray-400 hover:text-white active:scale-90 transition-all"
+                        >
+                          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Subcategories with smooth transition */}
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
+                      <div className="flex flex-col gap-3 pl-4 border-l-2 border-primary/20 ml-1">
                         {children.map(child => (
                           <Link
                             key={child.id}
                             to={`/category/${parent.id}/${child.id}`}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="text-sm font-bold text-gray-500 hover:text-white uppercase tracking-wider"
+                            className="text-sm font-bold text-gray-500 hover:text-white uppercase tracking-wider py-1 block"
                           >
                             {child.name}
                           </Link>
                         ))}
                       </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}
