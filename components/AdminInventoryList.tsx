@@ -44,7 +44,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                 const categoryProducts = products.filter(p => p.category === category.id);
                 if (categoryProducts.length === 0) return null;
 
-                const isOpen = openCategories[category.id] ?? true;
+                const isOpen = openCategories[category.id] ?? false;
                 const subcategories = Array.from(new Set(categoryProducts.map(p => p.subcategory || 'General'))) as string[];
 
                 return (
@@ -76,7 +76,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                 {subcategories.map(sub => {
                                     const subProducts = categoryProducts.filter(p => (p.subcategory || 'General') === sub);
                                     const subKey = `${category.id}-${sub}`;
-                                    const isSubOpen = openSubcategories[subKey] ?? true;
+                                    const isSubOpen = openSubcategories[subKey] ?? false;
 
                                     return (
                                         <div key={sub} className="space-y-4">
