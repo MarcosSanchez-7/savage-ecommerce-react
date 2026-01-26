@@ -332,18 +332,61 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                     </div>
 
                     {/* Subcategories with smooth transition */}
-                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[500px] opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[1000px] opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
                       <div className="flex flex-col gap-3 pl-4 border-l-2 border-primary/20 ml-1">
-                        {children.map(child => (
-                          <Link
-                            key={child.id}
-                            to={`/category/${parent.id}/${child.id}`}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className="text-sm font-bold text-gray-500 hover:text-white uppercase tracking-wider py-1 block"
-                          >
-                            {child.name}
-                          </Link>
-                        ))}
+                        {children.map(child => {
+                          const grandChildren = categories.filter(gc => gc.parent_id === child.id);
+                          const isChildExpanded = expandedMobileCategories[child.id];
+
+                          return (
+                            <div key={child.id} className="flex flex-col">
+                              <div className="flex items-center justify-between">
+                                <Link
+                                  to={`/category/${parent.id}/${child.id}`}
+                                  onClick={() => setIsMobileMenuOpen(false)}
+                                  className="text-sm font-bold text-gray-500 hover:text-white uppercase tracking-wider py-1 block"
+                                >
+                                  {child.name}
+                                </Link>
+                                {grandChildren.length > 0 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setExpandedMobileCategories(prev => ({
+                                        ...prev,
+                                        [child.id]: !prev[child.id]
+                                      }));
+                                    }}
+                                    className="p-2 -mr-2 text-gray-600 hover:text-white"
+                                  >
+                                    {isChildExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* L3 Grandchildren */}
+                              {grandChildren.length > 0 && (
+                                <div className={`overflow-hidden transition-all duration-300 pl-4 border-l border-white/10 mt-1 flex flex-col gap-2 ${isChildExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                  {grandChildren.map(grand => (
+                                    <Link
+                                      key={grand.id}
+                                      // Navigate to Parent/Child (Context) but we really want filtering by GrandChild
+                                      // CategoryPage now handles drilled down filtering if we pass subcategory=grand.id
+                                      // But the route is /category/:cat/:sub. 
+                                      // We can use /category/:parent/:grand because CategoryPage treats the second param as "Current Scope".
+                                      to={`/category/${parent.id}/${grand.id}`}
+                                      onClick={() => setIsMobileMenuOpen(false)}
+                                      className="text-xs font-bold text-gray-600 hover:text-primary uppercase tracking-wider py-1 block"
+                                    >
+                                      {grand.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

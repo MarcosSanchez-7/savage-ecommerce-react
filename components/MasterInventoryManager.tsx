@@ -62,7 +62,7 @@ const MasterInventoryManager: React.FC = () => {
         if (!newCategoryName.trim()) return;
 
         const newCat: Category = {
-            id: Date.now().toString(), // Temp ID, ShopContext handles UUID replacement
+            id: newCategoryName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
             name: newCategoryName,
             parent_id: modalParentId,
             image: ''
