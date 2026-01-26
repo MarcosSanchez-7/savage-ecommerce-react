@@ -27,6 +27,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const [expandedMobileCategories, setExpandedMobileCategories] = useState<Record<string, boolean>>({});
+  const [expandedDesktopCategories, setExpandedDesktopCategories] = useState<Record<string, boolean>>({});
 
   const navigate = useNavigate();
 
@@ -155,15 +156,31 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                   // If Grandchildren exist, render Child as a Sub-Header, else as a Link
 
                                   if (grandChildren.length > 0) {
+                                    const isExpanded = expandedDesktopCategories[child.id];
                                     return (
                                       <div key={child.id} className="mb-2">
-                                        <Link
-                                          to={`/category/${parent.id}/${child.id}`}
-                                          className="text-[11px] font-bold text-gray-400 hover:text-white uppercase tracking-wider block mb-1"
-                                        >
-                                          {child.name}
-                                        </Link>
-                                        <div className="flex flex-col gap-1 pl-2 border-l border-white/5">
+                                        <div className="flex items-center justify-between group/sub mb-1">
+                                          <Link
+                                            to={`/category/${parent.id}/${child.id}`}
+                                            className="text-[11px] font-bold text-gray-400 hover:text-white uppercase tracking-wider block"
+                                          >
+                                            {child.name}
+                                          </Link>
+                                          <button
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              e.stopPropagation();
+                                              setExpandedDesktopCategories(prev => ({
+                                                ...prev,
+                                                [String(child.id)]: !prev[String(child.id)]
+                                              }));
+                                            }}
+                                            className="text-gray-600 hover:text-primary transition-colors p-1 -mr-2"
+                                          >
+                                            {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                          </button>
+                                        </div>
+                                        <div className={`flex flex-col gap-1 pl-2 border-l border-white/5 overflow-hidden transition-all duration-300 ${isExpanded ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'}`}>
                                           {grandChildren.map(grand => (
                                             grand ? (
                                               <Link
