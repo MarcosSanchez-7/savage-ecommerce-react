@@ -11,7 +11,6 @@ import { useShop } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
-import UpcomingDrops from '../components/UpcomingDrops';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 
 const Home: React.FC = () => {
@@ -19,7 +18,10 @@ const Home: React.FC = () => {
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    // Categories are now directly from context (objects)
+    // Filter New Arrivals
+    const newArrivals = products
+        .filter(p => p.isNew)
+        .slice(0, 8); // Max 4-8 products
 
     return (
         <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white overflow-x-hidden">
@@ -27,7 +29,28 @@ const Home: React.FC = () => {
 
             <main>
                 <Hero />
-                <UpcomingDrops />
+
+                {/* NUEVOS INGRESOS Section */}
+                {newArrivals.length > 0 && (
+                    <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
+                        <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                            <div>
+                                <h2 className="text-3xl font-black uppercase tracking-tight">Nuevos Ingresos</h2>
+                                <p className="text-gray-500 mt-1 text-sm font-bold uppercase tracking-widest">Artículos limitados</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                            {newArrivals.map(product => (
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    onAddToCart={() => addToCart(product)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {/* Featured Products Section (Max 8) */}
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
