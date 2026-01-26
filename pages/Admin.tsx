@@ -1292,22 +1292,22 @@ const AdminDashboard: React.FC = () => {
                                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isImported ? 'left-7' : 'left-1'}`} />
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div
-                                            onClick={() => setNewProduct(prev => ({ ...prev, isNew: !prev.isNew }))}
-                                            className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isNew ? 'bg-purple-500/10 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className={`p-3 rounded-xl transition-all ${newProduct.isNew ? 'bg-purple-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
-                                                    <Sparkles size={24} />
+                                            <div
+                                                onClick={() => setNewProduct(prev => ({ ...prev, isNew: !prev.isNew }))}
+                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isNew ? 'bg-purple-500/10 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isNew ? 'bg-purple-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                        <Sparkles size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">NUEVO PRODUCTO</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecerá en "RECIEN LLEGADOS"</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-black text-white italic uppercase tracking-tighter">NUEVO INGRESO</p>
-                                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecerá en "Nuevos Ingresos"</p>
+                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isNew ? 'bg-purple-500' : 'bg-gray-800'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isNew ? 'left-7' : 'left-1'}`} />
                                                 </div>
-                                            </div>
-                                            <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isNew ? 'bg-purple-500' : 'bg-gray-800'}`}>
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isNew ? 'left-7' : 'left-1'}`} />
                                             </div>
                                         </div>
                                 </div>

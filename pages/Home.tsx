@@ -35,7 +35,7 @@ const Home: React.FC = () => {
                     <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
                         <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                             <div>
-                                <h2 className="text-3xl font-black uppercase tracking-tight">Nuevos Ingresos</h2>
+                                <h2 className="text-3xl font-black uppercase tracking-tight">RECIEN LLEGADOS</h2>
                                 <p className="text-gray-500 mt-1 text-sm font-bold uppercase tracking-widest">Artículos limitados</p>
                             </div>
                         </div>
@@ -156,7 +156,7 @@ const Home: React.FC = () => {
             </main>
 
             <Footer />
-        </div>
+        </div >
     );
 };
 
