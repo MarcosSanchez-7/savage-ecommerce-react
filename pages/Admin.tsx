@@ -1093,26 +1093,24 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                {uploadType === 'PC' && (
-                                                    <div>
-                                                        <input
-                                                            type="file"
-                                                            onChange={handleFileSelect}
-                                                            multiple
-                                                            accept="image/*"
-                                                            className="hidden"
-                                                            id="product-file-upload-small"
-                                                            disabled={isUploading}
-                                                        />
-                                                        <label
-                                                            htmlFor="product-file-upload-small"
-                                                            className="bg-primary hover:bg-yellow-500 text-black text-[10px] font-black px-6 py-3 rounded-lg flex items-center gap-2 cursor-pointer transition-all uppercase tracking-widest shadow-lg active:scale-95"
-                                                        >
-                                                            {isUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
-                                                            {isUploading ? 'Subiendo...' : 'Subir de Galería'}
-                                                        </label>
-                                                    </div>
-                                                )}
+                                                <div className={uploadType === 'URL' ? 'opacity-50 hover:opacity-100 transition-opacity' : ''}>
+                                                    <input
+                                                        type="file"
+                                                        onChange={handleFileSelect}
+                                                        multiple
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        id="product-file-upload-small"
+                                                        disabled={isUploading}
+                                                    />
+                                                    <label
+                                                        htmlFor="product-file-upload-small"
+                                                        className="bg-primary hover:bg-yellow-500 text-black text-[10px] font-black px-6 py-3 rounded-lg flex items-center gap-2 cursor-pointer transition-all uppercase tracking-widest shadow-lg active:scale-95"
+                                                    >
+                                                        {isUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                                                        {isUploading ? 'Subiendo...' : 'Subir de Galería'}
+                                                    </label>
+                                                </div>
                                             </div>
 
                                             {uploadType === 'URL' && (
