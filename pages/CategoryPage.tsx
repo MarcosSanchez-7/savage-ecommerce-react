@@ -34,30 +34,49 @@ const CategoryPage: React.FC = () => {
         : null;
 
     // Helper: Get all descendant IDs recursively
-    const getDescendants = (rootId: string): Set<string> => {
+    const getDescendants = React.useCallback((rootId: string): Set<string> => {
         const descendants = new Set<string>();
+        if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+            // console.log("Calculating descendants for:", rootId);
+        }
+
         const stack = [rootId];
-        while (stack.length > 0) {
+        // Safety Break to prevent infinite loops
+        let iterations = 0;
+        const MAX_ITERATIONS = 1000;
+
+        while (stack.length > 0 && iterations < MAX_ITERATIONS) {
+            iterations++;
             const current = stack.pop()!;
+
+            // Cycle detection
+            if (descendants.has(current)) continue;
+
             descendants.add(current);
+
+            // Find children
             const children = categories.filter(c => c.parent_id === current);
             children.forEach(c => stack.push(c.id));
         }
         return descendants;
-    };
+    }, [categories]);
 
     // Filter Products
     const categoryProducts = React.useMemo(() => {
         if (!currentScopeId) return [];
+        // Ensure products is an array
+        if (!Array.isArray(products)) return [];
+
         const allowedIds = getDescendants(currentScopeId);
 
         return products
             .filter(p => {
+                if (!p) return false;
                 // Check if product's category OR subcategory is in the allowed set of descendants
                 // This covers cases where product is directly assigned to the current node 
                 // OR assigned to a deep child of the current node.
-                const catMatch = allowedIds.has(p.category);
-                const subMatch = p.subcategory && allowedIds.has(p.subcategory);
+                const catMatch = p.category ? allowedIds.has(p.category) : false;
+                const subMatch = p.subcategory ? allowedIds.has(p.subcategory) : false;
                 return catMatch || subMatch;
             })
             .sort((a, b) => {
