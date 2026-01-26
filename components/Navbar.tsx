@@ -33,17 +33,24 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   // Search Logic (Fixed to resolve Category Names)
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
+      if (!Array.isArray(products)) {
+        setSearchResults([]);
+        return;
+      }
+
       const results = products.filter(p => {
-        const cat = categories.find(c => c.id === p.category);
-        const sub = categories.find(c => c.id === p.subcategory);
+        if (!p) return false;
+
+        const cat = categories.find(c => c && c.id === p.category);
+        const sub = categories.find(c => c && c.id === p.subcategory);
         const query = searchQuery.toLowerCase();
 
-        return (
-          p.name.toLowerCase().includes(query) ||
-          cat?.name.toLowerCase().includes(query) ||
-          sub?.name.toLowerCase().includes(query) ||
-          p.tags?.some(tag => tag.toLowerCase().includes(query))
-        );
+        const nameMatch = p.name ? p.name.toLowerCase().includes(query) : false;
+        const catMatch = cat && cat.name ? cat.name.toLowerCase().includes(query) : false;
+        const subMatch = sub && sub.name ? sub.name.toLowerCase().includes(query) : false;
+        const tagMatch = p.tags && Array.isArray(p.tags) ? p.tags.some(tag => tag && tag.toLowerCase().includes(query)) : false;
+
+        return nameMatch || catMatch || subMatch || tagMatch;
       }).slice(0, 5);
       setSearchResults(results);
     } else {
@@ -128,8 +135,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 <div className="absolute top-[calc(100%-1rem)] -left-[450px] pt-6 hidden group-hover:block z-50">
                   <div className="bg-[#0a0a0a]/95 border border-white/10 rounded-[32px] p-10 shadow-[0_40px_80px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-10 w-[1100px]">
                     <div className="grid grid-cols-5 gap-x-8 gap-y-12 w-full">
-                      {categories.filter(c => !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase())).map(parent => {
-                        const children = categories.filter(c => c.parent_id === parent.id);
+                      {(Array.isArray(categories) ? categories : []).filter(c => c && !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes((c.name || '').toUpperCase())).map(parent => {
+                        const children = categories.filter(c => c && c.parent_id === parent.id);
                         return (
                           <div key={parent.id} className="space-y-5">
                             <Link
@@ -141,16 +148,19 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                             </Link>
                             <div className="flex flex-col gap-3 pl-8 border-l border-white/5">
                               {children.length > 0 ? (
-                                children.map(child => (
-                                  <Link
-                                    key={child.id}
-                                    to={`/category/${parent.id}/${child.id}`}
-                                    className="text-[13px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
-                                  >
-                                    <ChevronRight size={12} className="opacity-0 group-hover/item:opacity-100 -ml-5 transition-all text-primary" />
-                                    {child.name}
-                                  </Link>
-                                ))
+                                children.map(child => {
+                                  if (!child) return null;
+                                  return (
+                                    <Link
+                                      key={child.id}
+                                      to={`/category/${parent.id}/${child.id}`}
+                                      className="text-[13px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
+                                    >
+                                      <ChevronRight size={12} className="opacity-0 group-hover/item:opacity-100 -ml-5 transition-all text-primary" />
+                                      {child.name}
+                                    </Link>
+                                  )
+                                })
                               ) : (
                                 <span className="text-[10px] text-gray-700 italic tracking-[0.1em] uppercase">Propio</span>
                               )}
@@ -299,8 +309,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
 
             <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-6 pl-2 ${isMobileCategoriesOpen ? 'max-h-[800px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-              {categories.filter(c => !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase())).map(parent => {
-                const children = categories.filter(c => c.parent_id === parent.id);
+              {(Array.isArray(categories) ? categories : []).filter(c => c && !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes((c.name || '').toUpperCase())).map(parent => {
+                const children = categories.filter(c => c && c.parent_id === parent.id);
                 const isExpanded = expandedMobileCategories[parent.id];
 
                 return (
@@ -335,7 +345,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                     <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[1000px] opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
                       <div className="flex flex-col gap-3 pl-4 border-l-2 border-primary/20 ml-1">
                         {children.map(child => {
-                          const grandChildren = categories.filter(gc => gc.parent_id === child.id);
+                          if (!child) return null;
+                          const grandChildren = categories.filter(gc => gc && gc.parent_id === child.id);
                           const isChildExpanded = expandedMobileCategories[child.id];
 
                           return (
@@ -369,18 +380,20 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                               {grandChildren.length > 0 && (
                                 <div className={`overflow-hidden transition-all duration-300 pl-4 border-l border-white/10 mt-1 flex flex-col gap-2 ${isChildExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
                                   {grandChildren.map(grand => (
-                                    <Link
-                                      key={grand.id}
-                                      // Navigate to Parent/Child (Context) but we really want filtering by GrandChild
-                                      // CategoryPage now handles drilled down filtering if we pass subcategory=grand.id
-                                      // But the route is /category/:cat/:sub. 
-                                      // We can use /category/:parent/:grand because CategoryPage treats the second param as "Current Scope".
-                                      to={`/category/${parent.id}/${grand.id}`}
-                                      onClick={() => setIsMobileMenuOpen(false)}
-                                      className="text-xs font-bold text-gray-600 hover:text-primary uppercase tracking-wider py-1 block"
-                                    >
-                                      {grand.name}
-                                    </Link>
+                                    grand ? (
+                                      <Link
+                                        key={grand.id}
+                                        // Navigate to Parent/Child (Context) but we really want filtering by GrandChild
+                                        // CategoryPage now handles drilled down filtering if we pass subcategory=grand.id
+                                        // But the route is /category/:cat/:sub. 
+                                        // We can use /category/:parent/:grand because CategoryPage treats the second param as "Current Scope".
+                                        to={`/category/${parent.id}/${grand.id}`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="text-xs font-bold text-gray-600 hover:text-primary uppercase tracking-wider py-1 block"
+                                      >
+                                        {grand.name}
+                                      </Link>
+                                    ) : null
                                   ))}
                                 </div>
                               )}

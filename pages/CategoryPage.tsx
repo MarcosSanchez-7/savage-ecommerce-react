@@ -35,15 +35,13 @@ const CategoryPage: React.FC = () => {
 
     // Helper: Get all descendant IDs recursively
     const getDescendants = React.useCallback((rootId: string): Set<string> => {
+        if (!Array.isArray(categories)) return new Set();
         const descendants = new Set<string>();
-        if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-            // console.log("Calculating descendants for:", rootId);
-        }
 
         const stack = [rootId];
         // Safety Break to prevent infinite loops
         let iterations = 0;
-        const MAX_ITERATIONS = 1000;
+        const MAX_ITERATIONS = 2000;
 
         while (stack.length > 0 && iterations < MAX_ITERATIONS) {
             iterations++;
@@ -54,8 +52,8 @@ const CategoryPage: React.FC = () => {
 
             descendants.add(current);
 
-            // Find children
-            const children = categories.filter(c => c.parent_id === current);
+            // Find children - Safe Filter
+            const children = categories.filter(c => c && c.parent_id === current);
             children.forEach(c => stack.push(c.id));
         }
         return descendants;
