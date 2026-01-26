@@ -310,6 +310,7 @@ const AdminDashboard: React.FC = () => {
         originalPrice: '', // This will be the regular price (higher)
         category: '',
         subcategory: '',
+        section: '', // Level 3
         slug: '',
         seoAlt: '',
         images: [''],
@@ -395,6 +396,7 @@ const AdminDashboard: React.FC = () => {
                 originalPrice: rPrice,
                 category: newProduct.category,
                 subcategory: newProduct.subcategory,
+                section: newProduct.section, // Level 3
                 slug: newProduct.slug,
                 images: newProduct.images.filter(img => img !== ''),
                 sizes: finalSizes,
@@ -429,6 +431,7 @@ const AdminDashboard: React.FC = () => {
                 originalPrice: '',
                 category: '',
                 subcategory: '',
+                section: '',
                 slug: '',
                 seoAlt: '',
                 images: [''],
@@ -1012,6 +1015,23 @@ const AdminDashboard: React.FC = () => {
                                                         ))}
                                                     </select>
                                                 </div>
+
+                                                {/* Level 3: Brazo Selector */}
+                                                {(newProduct.subcategory && categories.some(c => c.parent_id === newProduct.subcategory)) && (
+                                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 pt-2 col-span-2 md:col-span-1">
+                                                        <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Brazo (Nivel 3)</label>
+                                                        <select
+                                                            value={newProduct.section || ''}
+                                                            onChange={e => setNewProduct({ ...newProduct, section: e.target.value })}
+                                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
+                                                        >
+                                                            <option value="">Ninguna</option>
+                                                            {categories.filter(c => c.parent_id === newProduct.subcategory).map(sec => (
+                                                                <option key={sec.id} value={sec.id}>{sec.name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div className="space-y-2">
@@ -1452,6 +1472,7 @@ const AdminDashboard: React.FC = () => {
                                             originalPrice: product.originalPrice ? product.originalPrice.toString() : product.price.toString(),
                                             category: product.category,
                                             subcategory: product.subcategory || '',
+                                            section: product.section || '',
                                             slug: product.slug || generateSlug(product.name),
                                             seoAlt: (product as any).seoAlt || '',
                                             images: product.images.length > 0 ? product.images : [''],

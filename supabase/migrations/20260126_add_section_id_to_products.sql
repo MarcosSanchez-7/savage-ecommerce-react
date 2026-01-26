@@ -1,0 +1,2 @@
+ALTER TABLE products
+ADD COLUMN IF NOT EXISTS section_id TEXT REFERENCES categories (id) ON DELETE SET NULL;

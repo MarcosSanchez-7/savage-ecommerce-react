@@ -3,6 +3,7 @@ export interface Product {
   name: string;
   category: string;
   subcategory?: string;
+  section?: string; // Level 3 (Brazo)
   type?: 'clothing' | 'footwear'; // New field for Type Selector
   price: number;
   originalPrice?: number;

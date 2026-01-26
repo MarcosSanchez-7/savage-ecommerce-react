@@ -79,8 +79,9 @@ const CategoryPage: React.FC = () => {
                 // String conversion for potentially numeric DB IDs
                 const pCat = p.category ? String(p.category) : '';
                 const pSub = p.subcategory ? String(p.subcategory) : '';
+                const pSec = p.section ? String(p.section) : '';
 
-                return allowedIds.has(pCat) || allowedIds.has(pSub);
+                return allowedIds.has(pCat) || allowedIds.has(pSub) || allowedIds.has(pSec);
             })
             .sort((a, b) => {
                 // Feature sort priority
