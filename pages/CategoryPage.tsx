@@ -20,7 +20,7 @@ const CategoryPage: React.FC = () => {
             setCurrentScopeId(subcategory);
         } else if (category) {
             // Find the category object to resolve ID (validation)
-            const catObj = categories.find(c => c.id.toLowerCase() === category.toLowerCase() || c.name.toLowerCase() === category.toLowerCase());
+            const catObj = categories.find(c => String(c.id).toLowerCase() === category.toLowerCase() || c.name.toLowerCase() === category.toLowerCase());
             if (catObj) setCurrentScopeId(catObj.id);
         }
         window.scrollTo(0, 0);
@@ -81,7 +81,7 @@ const CategoryPage: React.FC = () => {
             })
             .sort((a, b) => {
                 if (a.isCategoryFeatured !== b.isCategoryFeatured) return a.isCategoryFeatured ? -1 : 1;
-                return b.id.localeCompare(a.id);
+                return String(b.id).localeCompare(String(a.id));
             });
     }, [products, currentScopeId, categories]);
 
@@ -90,7 +90,6 @@ const CategoryPage: React.FC = () => {
     // SEO
     const getSEOInfo = (catInfo: typeof categories[0] | undefined) => {
         if (!catInfo) return { title: 'Categoría', desc: '', docTitle: 'Savage Store' };
-        const name = catInfo.name.toLowerCase();
 
         return {
             title: catInfo.name,
