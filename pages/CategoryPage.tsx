@@ -12,57 +12,63 @@ const CategoryPage: React.FC = () => {
     const { products, categories, addToCart, cart } = useShop();
 
     // The "Current" Category Node we are viewing.
-    // If subcategory is present, it's that. Otherwise it's category.
     const [currentScopeId, setCurrentScopeId] = React.useState<string>('');
 
+    // 1. Resolve Scope safely handling Numeric/String IDs
     React.useEffect(() => {
+        let foundId = '';
+
         if (subcategory) {
-            setCurrentScopeId(subcategory);
+            // Try to find subcategory by ID or Name
+            const subObj = categories.find(c => String(c.id).toLowerCase() === subcategory.toLowerCase() || c.name.toLowerCase() === subcategory.toLowerCase());
+            if (subObj) foundId = String(subObj.id);
+            else foundId = subcategory; // Fallback to param if not found (though less likely to match)
         } else if (category) {
             // Find the category object to resolve ID (validation)
             const catObj = categories.find(c => String(c.id).toLowerCase() === category.toLowerCase() || c.name.toLowerCase() === category.toLowerCase());
-            if (catObj) setCurrentScopeId(catObj.id);
+            if (catObj) foundId = String(catObj.id);
         }
+
+        setCurrentScopeId(foundId);
         window.scrollTo(0, 0);
     }, [category, subcategory, categories]);
 
-    const currentCategoryInfo = categories.find(c => c.id === currentScopeId);
+    const currentCategoryInfo = categories.find(c => String(c.id) === currentScopeId);
 
-    // Find parent for "Back" navigation or breadcrumbs
+    // Find parent for "Back" navigation
     const parentCategory = currentCategoryInfo?.parent_id
-        ? categories.find(c => c.id === currentCategoryInfo.parent_id)
+        ? categories.find(c => String(c.id) === String(currentCategoryInfo.parent_id))
         : null;
 
-    // Helper: Get all descendant IDs recursively
+    // 2. Recursive Descendant Fetcher (Safe String Ids)
     const getDescendants = React.useCallback((rootId: string): Set<string> => {
         if (!Array.isArray(categories)) return new Set();
         const descendants = new Set<string>();
+        if (!rootId) return descendants;
 
-        const stack = [rootId];
-        // Safety Break to prevent infinite loops
+        const stack = [String(rootId)];
+
+        // Safety Break
         let iterations = 0;
-        const MAX_ITERATIONS = 2000;
+        const MAX_ITERATIONS = 5000;
 
         while (stack.length > 0 && iterations < MAX_ITERATIONS) {
             iterations++;
             const current = stack.pop()!;
 
-            // Cycle detection
             if (descendants.has(current)) continue;
-
             descendants.add(current);
 
-            // Find children - Safe Filter
-            const children = categories.filter(c => c && c.parent_id === current);
-            children.forEach(c => stack.push(c.id));
+            // Find children: MUST convert c.parent_id to String for comparison
+            const children = categories.filter(c => c && String(c.parent_id) === current);
+            children.forEach(c => stack.push(String(c.id)));
         }
         return descendants;
     }, [categories]);
 
-    // Filter Products
+    // 3. Filter Products using Descendants
     const categoryProducts = React.useMemo(() => {
         if (!currentScopeId) return [];
-        // Ensure products is an array
         if (!Array.isArray(products)) return [];
 
         const allowedIds = getDescendants(currentScopeId);
@@ -70,22 +76,23 @@ const CategoryPage: React.FC = () => {
         return products
             .filter(p => {
                 if (!p) return false;
-                // Check if product's category OR subcategory is in the allowed set of descendants
-                // This covers cases where product is directly assigned to the current node 
-                // OR assigned to a deep child of the current node.
-                const catMatch = p.category ? allowedIds.has(p.category) : false;
-                const subMatch = p.subcategory ? allowedIds.has(p.subcategory) : false;
-                return catMatch || subMatch;
+                // String conversion for potentially numeric DB IDs
+                const pCat = p.category ? String(p.category) : '';
+                const pSub = p.subcategory ? String(p.subcategory) : '';
+
+                return allowedIds.has(pCat) || allowedIds.has(pSub);
             })
             .sort((a, b) => {
+                // Feature sort priority
                 if (a.isCategoryFeatured !== b.isCategoryFeatured) return a.isCategoryFeatured ? -1 : 1;
+                // Newest first (assuming ID or timestampish)
                 return String(b.id).localeCompare(String(a.id));
             });
-    }, [products, currentScopeId, categories]);
+    }, [products, currentScopeId, getDescendants]);
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    // SEO
+    // 4. SEO Info
     const getSEOInfo = (catInfo: typeof categories[0] | undefined) => {
         if (!catInfo) return { title: 'Categoría', desc: '', docTitle: 'Savage Store' };
 
@@ -96,40 +103,39 @@ const CategoryPage: React.FC = () => {
         };
     };
     const seoInfo = getSEOInfo(currentCategoryInfo);
-    React.useEffect(() => document.title = seoInfo.docTitle, [seoInfo]);
+    React.useEffect(() => { document.title = seoInfo.docTitle; }, [seoInfo]);
 
-    // Subcategories for Filter Pills (Direct Children of Current Scope)
-    const directChildren = categories.filter(c => c.parent_id === currentScopeId);
+    // 5. Dynamic Pills: Direct Children of Current Scope
+    const directChildren = React.useMemo(() => {
+        return categories.filter(c => c && String(c.parent_id) === currentScopeId);
+    }, [categories, currentScopeId]);
 
-    // Navigation Handler for Pills
-    const handleSubcategoryClick = (subId: string) => {
-        // If we represent hierarchy in URL:
-        // Case 1: Root -> Child (standard) => /category/root/child
-        // Case 2: Root -> Child -> Grandchild => /category/root/grandchild ? 
-        //         OR /category/child/grandchild ?
-        // Since WebRoutes is /category/:category/:subcategory, we have 2 slots.
-        // We can try to keep the first slot as the "Root Context" if possible, or just shift.
+    // Navigation Handler
+    const handleNavigation = (targetId: string) => {
+        // Construct URL logic
+        // If we are at root, go to /category/root/target
+        // If we are at root/child, we want to go deeper? 
+        // Our Router only supports :category and :subcategory (2 params).
+        // If we click a 3rd level item, we MUST rely on the logic that "CategoryPage" detects the scope by ID.
+        // So we can put the targetID in the second slot.
+        // /category/ROOT_ID/TARGET_ID
+        // We need to find the ROOT ID of the target.
 
-        // If current is Root, next is /category/root/subId.
-        if (!currentCategoryInfo?.parent_id) {
-            navigate(`/category/${currentCategoryInfo?.id}/${subId}`);
+        let root = categories.find(c => String(c.id) === targetId);
+        // Climb up to find the top parent (L1)
+        let safeLoop = 0;
+        while (root && root.parent_id && safeLoop < 10) {
+            const parent = categories.find(p => String(p.id) === String(root!.parent_id));
+            if (parent) root = parent;
+            else break;
+            safeLoop++;
+        }
+
+        if (root) {
+            navigate(`/category/${root.id}/${targetId}`);
         } else {
-            // We are already deep. 
-            // Option A: Replace subcategory slot: /category/ROOT/GRANDCHILD_ID
-            // This requires knowing ROOT.
-            // Let's find the ultimate root.
-            let root = currentCategoryInfo;
-            while (root?.parent_id) {
-                const found = categories.find(c => c.id === root?.parent_id);
-                if (found) root = found;
-                else break;
-            }
-            if (root) {
-                navigate(`/category/${root.id}/${subId}`);
-            } else {
-                // Fallback
-                navigate(`/category/${category}/${subId}`);
-            }
+            // Fallback
+            navigate(`/category/${category}/${targetId}`);
         }
     };
 
@@ -139,7 +145,6 @@ const CategoryPage: React.FC = () => {
 
             <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
                 <div className="flex items-center gap-4 mb-8">
-                    {/* Back Button Logic */}
                     {parentCategory ? (
                         <Link to={`/category/${parentCategory.id}`} className="text-gray-400 hover:text-white transition-colors">
                             <ArrowLeft size={24} />
@@ -153,20 +158,18 @@ const CategoryPage: React.FC = () => {
                     <div>
                         <h1 className="text-4xl font-black uppercase tracking-tight flex items-center gap-2">
                             {seoInfo.title}
-                            {/* Breadcrumb hint could go here */}
                         </h1>
                         <p className="text-accent-gray text-sm mt-1">{seoInfo.desc}</p>
                     </div>
                 </div>
 
-                {/* Subcategories Filter (Children of Current Scope) */}
+                {/* Direct Children Pills */}
                 {directChildren.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-12 animate-in fade-in slide-in-from-left-4 duration-500 overflow-x-auto pb-4 scrollbar-hide">
-                        {/* Optional 'All' button if we want to reset to parent? No, we are IN parent. */}
                         {directChildren.map(sub => (
                             <button
                                 key={sub.id}
-                                onClick={() => handleSubcategoryClick(sub.id)}
+                                onClick={() => handleNavigation(sub.id)}
                                 className="whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white hover:bg-white/5"
                             >
                                 {sub.name}
@@ -200,3 +203,5 @@ const CategoryPage: React.FC = () => {
 };
 
 export default CategoryPage;
+
+

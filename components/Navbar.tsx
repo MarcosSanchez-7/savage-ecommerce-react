@@ -136,25 +136,55 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                   <div className="bg-[#0a0a0a]/95 border border-white/10 rounded-[32px] p-10 shadow-[0_40px_80px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-10 w-[1100px]">
                     <div className="grid grid-cols-5 gap-x-8 gap-y-12 w-full">
                       {(Array.isArray(categories) ? categories : []).filter(c => c && !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes((c.name || '').toUpperCase())).map(parent => {
-                        const children = categories.filter(c => c && c.parent_id === parent.id);
+                        const children = categories.filter(c => c && String(c.parent_id) === String(parent.id));
                         return (
-                          <div key={parent.id} className="space-y-5">
+                          <div key={parent.id} className="space-y-4">
                             <Link
                               to={`/category/${parent.id}`}
-                              className="group/cat flex items-center gap-3 text-[12px] font-black tracking-[0.25em] text-white hover:text-primary uppercase transition-colors"
+                              className="group/cat flex items-center gap-3 text-[12px] font-black tracking-[0.25em] text-white hover:text-primary uppercase transition-colors mb-2"
                             >
                               <span className="w-5 h-[2px] bg-primary/40 group-hover/cat:w-8 group-hover/cat:bg-primary transition-all"></span>
                               {parent.name}
                             </Link>
-                            <div className="flex flex-col gap-3 pl-8 border-l border-white/5">
+
+                            <div className="flex flex-col gap-2 pl-8 border-l border-white/5">
                               {children.length > 0 ? (
                                 children.map(child => {
                                   if (!child) return null;
+                                  const grandChildren = categories.filter(gc => gc && String(gc.parent_id) === String(child.id));
+                                  // If Grandchildren exist, render Child as a Sub-Header, else as a Link
+
+                                  if (grandChildren.length > 0) {
+                                    return (
+                                      <div key={child.id} className="mb-2">
+                                        <Link
+                                          to={`/category/${parent.id}/${child.id}`}
+                                          className="text-[11px] font-bold text-gray-400 hover:text-white uppercase tracking-wider block mb-1"
+                                        >
+                                          {child.name}
+                                        </Link>
+                                        <div className="flex flex-col gap-1 pl-2 border-l border-white/5">
+                                          {grandChildren.map(grand => (
+                                            grand ? (
+                                              <Link
+                                                key={grand.id}
+                                                to={`/category/${parent.id}/${grand.id}`}
+                                                className="text-[10px] font-medium text-gray-600 hover:text-primary uppercase tracking-wide block transition-colors"
+                                              >
+                                                {grand.name}
+                                              </Link>
+                                            ) : null
+                                          ))}
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+
                                   return (
                                     <Link
                                       key={child.id}
                                       to={`/category/${parent.id}/${child.id}`}
-                                      className="text-[13px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
+                                      className="text-[12px] font-bold text-gray-500 hover:text-white uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
                                     >
                                       <ChevronRight size={12} className="opacity-0 group-hover/item:opacity-100 -ml-5 transition-all text-primary" />
                                       {child.name}
@@ -162,7 +192,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                   )
                                 })
                               ) : (
-                                <span className="text-[10px] text-gray-700 italic tracking-[0.1em] uppercase">Propio</span>
+                                <span className="text-[10px] text-gray-700 italic tracking-[0.1em] uppercase">...</span>
                               )}
                             </div>
                           </div>
@@ -310,8 +340,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
             <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-6 pl-2 ${isMobileCategoriesOpen ? 'max-h-[800px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
               {(Array.isArray(categories) ? categories : []).filter(c => c && !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes((c.name || '').toUpperCase())).map(parent => {
-                const children = categories.filter(c => c && c.parent_id === parent.id);
-                const isExpanded = expandedMobileCategories[parent.id];
+                const children = categories.filter(c => c && String(c.parent_id) === String(parent.id));
+                const isExpanded = expandedMobileCategories[String(parent.id)];
 
                 return (
                   <div key={parent.id} className="flex flex-col border-b border-gray-800/30 last:border-0">
@@ -331,7 +361,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                             e.stopPropagation();
                             setExpandedMobileCategories(prev => ({
                               ...prev,
-                              [parent.id]: !prev[parent.id]
+                              [String(parent.id)]: !prev[String(parent.id)]
                             }));
                           }}
                           className="p-3 -mr-3 text-gray-400 hover:text-white active:scale-90 transition-all"
@@ -346,8 +376,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                       <div className="flex flex-col gap-3 pl-4 border-l-2 border-primary/20 ml-1">
                         {children.map(child => {
                           if (!child) return null;
-                          const grandChildren = categories.filter(gc => gc && gc.parent_id === child.id);
-                          const isChildExpanded = expandedMobileCategories[child.id];
+                          const grandChildren = categories.filter(gc => gc && String(gc.parent_id) === String(child.id));
+                          const isChildExpanded = expandedMobileCategories[String(child.id)];
 
                           return (
                             <div key={child.id} className="flex flex-col">
@@ -366,7 +396,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                       e.stopPropagation();
                                       setExpandedMobileCategories(prev => ({
                                         ...prev,
-                                        [child.id]: !prev[child.id]
+                                        [String(child.id)]: !prev[String(child.id)]
                                       }));
                                     }}
                                     className="p-2 -mr-2 text-gray-600 hover:text-white"
@@ -385,8 +415,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                         key={grand.id}
                                         // Navigate to Parent/Child (Context) but we really want filtering by GrandChild
                                         // CategoryPage now handles drilled down filtering if we pass subcategory=grand.id
-                                        // But the route is /category/:cat/:sub. 
-                                        // We can use /category/:parent/:grand because CategoryPage treats the second param as "Current Scope".
+                                        // We rely on CategoryPage resolving the scope by ID.
+                                        // So we pass: /category/ROOT_ID/GRAND_ID
                                         to={`/category/${parent.id}/${grand.id}`}
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         className="text-xs font-bold text-gray-600 hover:text-primary uppercase tracking-wider py-1 block"
