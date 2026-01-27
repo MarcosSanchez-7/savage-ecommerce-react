@@ -25,7 +25,7 @@ dist-ssr
 
 
 
-# Archivos de entorno (Seguridad)
+# Archivos de entorno (Seguridad/Security)
 .env
-.env.local
 .env.*
+!.env.example
