@@ -76,6 +76,7 @@ const CategoryPage: React.FC = () => {
         return products
             .filter(p => {
                 if (!p) return false;
+                if (p.isActive === false) return false;
                 // String conversion for potentially numeric DB IDs
                 const pCat = p.category ? String(p.category) : '';
                 const pSub = p.subcategory ? String(p.subcategory) : '';

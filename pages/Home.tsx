@@ -20,6 +20,7 @@ const Home: React.FC = () => {
 
     // Filter New Arrivals
     const newArrivals = products
+        .filter(p => p.isActive !== false)
         .filter(p => p.isNew)
         .slice(0, 8); // Max 4-8 products
 
@@ -64,6 +65,7 @@ const Home: React.FC = () => {
                     {/* Featured Carousel */}
                     <FeaturedCarousel
                         products={products
+                            .filter(p => p.isActive !== false)
                             .filter(p => p.isFeatured)
                             // Sort: Featured First (implicitly filtered), then by ID descending (newest first assumption) or specific date if available
                             // Using ID string comparison for rough "newest" approximation if UUIDs/TimeIDs
@@ -82,8 +84,10 @@ const Home: React.FC = () => {
                         const categoryIds = [category, ...children.map(c => c.id)];
 
                         const categoryProducts = products.filter(p =>
-                            categoryIds.includes(p.category) ||
-                            categoryIds.includes(p.subcategory || '')
+                            p.isActive !== false && (
+                                categoryIds.includes(p.category) ||
+                                categoryIds.includes(p.subcategory || '')
+                            )
                         );
 
                         if (categoryProducts.length === 0) return null;

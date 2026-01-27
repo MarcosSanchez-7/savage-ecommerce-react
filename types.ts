@@ -23,6 +23,7 @@ export interface Product {
   isImported?: boolean;
   selectedAttributes?: Record<string, string>;
   visualTag?: { text: string; color: string };
+  isActive?: boolean; // Soft Disable
 }
 
 export interface InventoryItem {

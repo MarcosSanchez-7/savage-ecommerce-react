@@ -5,7 +5,9 @@ import {
     Edit,
     Trash2,
     Layers,
-    Search
+    Search,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { Category, Product } from '../types';
 
@@ -14,13 +16,15 @@ interface AdminInventoryListProps {
     products: Product[];
     onEdit: (product: Product) => void;
     onDelete: (productId: string) => void;
+    onToggleActive: (product: Product) => void;
 }
 
 const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
     categories,
     products,
     onEdit,
-    onDelete
+    onDelete,
+    onToggleActive
 }) => {
     // Local state for folder toggles (Performance Optimization)
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
@@ -139,7 +143,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                             {isSubOpen && (
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 animate-in slide-in-from-top-1 duration-200">
                                                     {subProducts.map(product => (
-                                                        <div key={product.id} className="bg-black/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4 group hover:border-gray-700 transition-all hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative overflow-hidden">
+                                                        <div key={product.id} className={`bg-black/60 border border-gray-800 rounded-2xl p-4 flex flex-col gap-4 group hover:border-gray-700 transition-all hover:shadow-[0_0_30px_rgba(0,0,0,0.5)] relative overflow-hidden ${(product.isActive === false) ? 'opacity-50 grayscale' : ''}`}>
                                                             <div className="flex gap-4">
                                                                 <div className="w-24 aspect-[3/4] bg-gray-900 rounded-xl overflow-hidden border border-gray-800 flex-shrink-0">
                                                                     <img src={product.images?.[0]} alt="" className="w-full h-full object-cover" />
@@ -213,6 +217,13 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
 
                                                             {/* Actions - Positioned to the side */}
                                                             <div className="absolute top-4 right-4 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                                                <button
+                                                                    onClick={() => onToggleActive(product)}
+                                                                    className={`p-2.5 rounded-xl text-white transition-all shadow-xl backdrop-blur-md ${product.isActive === false ? 'bg-gray-600 hover:bg-gray-500' : 'bg-green-600/90 hover:bg-green-500'}`}
+                                                                    title={product.isActive === false ? 'Activar' : 'Desactivar'}
+                                                                >
+                                                                    {product.isActive === false ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                                </button>
                                                                 <button
                                                                     onClick={() => onEdit(product)}
                                                                     className="p-2.5 bg-blue-600/90 text-white rounded-xl hover:bg-blue-500 transition-all shadow-xl backdrop-blur-md"

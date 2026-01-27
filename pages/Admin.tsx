@@ -1486,6 +1486,12 @@ const AdminDashboard: React.FC = () => {
                                 <AdminInventoryList
                                     categories={categories}
                                     products={products}
+                                    onToggleActive={(product) => {
+                                        const newStatus = !(product.isActive ?? true);
+                                        // @ts-ignore
+                                        updateProduct({ ...product, isActive: newStatus });
+                                        alert(newStatus ? 'Producto ACTIVADO exitosamente.' : 'Producto DESACTIVADO (Oculto del público).');
+                                    }}
                                     onEdit={(product) => {
                                         setEditingProductId(product.id);
                                         setNewProduct({
