@@ -41,6 +41,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
       const results = products.filter(p => {
         if (!p) return false;
+        if (p.isActive === false) return false;
 
         const cat = categories.find(c => c && c.id === p.category);
         const sub = categories.find(c => c && c.id === p.subcategory);

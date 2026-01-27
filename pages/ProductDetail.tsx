@@ -27,8 +27,20 @@ const ProductDetail: React.FC = () => {
         window.scrollTo(0, 0);
     }, [slug]);
 
-    if (!product) {
-        return <div className="min-h-screen bg-background-dark text-white flex items-center justify-center">Producto no encontrado</div>;
+    if (!product || product.isActive === false) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center space-y-4">
+                <div className="text-6xl">🙈</div>
+                <h1 className="text-2xl font-black uppercase tracking-widest text-primary">Producto No Disponible</h1>
+                <p className="text-gray-500 font-bold uppercase tracking-wider text-sm">Este producto está oculto temporalmente o no existe.</p>
+                <button
+                    onClick={() => navigate('/')}
+                    className="mt-4 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-black uppercase tracking-widest rounded-lg transition-all"
+                >
+                    Volver al Inicio
+                </button>
+            </div>
+        );
     }
 
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
