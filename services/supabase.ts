@@ -1,8 +1,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Hardcoded for stability against Vercel domain conflicts
-const supabaseUrl = 'https://cwlaqfjqgrtyhyscwpnq.supabase.co';
+// Use Environment Variable first, fallback to hardcoded for stability
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://cwlaqfjqgrtyhyscwpnq.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
