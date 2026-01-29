@@ -84,6 +84,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               <div className="bg-white/95 backdrop-blur-sm text-blue-600 text-[8px] md:text-[9px] font-black px-2 py-0.5 uppercase tracking-tighter rounded-sm flex items-center gap-1 shadow-lg border border-blue-100">
                 BAJO PEDIDO
               </div>
+              <div className="bg-black/90 backdrop-blur-sm text-gray-300 text-[8px] md:text-[9px] font-black px-2 py-0.5 uppercase tracking-tighter rounded-sm flex items-center gap-1 shadow-lg border border-gray-800">
+                25-30 DÍAS
+              </div>
             </>
           )}
           {product.isNew && (

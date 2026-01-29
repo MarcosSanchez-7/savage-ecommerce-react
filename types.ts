@@ -24,6 +24,7 @@ export interface Product {
   selectedAttributes?: Record<string, string>;
   visualTag?: { text: string; color: string };
   isActive?: boolean; // Soft Disable
+  isOffer?: boolean; // Section OFERTAS
 }
 
 export interface InventoryItem {

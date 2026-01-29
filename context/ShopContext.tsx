@@ -369,7 +369,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     visualTag: p.visual_tag,
                     section: p.section_id, // Map DB section_id to Product.section
                     inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : [],
-                    isActive: p.is_active ?? true
+                    isActive: p.is_active ?? true,
+                    isOffer: p.is_offer ?? false
                 })));
             }
         } catch (e) {
@@ -668,7 +669,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_imported: product.isImported,
                 visual_tag: product.visualTag,
                 section_id: product.section, // Map Level 3
-                is_active: product.isActive ?? true
+                is_active: product.isActive ?? true,
+                is_offer: product.isOffer ?? false
             };
 
             const { data, error } = await supabase
@@ -748,7 +750,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_imported: updatedProduct.isImported,
                 visual_tag: updatedProduct.visualTag,
                 section_id: updatedProduct.section, // Map Level 3
-                is_active: updatedProduct.isActive
+                is_active: updatedProduct.isActive,
+                is_offer: updatedProduct.isOffer
             };
 
             const { error } = await supabase

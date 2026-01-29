@@ -30,6 +30,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
     const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterType, setFilterType] = useState<'ALL' | 'FEATURED' | 'NEW' | 'OFFER' | 'IMPORTED'>('ALL');
 
     const toggleCategory = (catId: string) => {
         setOpenCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
@@ -40,19 +41,65 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
         setOpenSubcategories(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    // Filter products globally if search term exists
+    // Filter products globally based on Search and Filter Buttons
     const getFilteredProducts = (prods: Product[]) => {
-        if (!searchTerm) return prods;
-        const term = searchTerm.toLowerCase();
-        return prods.filter(p => p.name.toLowerCase().includes(term));
+        let filtered = prods;
+
+        // 1. Status Filter
+        if (filterType === 'FEATURED') filtered = filtered.filter(p => p.isFeatured);
+        if (filterType === 'NEW') filtered = filtered.filter(p => p.isNew);
+        if (filterType === 'OFFER') filtered = filtered.filter(p => p.isOffer);
+        if (filterType === 'IMPORTED') filtered = filtered.filter(p => p.isImported);
+
+        // 2. Search Filter
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filtered = filtered.filter(p => p.name.toLowerCase().includes(term));
+        }
+
+        return filtered;
     };
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h4 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-2">
-                    Inventario
-                </h4>
+            <h4 className="text-lg font-black text-white italic uppercase tracking-tighter flex items-center gap-2">
+                Inventario
+            </h4>
+            <div className="flex flex-col gap-4 w-full md:w-auto">
+                {/* Quick Filters */}
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        onClick={() => setFilterType('ALL')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${filterType === 'ALL' ? 'bg-white text-black border-white' : 'bg-black text-gray-500 border-gray-800 hover:border-gray-600'}`}
+                    >
+                        Todo
+                    </button>
+                    <button
+                        onClick={() => setFilterType('FEATURED')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${filterType === 'FEATURED' ? 'bg-yellow-400 text-black border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.3)]' : 'bg-black text-gray-500 border-gray-800 hover:border-yellow-400/50 hover:text-yellow-400'}`}
+                    >
+                        ★ Destacados
+                    </button>
+                    <button
+                        onClick={() => setFilterType('OFFER')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${filterType === 'OFFER' ? 'bg-red-600 text-white border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-black text-gray-500 border-gray-800 hover:border-red-600/50 hover:text-red-500'}`}
+                    >
+                        % Ofertas
+                    </button>
+                    <button
+                        onClick={() => setFilterType('NEW')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${filterType === 'NEW' ? 'bg-purple-600 text-white border-purple-600 shadow-[0_0_15px_rgba(147,51,234,0.3)]' : 'bg-black text-gray-500 border-gray-800 hover:border-purple-600/50 hover:text-purple-500'}`}
+                    >
+                        ✦ Nuevos
+                    </button>
+                    <button
+                        onClick={() => setFilterType('IMPORTED')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${filterType === 'IMPORTED' ? 'bg-blue-600 text-white border-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'bg-black text-gray-500 border-gray-800 hover:border-blue-600/50 hover:text-blue-500'}`}
+                    >
+                        Globe Importados
+                    </button>
+                </div>
+
                 <div className="relative w-full md:w-96">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
                     <input
@@ -75,9 +122,10 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                 // If no products match in this category, hide it
                 if (categoryProducts.length === 0) return null;
 
-                // Force open if searching, otherwise use state or default closed
-                const isSearching = searchTerm.length > 0;
-                const isOpen = isSearching ? true : (openCategories[category.id] ?? false);
+                // Auto-open ONLY if searching by text (to find specific item).
+                // For filters (Offers, Featured...), items start closed to keep UI clean.
+                const isTextSearching = searchTerm.length > 0;
+                const isOpen = isTextSearching ? true : (openCategories[category.id] ?? false);
 
                 const subcategories = Array.from(new Set(categoryProducts.map(p => p.subcategory || 'General'))) as string[];
 
@@ -112,7 +160,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                     const subKey = `${category.id}-${sub}`;
 
                                     // Force open subcategory if searching
-                                    const isSubOpen = isSearching ? true : (openSubcategories[subKey] ?? false);
+                                    const isSubOpen = isTextSearching ? true : (openSubcategories[subKey] ?? false);
 
                                     return (
                                         <div key={sub} className="space-y-4">
@@ -155,6 +203,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                                                             <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
                                                                             <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
                                                                             {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
+                                                                            {product.isOffer && <span className="px-1.5 py-0.5 bg-red-500/10 text-red-500 text-[8px] font-black uppercase rounded">OFFER</span>}
                                                                         </div>
                                                                     </div>
 
@@ -166,6 +215,15 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                                                 </div>
                                                             </div>
 
+                                                            {/* Offer Tag Overlay */}
+                                                            {product.isOffer && (
+                                                                <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                                                                    <div className="bg-red-600 text-white text-[8px] md:text-[9px] font-black px-2 py-0.5 uppercase tracking-tighter rounded-sm flex items-center gap-1 shadow-lg border border-red-400/20 shadow-red-500/20">
+                                                                        % OFERTA
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
                                                             {/* Tags for Imported Products */}
                                                             {product.isImported && (
                                                                 <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
@@ -176,6 +234,9 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                                                     </div>
                                                                     <div className="bg-white/90 backdrop-blur-sm text-blue-600 text-[8px] md:text-[9px] font-black px-2 py-0.5 uppercase tracking-tighter rounded-sm flex items-center gap-1 shadow-lg border border-blue-200">
                                                                         BAJO PEDIDO
+                                                                    </div>
+                                                                    <div className="bg-black/90 backdrop-blur-sm text-gray-300 text-[8px] md:text-[9px] font-black px-2 py-0.5 uppercase tracking-tighter rounded-sm flex items-center gap-1 shadow-lg border border-gray-800">
+                                                                        25-30 DÍAS
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -250,8 +311,9 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                         )}
                     </div>
                 );
-            })}
-        </div>
+            })
+            }
+        </div >
     );
 };
 

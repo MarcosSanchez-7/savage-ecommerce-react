@@ -107,22 +107,26 @@ const CategoryPage: React.FC = () => {
     const seoInfo = getSEOInfo(currentCategoryInfo);
     React.useEffect(() => { document.title = seoInfo.docTitle; }, [seoInfo]);
 
-    // 5. Dynamic Pills: Direct Children of Current Scope
-    const directChildren = React.useMemo(() => {
-        return categories.filter(c => c && String(c.parent_id) === currentScopeId);
-    }, [categories, currentScopeId]);
+    // 5. Dynamic Pills: Children of current scope OR Siblings if current scope is a leaf
+    const navigationPills = React.useMemo(() => {
+        if (!currentCategoryInfo) return [];
+
+        // A. If current node has children, show them (Standard Drill-down)
+        const children = categories.filter(c => c && String(c.parent_id) === currentScopeId);
+        if (children.length > 0) return children;
+
+        // B. If no children (Leaf node), show Siblings (Lateral Navigation)
+        // Find parent to get common siblings
+        if (currentCategoryInfo.parent_id) {
+            return categories.filter(c => c && String(c.parent_id) === String(currentCategoryInfo.parent_id));
+        }
+
+        return [];
+    }, [categories, currentScopeId, currentCategoryInfo]);
 
     // Navigation Handler
     const handleNavigation = (targetId: string) => {
         // Construct URL logic
-        // If we are at root, go to /category/root/target
-        // If we are at root/child, we want to go deeper? 
-        // Our Router only supports :category and :subcategory (2 params).
-        // If we click a 3rd level item, we MUST rely on the logic that "CategoryPage" detects the scope by ID.
-        // So we can put the targetID in the second slot.
-        // /category/ROOT_ID/TARGET_ID
-        // We need to find the ROOT ID of the target.
-
         let root = categories.find(c => String(c.id) === targetId);
         // Climb up to find the top parent (L1)
         let safeLoop = 0;
@@ -165,18 +169,24 @@ const CategoryPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Direct Children Pills */}
-                {directChildren.length > 0 && (
+                {/* Sub-Navigation Pills */}
+                {navigationPills.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-12 animate-in fade-in slide-in-from-left-4 duration-500 overflow-x-auto pb-4 scrollbar-hide">
-                        {directChildren.map(sub => (
-                            <button
-                                key={sub.id}
-                                onClick={() => handleNavigation(sub.id)}
-                                className="whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white hover:bg-white/5"
-                            >
-                                {sub.name}
-                            </button>
-                        ))}
+                        {navigationPills.map(sub => {
+                            const isActive = String(sub.id) === currentScopeId;
+                            return (
+                                <button
+                                    key={sub.id}
+                                    onClick={() => handleNavigation(sub.id)}
+                                    className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${isActive
+                                        ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)] transform scale-105'
+                                        : 'bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    {sub.name}
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
 
@@ -193,7 +203,7 @@ const CategoryPage: React.FC = () => {
                 ) : (
                     <div className="text-center py-20 bg-surface-dark border border-gray-800 rounded-xl">
                         <p className="text-gray-500 text-lg">No hay productos en esta sección.</p>
-                        {directChildren.length > 0 && <p className="text-xs text-gray-600 mt-2 font-bold uppercase">Selecciona una subcategoría arriba</p>}
+                        {navigationPills.length > 0 && <p className="text-xs text-gray-600 mt-2 font-bold uppercase">Selecciona una subcategoría arriba</p>}
                         <Link to="/" className="text-primary hover:underline mt-4 inline-block font-bold">Volver al Inicio</Link>
                     </div>
                 )}

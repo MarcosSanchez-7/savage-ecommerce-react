@@ -75,6 +75,28 @@ const Home: React.FC = () => {
 
                 </section>
 
+                {/* OFFER Products Section (Dynamic Carousel) */}
+                {products.filter(p => p.isActive !== false && p.isOffer).length > 0 && (
+                    <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900 bg-gradient-to-b from-red-900/5 to-transparent">
+                        <div className="flex items-end justify-between mb-10 pb-4 border-b border-red-900/30">
+                            <div>
+                                <h2 className="text-3xl font-black uppercase tracking-tight text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">OFERTAS IMPERDIBLES</h2>
+                                <p className="text-gray-400 mt-1 text-sm font-bold uppercase tracking-widest">Precios de locura por tiempo limitado</p>
+                            </div>
+                        </div>
+
+                        {/* Reuse FeaturedCarousel for the same sliding effect */}
+                        <FeaturedCarousel
+                            products={products
+                                .filter(p => p.isActive !== false)
+                                .filter(p => p.isOffer)
+                                .sort((a, b) => b.id.localeCompare(a.id))}
+                            onAddToCart={addToCart}
+                        />
+
+                    </section>
+                )}
+
                 {/* Dynamic Category Sections (Root Categories Only) */}
                 {categories
                     .filter(c => !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase()))
