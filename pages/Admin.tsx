@@ -35,6 +35,7 @@ import {
     ArrowLeft,
     ArrowRight,
     Star,
+    Percent,
     Tag,
     UploadCloud,
     Loader2
@@ -410,6 +411,7 @@ const AdminDashboard: React.FC = () => {
                 isCategoryFeatured: newProduct.isCategoryFeatured,
                 isImported: newProduct.isImported,
                 isNew: newProduct.isNew,
+                isOffer: newProduct.isOffer, // Added isOffer
                 selectedAttributes: newProduct.selectedAttributes,
                 visualTag: newProduct.visualTag
             } as any;
@@ -443,6 +445,7 @@ const AdminDashboard: React.FC = () => {
                 isCategoryFeatured: false,
                 isImported: false,
                 isNew: false,
+                isOffer: false, // Reset isOffer
                 selectedAttributes: {},
                 visualTag: { text: '', color: '#000000' }
             });
@@ -880,7 +883,8 @@ const AdminDashboard: React.FC = () => {
                                         tags: [],
                                         isFeatured: false,
                                         isCategoryFeatured: false,
-                                        isImported: false
+                                        isImported: false,
+                                        isOffer: false
                                     });
                                     setStockMatrix({});
                                     setShowProductForm(true);
@@ -1309,6 +1313,24 @@ const AdminDashboard: React.FC = () => {
                                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isNew ? 'left-7' : 'left-1'}`} />
                                                 </div>
                                             </div>
+
+                                            <div
+                                                onClick={() => setNewProduct(prev => ({ ...prev, isOffer: !prev.isOffer }))}
+                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isOffer ? 'bg-red-500/10 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isOffer ? 'bg-red-600 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                        <Percent size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">SECCIÓN OFERTAS</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en carrusel de Ofertas</p>
+                                                    </div>
+                                                </div>
+                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isOffer ? 'bg-red-600' : 'bg-gray-800'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isOffer ? 'left-7' : 'left-1'}`} />
+                                                </div>
+                                            </div>
                                         </div>
 
 
@@ -1466,7 +1488,7 @@ const AdminDashboard: React.FC = () => {
                                         </div>
                                     </form>
                                 </div>
-                            </div>
+                            </div >
                         )
                         }
 
@@ -1510,6 +1532,7 @@ const AdminDashboard: React.FC = () => {
                                             isCategoryFeatured: (product as any).isCategoryFeatured || false,
                                             isImported: (product as any).isImported || false,
                                             isNew: (product as any).isNew || false,
+                                            isOffer: (product as any).isOffer || false,
                                             selectedAttributes: product.selectedAttributes || {},
                                             visualTag: product.visualTag || { text: '', color: '#000000' }
                                         });
