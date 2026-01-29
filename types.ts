@@ -40,6 +40,7 @@ export interface Category {
   image?: string;
   parent_id?: string | null;
   opacity?: number;
+  description_template?: string; // New field for automatic descriptions
 }
 
 export interface Attribute {
@@ -213,9 +214,4 @@ export interface UserProfile {
   created_at?: string;
 }
 
-export interface DescriptionTemplates {
-  fan: string;
-  player: string;
-  kids: string;
-  shoes: string;
-}
+
