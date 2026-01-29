@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, DescriptionTemplates, Attribute, AttributeValue, ProductAttributeValue } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 import { useAuth } from './AuthContext';
@@ -68,8 +68,7 @@ interface ShopContextType {
     loading: boolean;
     favorites: string[];
     toggleFavorite: (productId: string) => void;
-    descriptionTemplates: DescriptionTemplates;
-    updateDescriptionTemplates: (templates: DescriptionTemplates) => void;
+
     addAttribute: (attribute: Omit<Attribute, 'id'>) => Promise<void>;
     deleteAttribute: (id: string) => Promise<void>;
     addAttributeValue: (value: Omit<AttributeValue, 'id'>) => Promise<void>;
@@ -313,28 +312,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    // Description Templates State
-    const [descriptionTemplates, setDescriptionTemplates] = useState<DescriptionTemplates>({
-        fan: "• Calce estándar y cómodo para uso diario.\n• Escudo y logos bordados (máxima durabilidad).\n• Tela transpirable con tecnología de secado rápido.",
-        player: "• Athletic Fit (ajustado al cuerpo).\n• Escudo y logos termosellados en vinilo/silicona.\n• Tejido con microperforaciones láser para ventilación extrema.",
-        kids: "• Pack incluye Camiseta + Short.\n• Tejido suave e hipoalergénico.\n• Cintura elástica y costuras reforzadas para mayor resistencia.",
-        shoes: "• Calidad Premium con materiales seleccionados.\n• Plantilla acolchada y suela antideslizante.\n• Terminaciones de alta gama."
-    });
 
-    const updateDescriptionTemplates = async (templates: DescriptionTemplates) => {
-        setDescriptionTemplates(templates);
-        try {
-            const { error } = await supabase.from('store_config').upsert({
-                key: 'description_templates',
-                value: templates,
-                updated_at: new Date().toISOString()
-            });
-            if (error) throw error;
-        } catch (e) {
-            console.error(e);
-            throw e;
-        }
-    };
 
     // --- SUPABASE MIGRATION: FETCH DATA ---
     // --- SUPABASE MIGRATION: FETCH DATA ---
@@ -408,9 +386,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             fetchedSortOrder = conf.value as string[];
                             setCategorySortOrder(fetchedSortOrder);
                         }
-                        if (conf.key === 'description_templates') {
-                            setDescriptionTemplates(conf.value);
-                        }
+
                     } catch (parseError) {
                         console.warn(`Error parsing config for ${conf.key}`, parseError);
                     }
@@ -1618,8 +1594,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             loading,
             favorites,
             toggleFavorite,
-            descriptionTemplates,
-            updateDescriptionTemplates,
+
             attributes,
             attributeValues,
             addAttribute,

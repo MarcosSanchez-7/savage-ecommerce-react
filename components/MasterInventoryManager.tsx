@@ -34,6 +34,8 @@ const MasterInventoryManager: React.FC = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [modalParentId, setModalParentId] = useState<string | null>(null);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [newCategoryTemplate, setNewCategoryTemplate] = useState('');
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
     // Attribute States
     const [selectedAttrId, setSelectedAttrId] = useState<string | null>(null);
@@ -61,18 +63,29 @@ const MasterInventoryManager: React.FC = () => {
     const handleAddCategory = async () => {
         if (!newCategoryName.trim()) return;
 
+        const slugId = newCategoryName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
         const newCat: Category = {
-            id: newCategoryName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+            id: editingCategory ? editingCategory.id : slugId,
             name: newCategoryName,
-            parent_id: modalParentId,
-            image: ''
+            parent_id: editingCategory ? editingCategory.parent_id : modalParentId,
+            image: editingCategory?.image || '',
+            description_template: newCategoryTemplate
         };
 
-        // @ts-ignore - ShopContext might not have parent_id in types yet but we added it
-        await addCategory(newCat);
+        if (editingCategory) {
+            // @ts-ignore
+            await updateCategory(newCat);
+        } else {
+            // @ts-ignore
+            await addCategory(newCat);
+        }
+
         setNewCategoryName('');
+        setNewCategoryTemplate('');
         setIsAddModalOpen(false);
         setModalParentId(null);
+        setEditingCategory(null);
     };
 
     const handleDeleteCategory = (id: string) => {
@@ -119,7 +132,22 @@ const MasterInventoryManager: React.FC = () => {
                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={() => {
+                                setEditingCategory(category);
+                                setNewCategoryName(category.name);
+                                setNewCategoryTemplate(category.description_template || '');
+                                setIsAddModalOpen(true);
+                            }}
+                            className="p-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all"
+                            title="Editar"
+                        >
+                            <Edit2 size={14} />
+                        </button>
+                        <button
+                            onClick={() => {
                                 setModalParentId(category.id);
+                                setEditingCategory(null);
+                                setNewCategoryName('');
+                                setNewCategoryTemplate('');
                                 setIsAddModalOpen(true);
                             }}
                             className="p-2 bg-primary/10 text-primary hover:bg-primary hover:text-black rounded-lg transition-all"
@@ -321,9 +349,9 @@ const MasterInventoryManager: React.FC = () => {
                     <div className="bg-[#0c0c0c] border border-gray-800 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl">
                         <div className="p-8 border-b border-gray-800 bg-black/40">
                             <h4 className="text-xl font-black text-white italic uppercase tracking-tighter">
-                                {modalParentId ? 'Añadir Rama' : 'Nueva Categoría Raíz'}
+                                {editingCategory ? 'Editar Categoría' : (modalParentId ? 'Añadir Rama' : 'Nueva Categoría Raíz')}
                             </h4>
-                            {modalParentId && (
+                            {modalParentId && !editingCategory && (
                                 <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-1">
                                     Dentro de: {categories.find(c => c.id === modalParentId)?.name}
                                 </p>
@@ -340,9 +368,21 @@ const MasterInventoryManager: React.FC = () => {
                                     className="w-full bg-black border border-gray-800 rounded-2xl p-4 text-white focus:border-primary outline-none transition-all font-bold"
                                 />
                             </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Template de Descripción (Opcional)</label>
+                                <textarea
+                                    value={newCategoryTemplate}
+                                    onChange={e => setNewCategoryTemplate(e.target.value)}
+                                    placeholder="Escribe la descripción por defecto para los productos de esta categoría..."
+                                    className="w-full bg-black border border-gray-800 rounded-2xl p-4 text-white focus:border-primary outline-none transition-all font-bold h-24 resize-none"
+                                />
+                            </div>
                             <div className="flex gap-4">
                                 <button
-                                    onClick={() => setIsAddModalOpen(false)}
+                                    onClick={() => {
+                                        setIsAddModalOpen(false);
+                                        setEditingCategory(null);
+                                    }}
                                     className="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
                                 >
                                     Cancelar
@@ -351,7 +391,7 @@ const MasterInventoryManager: React.FC = () => {
                                     onClick={handleAddCategory}
                                     className="flex-1 bg-primary hover:bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
                                 >
-                                    Crear Categoría
+                                    {editingCategory ? 'Guardar Cambios' : 'Crear Categoría'}
                                 </button>
                             </div>
                         </div>
