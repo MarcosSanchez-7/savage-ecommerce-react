@@ -35,7 +35,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
     const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterType, setFilterType] = useState<'ALL' | 'FEATURED' | 'NEW' | 'OFFER' | 'IMPORTED'>('ALL');
+    const [filterType, setFilterType] = useState<'ALL' | 'FEATURED' | 'NEW' | 'OFFER' | 'IMPORTED' | 'SEASON'>('ALL');
 
     const toggleCategory = (catId: string) => {
         setOpenCategories(prev => ({ ...prev, [catId]: !prev[catId] }));
@@ -55,6 +55,7 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
         if (filterType === 'NEW') filtered = filtered.filter(p => p.isNew);
         if (filterType === 'OFFER') filtered = filtered.filter(p => p.isOffer);
         if (filterType === 'IMPORTED') filtered = filtered.filter(p => p.isImported);
+        if (filterType === 'SEASON') filtered = filtered.filter(p => seasonProductIds.includes(p.id));
 
         // 2. Search Filter
         if (searchTerm) {
@@ -102,6 +103,12 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                         className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${filterType === 'IMPORTED' ? 'bg-blue-600 text-white border-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]' : 'bg-black text-gray-500 border-gray-800 hover:border-blue-600/50 hover:text-blue-500'}`}
                     >
                         Globe Importados
+                    </button>
+                    <button
+                        onClick={() => setFilterType('SEASON')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${filterType === 'SEASON' ? 'bg-pink-600 text-white border-pink-600 shadow-[0_0_15px_rgba(236,72,153,0.3)]' : 'bg-black text-gray-500 border-gray-800 hover:border-pink-600/50 hover:text-pink-500'}`}
+                    >
+                        📅 Season
                     </button>
                 </div>
 
