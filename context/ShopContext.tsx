@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue, SeasonConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 import { useAuth } from './AuthContext';
@@ -42,6 +42,9 @@ interface ShopContextType {
 
     dropsConfig: DropsConfig;
     updateDropsConfig: (config: DropsConfig) => void;
+
+    seasonConfig: SeasonConfig;
+    updateSeasonConfig: (config: SeasonConfig) => void;
 
     updateSocialConfig: (config: SocialConfig) => void;
     cartTotal: number;
@@ -227,6 +230,30 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    // Season Config
+    const [seasonConfig, setSeasonConfig] = useState<SeasonConfig>({
+        isEnabled: false,
+        title: 'SEASON 2026',
+        subtitle: 'COLECCIÓN EXCLUSIVA',
+        backgroundImage: '',
+        productIds: []
+    });
+
+    const updateSeasonConfig = async (config: SeasonConfig) => {
+        setSeasonConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'season_config',
+                value: config,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
     const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(() => {
         const saved = localStorage.getItem('savage_footer_columns');
         return saved ? JSON.parse(saved) : [];
@@ -382,6 +409,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         if (conf.key === 'footer_columns') setFooterColumns(conf.value);
                         if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
                         if (conf.key === 'drops_config') setDropsConfig(conf.value);
+                        if (conf.key === 'season_config') setSeasonConfig(conf.value);
                         if (conf.key === 'category_sort_order') {
                             fetchedSortOrder = conf.value as string[];
                             setCategorySortOrder(fetchedSortOrder);
@@ -1566,6 +1594,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             deleteDrop,
             dropsConfig,
             updateDropsConfig,
+            seasonConfig,
+            updateSeasonConfig,
             updateSocialConfig,
 
             cartTotal,

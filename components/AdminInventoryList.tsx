@@ -7,7 +7,8 @@ import {
     Layers,
     Search,
     Eye,
-    EyeOff
+    EyeOff,
+    Calendar
 } from 'lucide-react';
 import { Category, Product } from '../types';
 
@@ -17,6 +18,8 @@ interface AdminInventoryListProps {
     onEdit: (product: Product) => void;
     onDelete: (productId: string) => void;
     onToggleActive: (product: Product) => void;
+    seasonProductIds: string[];
+    onToggleSeason: (product: Product) => void;
 }
 
 const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
@@ -24,7 +27,9 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
     products,
     onEdit,
     onDelete,
-    onToggleActive
+    onToggleActive,
+    seasonProductIds,
+    onToggleSeason
 }) => {
     // Local state for folder toggles (Performance Optimization)
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
@@ -203,7 +208,9 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                                                             <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
                                                                             <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
                                                                             {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
+                                                                            {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
                                                                             {product.isOffer && <span className="px-1.5 py-0.5 bg-red-500/10 text-red-500 text-[8px] font-black uppercase rounded">OFFER</span>}
+                                                                            {seasonProductIds.includes(product.id) && <span className="px-1.5 py-0.5 bg-pink-500/10 text-pink-500 text-[8px] font-black uppercase rounded">SEASON</span>}
                                                                         </div>
                                                                     </div>
 
@@ -284,6 +291,13 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                                                     title={product.isActive === false ? 'Activar' : 'Desactivar'}
                                                                 >
                                                                     {product.isActive === false ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => onToggleSeason(product)}
+                                                                    className={`p-2.5 rounded-xl text-white transition-all shadow-xl backdrop-blur-md ${seasonProductIds.includes(product.id) ? 'bg-pink-600/90 hover:bg-pink-500 shadow-pink-500/20' : 'bg-gray-700/50 hover:bg-gray-600 border border-white/10'}`}
+                                                                    title="Añadir/Quitar Temporada"
+                                                                >
+                                                                    <Calendar size={14} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => onEdit(product)}

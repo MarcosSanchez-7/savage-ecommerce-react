@@ -2,47 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
-import {
-    Plus,
-    Trash2,
-    Layout,
-    ShoppingBag,
-    Image as ImageIcon,
-    Save,
-    LogOut,
-    ChevronDown,
-    ChevronUp,
-    ChevronRight,
-    Folder,
-    FolderOpen,
-    X,
-    FileText,
-    Settings,
-    Sparkles,
-    MessageSquare,
-    Layers,
-    Map,
-    Edit,
-    Type,
-    Menu,
-    ArrowUp,
-    ArrowDown,
-    Activity,
-    Package,
-    Box,
-    Globe,
-    Zap,
-    ArrowLeft,
-    ArrowRight,
-    Star,
-    Percent,
-    Tag,
-    UploadCloud,
-    Loader2
-} from 'lucide-react';
+import { Trash2, Plus, Edit, X, Save, UploadCloud, Search, Eye, Filter, MoreVertical, Layout, Type, Image as ImageIcon, MessageSquare, Briefcase, Map, Menu, Layers, Box, FileText, Activity, Settings, Globe, LogOut, Loader2, Star, Zap, CornerDownRight, Percent, Sparkles, Tag, ArrowLeft, ArrowRight, Check, Calendar, Folder, FolderOpen, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
-import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Attribute, AttributeValue } from '../types';
+import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Attribute, AttributeValue, Product, SeasonConfig } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import MasterInventoryManager from '../components/MasterInventoryManager';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
@@ -169,12 +132,13 @@ const AdminDashboard: React.FC = () => {
         footerColumns, updateFooterColumns,
         saveAllData, loading,
         updateCategoryOrder,
-        attributes, attributeValues
+        attributes, attributeValues,
+        seasonConfig, updateSeasonConfig
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
-    const [activeTab, setActiveTab] = useState<'hero' | 'orders' | 'blog' | 'config' | 'inventory_master' | 'delivery' | 'webDesign' | 'stock'>('stock');
+    const [activeTab, setActiveTab] = useState<'hero' | 'orders' | 'blog' | 'config' | 'inventory_master' | 'delivery' | 'webDesign' | 'stock' | 'season'>('stock');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -285,6 +249,29 @@ const AdminDashboard: React.FC = () => {
     React.useEffect(() => { if (bannerBento) setBentoForm(bannerBento); }, [bannerBento]);
     React.useEffect(() => { if (footerColumns) setFooterForm(footerColumns); }, [footerColumns]);
 
+    // Season Config Form
+    const [seasonForm, setSeasonForm] = useState<SeasonConfig>(seasonConfig || {
+        isEnabled: false,
+        title: 'SEASON',
+        subtitle: 'NEW',
+        backgroundImage: '',
+        productIds: []
+    });
+
+    React.useEffect(() => {
+        if (seasonConfig) {
+            setSeasonForm(seasonConfig);
+        }
+    }, [seasonConfig]);
+
+    const handleSeasonSave = () => {
+        updateSeasonConfig(seasonForm);
+        alert('Configuración de temporada guardada.');
+    };
+
+    const [productSearch, setProductSearch] = useState('');
+    const [expandedCategories, setExpandedCategories] = useState<string[]>([]); // Folders closed by default
+
     // Categories Form State
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategorySubcats, setNewCategorySubcats] = useState('');
@@ -384,8 +371,10 @@ const AdminDashboard: React.FC = () => {
                 ? getSizesForCategory(categoryName)
                 : Object.keys(stockMatrix).filter(s => stockMatrix[s] > 0);
 
+            let productId = editingProductId || Date.now().toString();
+
             const productData = {
-                id: editingProductId || Date.now().toString(),
+                id: productId,
                 name: newProduct.name,
                 description: newProduct.description,
                 price: sPrice,
@@ -415,8 +404,27 @@ const AdminDashboard: React.FC = () => {
                 alert('Producto actualizado!');
             } else {
                 // @ts-ignore
-                await addProduct(productData);
+                const newUuid = await addProduct(productData);
+                if (newUuid) productId = newUuid; // Update productId with real UUID
                 alert('Producto creado con éxito!');
+            }
+
+            // Handle Season Update with CORRECT ID
+            if (seasonConfig) {
+                const shouldBeInSeason = (newProduct as any).isSeason === true;
+                const isInSeason = seasonConfig.productIds.includes(productId);
+
+                if (shouldBeInSeason && !isInSeason) {
+                    await updateSeasonConfig({
+                        ...seasonConfig,
+                        productIds: [...seasonConfig.productIds, productId]
+                    });
+                } else if (!shouldBeInSeason && isInSeason) {
+                    await updateSeasonConfig({
+                        ...seasonConfig,
+                        productIds: seasonConfig.productIds.filter(id => id !== productId)
+                    });
+                }
             }
 
             // Reset
@@ -440,7 +448,8 @@ const AdminDashboard: React.FC = () => {
                 isNew: false,
                 isOffer: false, // Reset isOffer
                 selectedAttributes: {},
-                visualTag: { text: '', color: '#000000' }
+                visualTag: { text: '', color: '#000000' },
+                isSeason: false
             });
             setStockMatrix({});
         } catch (error) {
@@ -822,6 +831,10 @@ const AdminDashboard: React.FC = () => {
                     </button>
                     <button onClick={() => setActiveTab('blog')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'blog' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <MessageSquare size={20} /> <span className="font-bold text-sm">Blog / Reviews</span>
+                    </button>
+
+                    <button onClick={() => setActiveTab('season')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'season' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                        <Calendar size={20} className="text-purple-500" /> <span className="font-bold text-sm">Temporada</span>
                     </button>
 
                     <button onClick={() => setActiveTab('config')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'config' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
@@ -1352,6 +1365,25 @@ const AdminDashboard: React.FC = () => {
                                                     <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isOffer ? 'left-7' : 'left-1'}`} />
                                                 </div>
                                             </div>
+
+                                            {/* Season Toggle */}
+                                            <div
+                                                onClick={() => setNewProduct(prev => ({ ...prev, isSeason: !(prev as any).isSeason }))}
+                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${(newProduct as any).isSeason ? 'bg-pink-500/10 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-3 rounded-xl transition-all ${(newProduct as any).isSeason ? 'bg-pink-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                        <Calendar size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">TEMPORADA / SEASON</p>
+                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en sección "Temporada"</p>
+                                                    </div>
+                                                </div>
+                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${(newProduct as any).isSeason ? 'bg-pink-500' : 'bg-gray-800'}`}>
+                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${(newProduct as any).isSeason ? 'left-7' : 'left-1'}`} />
+                                                </div>
+                                            </div>
                                         </div>
 
 
@@ -1535,6 +1567,16 @@ const AdminDashboard: React.FC = () => {
                                         updateProduct({ ...product, isActive: newStatus });
                                         alert(newStatus ? 'Producto ACTIVADO exitosamente.' : 'Producto DESACTIVADO (Oculto del público).');
                                     }}
+                                    seasonProductIds={seasonConfig?.productIds || []}
+                                    onToggleSeason={(product) => {
+                                        if (!seasonConfig) return;
+                                        const isSelected = seasonConfig.productIds.includes(product.id);
+                                        const newIds = isSelected
+                                            ? seasonConfig.productIds.filter(id => id !== product.id)
+                                            : [...seasonConfig.productIds, product.id];
+                                        updateSeasonConfig({ ...seasonConfig, productIds: newIds });
+                                        // Feedback visual sutil (opcional)
+                                    }}
                                     onEdit={(product) => {
                                         setEditingProductId(product.id);
                                         setNewProduct({
@@ -1555,7 +1597,8 @@ const AdminDashboard: React.FC = () => {
                                             isNew: (product as any).isNew || false,
                                             isOffer: (product as any).isOffer || false,
                                             selectedAttributes: product.selectedAttributes || {},
-                                            visualTag: product.visualTag || { text: '', color: '#000000' }
+                                            visualTag: product.visualTag || { text: '', color: '#000000' },
+                                            isSeason: seasonConfig?.productIds.includes(product.id) || false
                                         });
 
                                         const matrix: Record<string, number> = {};
@@ -1802,6 +1845,178 @@ const AdminDashboard: React.FC = () => {
                     )
                 }
 
+
+                {/* SEASON TAB */}
+                {activeTab === 'season' && (
+                    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <header className="border-b border-gray-800 pb-6 flex justify-between items-end">
+                            <div>
+                                <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3">
+                                    <Calendar size={32} className="text-purple-500" />
+                                    SECCIÓN DE <span className="text-purple-500">TEMPORADA</span>
+                                </h2>
+                                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mt-1">Configura la sección especial del Home.</p>
+                            </div>
+                            <button
+                                onClick={handleSeasonSave}
+                                className="bg-primary hover:bg-yellow-500 text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95"
+                            >
+                                <Save size={18} /> GUARDAR TEMPORADA
+                            </button>
+                        </header>
+
+                        <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-8 space-y-8 shadow-2xl">
+                            {/* Enable Toggle */}
+                            <div onClick={() => setSeasonForm({ ...seasonForm, isEnabled: !seasonForm.isEnabled })} className="flex items-center gap-4 cursor-pointer p-4 border border-gray-800 rounded-xl hover:bg-white/5 transition-all group">
+                                <div className={`w-14 h-8 rounded-full relative transition-all ${seasonForm?.isEnabled ? 'bg-primary' : 'bg-gray-800'}`}>
+                                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${seasonForm?.isEnabled ? 'left-7' : 'left-1'}`} />
+                                </div>
+                                <div>
+                                    <h3 className={`font-black uppercase italic transition-colors ${seasonForm?.isEnabled ? 'text-white' : 'text-gray-500'}`}>Activar Sección en Home</h3>
+                                    <p className="text-xs text-gray-500 font-bold tracking-widest">Mostrar debajo del Hero principal</p>
+                                </div>
+                            </div>
+
+                            {/* Texts & Image */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Título Principal</label>
+                                        <input
+                                            type="text"
+                                            value={seasonForm?.title}
+                                            onChange={e => setSeasonForm({ ...seasonForm, title: e.target.value })}
+                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white font-black italic uppercase tracking-tighter focus:border-primary focus:outline-none transition-all shadow-inner text-xl"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Subtítulo (Badge)</label>
+                                        <input
+                                            type="text"
+                                            value={seasonForm?.subtitle}
+                                            onChange={e => setSeasonForm({ ...seasonForm, subtitle: e.target.value })}
+                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-all shadow-inner text-xs"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Imagen de Fondo (URL)</label>
+                                        <input
+                                            type="text"
+                                            value={seasonForm?.backgroundImage}
+                                            onChange={e => setSeasonForm({ ...seasonForm, backgroundImage: e.target.value })}
+                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-gray-400 text-xs font-mono focus:border-primary focus:outline-none transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Preview Image */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Vista Previa Fondo</label>
+                                    <div className="relative rounded-xl overflow-hidden border border-gray-800 aspect-video bg-gray-900 group shadow-lg">
+                                        <img src={seasonForm?.backgroundImage} className="w-full h-full object-cover opacity-60 transition-opacity duration-700" onError={(e) => (e.currentTarget.style.display = 'none')} onLoad={(e) => (e.currentTarget.style.display = 'block')} />
+                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4 text-center">
+                                            <h3 className="text-3xl text-white font-black italic uppercase tracking-tighter drop-shadow-lg">{seasonForm?.title}</h3>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 px-3 py-1 rounded mt-2 text-gray-200">{seasonForm?.subtitle}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Product Selector */}
+                            <div className="pt-8 border-t border-gray-800 animate-in fade-in slide-in-from-bottom-2">
+                                <div className="flex justify-between items-end mb-4">
+                                    <div>
+                                        <h3 className="font-black text-white uppercase italic text-lg">Productos Seleccionados</h3>
+                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Selecciona los productos para el carrusel ({seasonForm?.productIds.length})</p>
+                                    </div>
+                                    <div className="text-xs font-bold text-gray-600 uppercase">
+                                        Click para seleccionar
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="BUSCAR PRODUCTO POR NOMBRE O ID..."
+                                            value={productSearch}
+                                            onChange={e => setProductSearch(e.target.value)}
+                                            className="w-full bg-black border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:border-primary focus:outline-none transition-all placeholder:text-gray-700 font-bold uppercase"
+                                        />
+                                    </div>
+
+                                    <div className="bg-black/50 border border-gray-800 rounded-xl max-h-[500px] overflow-y-auto p-4 fancy-scrollbar space-y-8">
+                                        {Object.entries(products
+                                            .filter(p => !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.id.toLowerCase().includes(productSearch.toLowerCase()))
+                                            .filter(p => p.isActive !== false)
+                                            .reduce((acc, product) => {
+                                                const cat = product.category || 'SIN CATEGORÍA';
+                                                if (!acc[cat]) acc[cat] = [];
+                                                acc[cat].push(product);
+                                                return acc;
+                                            }, {} as Record<string, Product[]>)
+                                        ).sort((a, b) => a[0].localeCompare(b[0])).map(([category, items]) => {
+                                            const isExpanded = expandedCategories.includes(category) || productSearch.length > 0;
+                                            return (
+                                                <div key={category} className="border border-gray-800 rounded-lg overflow-hidden bg-[#0a0a0a] transition-all">
+                                                    <div
+                                                        onClick={() => {
+                                                            setExpandedCategories(prev =>
+                                                                prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+                                                            );
+                                                        }}
+                                                        className={`flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none ${isExpanded ? 'bg-white/5' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            {isExpanded ? <FolderOpen size={16} className="text-primary" /> : <Folder size={16} className="text-gray-500" />}
+                                                            <h4 className={`font-bold text-xs uppercase tracking-wider transition-colors ${isExpanded ? 'text-white' : 'text-gray-400'}`}>{category}</h4>
+                                                            <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-[10px] font-mono">{(items as Product[]).length}</span>
+                                                        </div>
+                                                        {isExpanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
+                                                    </div>
+
+                                                    {isExpanded && (
+                                                        <div className="p-3 border-t border-gray-800 bg-black/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 animate-in slide-in-from-top-1 duration-200">
+                                                            {(items as Product[]).sort((a, b) => b.id.localeCompare(a.id)).map(p => {
+                                                                const isSelected = seasonForm?.productIds.includes(p.id);
+                                                                return (
+                                                                    <div
+                                                                        key={p.id}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            const newIds = isSelected
+                                                                                ? seasonForm.productIds.filter(id => id !== p.id)
+                                                                                : [...seasonForm.productIds, p.id];
+                                                                            setSeasonForm({ ...seasonForm, productIds: newIds });
+                                                                        }}
+                                                                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all border group ${isSelected ? 'bg-primary/5 border-primary shadow-[0_0_10px_rgba(255,215,0,0.05)]' : 'bg-transparent border-gray-800 hover:border-gray-600 hover:bg-white/5'}`}
+                                                                    >
+                                                                        <div className={`w-5 h-5 min-w-[1.25rem] rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-black' : 'border-gray-700 bg-transparent group-hover:border-gray-500'}`}>
+                                                                            {isSelected && <Check size={14} strokeWidth={4} />}
+                                                                        </div>
+                                                                        <img src={p.images[0]} className="w-10 h-10 object-cover rounded bg-gray-900 border border-gray-800 group-hover:border-gray-600 transition-colors" />
+                                                                        <div className="flex-1 overflow-hidden">
+                                                                            <p className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>{p.name}</p>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <p className="text-[9px] text-gray-600 font-mono truncate">{p.id}</p>
+                                                                                {isSelected && <span className="text-[8px] font-bold text-primary uppercase">SEASON</span>}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* CONFIG TAB */}
                 {

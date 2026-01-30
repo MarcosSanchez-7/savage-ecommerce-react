@@ -214,4 +214,12 @@ export interface UserProfile {
   created_at?: string;
 }
 
+export interface SeasonConfig {
+  isEnabled: boolean;
+  title: string;
+  subtitle: string;
+  backgroundImage: string;
+  productIds: string[];
+}
+
 

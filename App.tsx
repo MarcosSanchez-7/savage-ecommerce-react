@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import StockRoutes from './components/routes/StockRoutes';
 import WebRoutes from './components/routes/WebRoutes';
 import CartDrawer from './components/CartDrawer';
@@ -11,6 +11,7 @@ import LoadingScreen from './components/LoadingScreen';
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
+  // Check if we are in "Admin/Stock Mode" via env var or just default to Web Store
   const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
 
   if (loading) {
@@ -43,5 +44,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-

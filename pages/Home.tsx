@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 import FeaturedCarousel from '../components/FeaturedCarousel';
+import SeasonSection from '../components/SeasonSection';
 
 const Home: React.FC = () => {
     const { products, addToCart, cart, categories } = useShop();
@@ -30,6 +31,7 @@ const Home: React.FC = () => {
 
             <main>
                 <Hero />
+                <SeasonSection />
 
                 {/* NUEVOS INGRESOS Section */}
                 {newArrivals.length > 0 && (
