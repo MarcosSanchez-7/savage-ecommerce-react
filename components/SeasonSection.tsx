@@ -72,7 +72,7 @@ const SeasonCarousel = ({ products, addToCart, isMobile }: { products: any[], ad
         if (products.length <= visibleCount) return;
 
         const interval = setInterval(() => {
-            setStartIndex(prev => (prev + 1) % products.length);
+            setStartIndex(prev => (prev + visibleCount) % products.length);
         }, 5000);
         return () => clearInterval(interval);
     }, [products.length, visibleCount]);
@@ -89,8 +89,8 @@ const SeasonCarousel = ({ products, addToCart, isMobile }: { products: any[], ad
 
     const displayProducts = getVisibleProducts();
 
-    const nextSlide = () => setStartIndex(prev => (prev + 1) % products.length);
-    const prevSlide = () => setStartIndex(prev => (prev - 1 + products.length) % products.length);
+    const nextSlide = () => setStartIndex(prev => (prev + visibleCount) % products.length);
+    const prevSlide = () => setStartIndex(prev => (prev - visibleCount + products.length) % products.length);
 
     return (
         <div className="relative group/carousel">
