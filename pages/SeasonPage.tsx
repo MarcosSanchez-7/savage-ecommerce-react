@@ -29,11 +29,11 @@ const SeasonPage: React.FC = () => {
 
             {/* Hero Header */}
             <div className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden border-b border-white/5">
-                <Link to="/" className="absolute top-24 left-6 md:left-12 z-20 flex items-center gap-2 text-white/50 hover:text-white transition-colors group">
-                    <div className="bg-white/10 p-2 rounded-full group-hover:bg-primary group-hover:text-black transition-all backdrop-blur-sm border border-white/5">
-                        <ArrowLeft size={20} />
+                <Link to="/" className="absolute top-20 md:top-24 left-6 md:left-12 z-20 flex items-center gap-3 group transition-all">
+                    <div className="bg-black/50 p-3 rounded-full text-primary border border-primary/20 group-hover:bg-primary group-hover:text-black group-hover:border-primary transition-all backdrop-blur-md shadow-[0_0_15px_rgba(234,179,8,0.15)] group-hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]">
+                        <ArrowLeft size={22} />
                     </div>
-                    <span className="font-bold uppercase tracking-widest text-xs hidden md:block group-hover:translate-x-1 transition-transform">Volver al Inicio</span>
+                    <span className="font-black uppercase tracking-widest text-xs hidden md:block text-primary group-hover:translate-x-1 transition-transform">Volver al Inicio</span>
                 </Link>
                 <img
                     src={seasonConfig.backgroundImage || 'https://images.unsplash.com/photo-1523398002811-999ca8dec234'}
