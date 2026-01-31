@@ -604,6 +604,30 @@ const AdminDashboard: React.FC = () => {
         updateCategoryOrder(newOrderIds);
     };
 
+    // Helper para product info items
+    const addInfoItem = () => {
+        setConfigForm(prev => ({
+            ...prev,
+            productInfoItems: [...(prev.productInfoItems || []), { icon: 'check_circle', text: '' }]
+        }));
+    };
+
+    const removeInfoItem = (index: number) => {
+        setConfigForm(prev => ({
+            ...prev,
+            productInfoItems: (prev.productInfoItems || []).filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateInfoItem = (index: number, field: 'icon' | 'text', value: string) => {
+        setConfigForm(prev => ({
+            ...prev,
+            productInfoItems: (prev.productInfoItems || []).map((item, i) =>
+                i === index ? { ...item, [field]: value } : item
+            )
+        }));
+    };
+
     // --- Config Handlers ---
     const handleConfigSave = async () => {
         try {
@@ -2123,6 +2147,45 @@ const AdminDashboard: React.FC = () => {
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Texto de Devoluciones (Info Producto)</label>
                                     <input type="text" value={configForm.extraShippingInfo || ''} onChange={e => setConfigForm({ ...configForm, extraShippingInfo: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" placeholder="Ej. Devoluciones gratis hasta 30 días" />
+                                </div>
+
+                                <hr className="border-gray-800 my-4" />
+                                <h3 className="text-lg font-bold text-white mb-2">Información Adicional (Lista Dinámica)</h3>
+                                <div className="space-y-3">
+                                    {configForm.productInfoItems?.map((item, index) => (
+                                        <div key={index} className="flex gap-2 items-center">
+                                            <div className="w-1/3">
+                                                <input
+                                                    type="text"
+                                                    value={item.icon}
+                                                    onChange={(e) => updateInfoItem(index, 'icon', e.target.value)}
+                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors"
+                                                    placeholder="Icono (ej. star)"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={item.text}
+                                                    onChange={(e) => updateInfoItem(index, 'text', e.target.value)}
+                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors"
+                                                    placeholder="Texto informativo"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeInfoItem(index)}
+                                                className="bg-red-900/20 text-red-500 p-3 rounded-lg border border-red-900/30 hover:bg-red-900/40 transition-colors"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        onClick={addInfoItem}
+                                        className="text-primary text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:text-white transition-colors"
+                                    >
+                                        <Plus size={16} /> Añadir Ítem de Info
+                                    </button>
                                 </div>
                                 <button onClick={handleConfigSave} className="w-full bg-primary text-white font-black py-4 rounded-lg hover:bg-red-700 transition-all uppercase text-sm tracking-widest shadow-lg mt-4">
                                     Guardar Configuración

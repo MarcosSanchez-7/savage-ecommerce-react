@@ -102,6 +102,7 @@ export interface SocialConfig {
   address?: string;
   shippingText?: string;
   extraShippingInfo?: string;
+  productInfoItems?: { icon: string; text: string }[];
   topHeaderText?: string;
   favicon?: string;
 }

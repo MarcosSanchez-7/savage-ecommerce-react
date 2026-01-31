@@ -339,14 +339,25 @@ const ProductDetail: React.FC = () => {
                         )}
 
                         <div className="mt-8 border-t border-gray-800 pt-6 space-y-3">
-                            <div className="flex items-center gap-3 text-sm text-gray-400">
-                                <span className="material-symbols-outlined text-green-500">check_circle</span>
-                                {socialConfig.shippingText || 'Envío gratis en compras mayores a Gs. 200.000'}
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-gray-400">
-                                <span className="material-symbols-outlined text-green-500">check_circle</span>
-                                {socialConfig.extraShippingInfo || 'Devoluciones gratis hasta 30 días'}
-                            </div>
+                            {socialConfig.shippingText && (
+                                <div className="flex items-center gap-3 text-sm text-gray-400">
+                                    <span className="material-symbols-outlined text-green-500">check_circle</span>
+                                    {socialConfig.shippingText}
+                                </div>
+                            )}
+                            {socialConfig.extraShippingInfo && (
+                                <div className="flex items-center gap-3 text-sm text-gray-400">
+                                    <span className="material-symbols-outlined text-green-500">check_circle</span>
+                                    {socialConfig.extraShippingInfo}
+                                </div>
+                            )}
+                            {/* Dynamic Info Items */}
+                            {socialConfig.productInfoItems?.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-3 text-sm text-gray-400">
+                                    <span className="material-symbols-outlined text-green-500">{item.icon || 'check_circle'}</span>
+                                    {item.text}
+                                </div>
+                            ))}
                         </div>
 
                     </div>
