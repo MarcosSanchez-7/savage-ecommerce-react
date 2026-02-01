@@ -21,7 +21,7 @@ export default async function handler() {
     try {
         const { data: products, error } = await supabase
             .from('products')
-            .select('id, name, description, price, slug, images, stock_quantity');
+            .select('id, name, description, price, slug, images, stock');
 
         if (error) throw error;
 
@@ -34,8 +34,8 @@ export default async function handler() {
     <description>Sincronización automática Savage</description>`;
 
         products?.forEach((p) => {
-            // Tu tabla usa stock_quantity
-            const availability = (p.stock_quantity > 0) ? 'in stock' : 'out of stock';
+            // Usamos 'stock' que es la columna correcta en tu DB
+            const availability = (p.stock > 0) ? 'in stock' : 'out of stock';
 
             // Tu tabla tiene un array de imágenes
             const imageUrl = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : '';
