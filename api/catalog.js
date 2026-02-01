@@ -4,13 +4,13 @@ export const config = {
     runtime: 'edge',
 };
 
-export default async function handler() {
+export default async function handler(request) {
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-    // Si faltan las llaves, mostramos un XML de error que Meta pueda entender
+    // ERROR CHECK XML
     if (!supabaseUrl || !supabaseKey) {
-        return new Response(`<?xml version="1.0"?><error>Faltan credenciales en Vercel</error>`, {
+        return new Response(`<?xml version="1.0"?><error>Faltan credenciales en Vercel (SUPABASE_URL / KEY)</error>`, {
             status: 500,
             headers: { 'Content-Type': 'application/xml' },
         });
@@ -33,18 +33,18 @@ export default async function handler() {
     <link>${baseUrl}</link>
     <description>Sincronización automática Savage</description>`;
 
-        products?.forEach((p) => {
-            // Usamos 'stock' que es la columna correcta en tu DB
-            const availability = (p.stock > 0) ? 'in stock' : 'out of stock';
+        if (products) {
+            products.forEach((p) => {
+                const availability = (p.stock > 0) ? 'in stock' : 'out of stock';
+                const imageUrl = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : '';
+                const safeName = (p.name || 'Producto').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const safeDesc = (p.description || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-            // Tu tabla tiene un array de imágenes
-            const imageUrl = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : '';
-
-            xml += `
+                xml += `
     <item>
       <g:id>${p.id}</g:id>
-      <g:title><![CDATA[${p.name}]]></g:title>
-      <g:description><![CDATA[${p.description || 'Streetwear Premium'}]]></g:description>
+      <g:title><![CDATA[${safeName}]]></g:title>
+      <g:description><![CDATA[${safeDesc}]]></g:description>
       <g:link>${baseUrl}/product/${p.slug || p.id}</g:link>
       <g:image_link>${imageUrl}</g:image_link>
       <g:brand>Savage</g:brand>
@@ -52,13 +52,19 @@ export default async function handler() {
       <g:availability>${availability}</g:availability>
       <g:price>${p.price} PYG</g:price>
     </item>`;
-        });
+            });
+        }
 
         xml += `</channel></rss>`;
 
-        return new Response(xml, { headers: { 'Content-Type': 'application/xml' } });
+        return new Response(xml, {
+            headers: {
+                'Content-Type': 'application/xml',
+                'Cache-Control': 's-maxage=60, stale-while-revalidate'
+            }
+        });
 
-    } catch (err: any) {
+    } catch (err) {
         return new Response(`<?xml version="1.0"?><error>${err.message}</error>`, {
             status: 500,
             headers: { 'Content-Type': 'application/xml' },
