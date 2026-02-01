@@ -5,39 +5,40 @@ export const config = {
 };
 
 export default async function handler() {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    // Si faltan las llaves, mostramos un XML de error que Meta pueda entender
+    if (!supabaseUrl || !supabaseKey) {
+        return new Response(`<?xml version="1.0"?><error>Faltan credenciales en Vercel</error>`, {
+            status: 500,
+            headers: { 'Content-Type': 'application/xml' },
+        });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     try {
-        // 1. Verificamos que las variables existan
-        const supabaseUrl = process.env.VITE_SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-        if (!supabaseUrl || !supabaseKey) {
-            return new Response(
-                JSON.stringify({ error: "Faltan variables de entorno en Vercel" }),
-                { status: 500, headers: { 'Content-Type': 'application/json' } }
-            );
-        }
-
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
-        // 2. Consulta a la tabla 'products'
         const { data: products, error } = await supabase
             .from('products')
-            .select('*');
+            .select('id, name, description, price, slug, images, stock_quantity');
 
         if (error) throw error;
 
-        const baseUrl = "https://savageeeepy.vercel.app"; // URL actualizada según tu captura
-
+        const baseUrl = "https://savageeeepy.vercel.app";
         let xml = `<?xml version="1.0"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
   <channel>
     <title>Savage Essence Catalog</title>
     <link>${baseUrl}</link>
-    <description>Catálogo automático Savage Essence</description>`;
+    <description>Sincronización automática Savage</description>`;
 
         products?.forEach((p) => {
-            const availability = p.stock_quantity > 0 ? 'in stock' : 'out of stock';
-            const image = Array.isArray(p.images) ? p.images[0] : '';
+            // Tu tabla usa stock_quantity
+            const availability = (p.stock_quantity > 0) ? 'in stock' : 'out of stock';
+
+            // Tu tabla tiene un array de imágenes
+            const imageUrl = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : '';
 
             xml += `
     <item>
@@ -45,7 +46,7 @@ export default async function handler() {
       <g:title><![CDATA[${p.name}]]></g:title>
       <g:description><![CDATA[${p.description || 'Streetwear Premium'}]]></g:description>
       <g:link>${baseUrl}/product/${p.slug || p.id}</g:link>
-      <g:image_link>${image}</g:image_link>
+      <g:image_link>${imageUrl}</g:image_link>
       <g:brand>Savage</g:brand>
       <g:condition>new</g:condition>
       <g:availability>${availability}</g:availability>
@@ -55,17 +56,12 @@ export default async function handler() {
 
         xml += `</channel></rss>`;
 
-        return new Response(xml, {
-            headers: {
-                'Content-Type': 'application/xml',
-                'Cache-Control': 's-maxage=3600, stale-while-revalidate',
-            },
-        });
+        return new Response(xml, { headers: { 'Content-Type': 'application/xml' } });
 
     } catch (err: any) {
-        return new Response(
-            JSON.stringify({ error: err.message, detail: "Error en la lógica del catálogo" }),
-            { status: 500, headers: { 'Content-Type': 'application/json' } }
-        );
+        return new Response(`<?xml version="1.0"?><error>${err.message}</error>`, {
+            status: 500,
+            headers: { 'Content-Type': 'application/xml' },
+        });
     }
 }
