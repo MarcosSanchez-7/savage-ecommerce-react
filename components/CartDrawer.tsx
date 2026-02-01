@@ -9,16 +9,16 @@ import { isPointInPolygon } from '../types';
 const CartDrawer: React.FC = () => {
     const navigate = useNavigate();
     const {
-        cart,
-        isCartOpen,
-        toggleCart,
-        updateQuantity,
-        updateCartItemSize, // Consume new function
-        removeFromCart,
-        cartTotal,
-        createOrder,
-        socialConfig,
-        deliveryZones
+        cart,   // carrito 
+        isCartOpen,   // estado del carrito abierto o cerrado
+        toggleCart,   // funcion para abrir o cerrar el carrito
+        updateQuantity,   // funcion para actualizar la cantidad de un producto
+        updateCartItemSize, // funcion para actualizar el tal le de un producto
+        removeFromCart,   // funcion para eliminar un producto del carrito
+        cartTotal,   // total del carrito
+        createOrder,   // funcion para crear un pedido
+        socialConfig,   // configuracion de la tienda
+        deliveryZones   // zonas de envio
     } = useShop();
 
     const [showMap, setShowMap] = React.useState(false);
