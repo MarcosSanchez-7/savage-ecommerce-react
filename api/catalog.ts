@@ -1,13 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-// No config export means Node.js runtime by default (serverless)
+export const config = {
+    runtime: 'edge',
+};
 
-export default async function handler(req, res) {
+export default async function handler(request) {
     const supabaseUrl = process.env.SUPABASE_URL || '';
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
     if (!supabaseUrl || !supabaseKey) {
-        return res.status(500).send(`<?xml version="1.0"?><error>Faltan credenciales en Vercel (SUPABASE_URL / KEY)</error>`);
+        return new Response(`<?xml version="1.0"?><error>Faltan credenciales en Vercel (SUPABASE_URL / KEY)</error>`, {
+            status: 500,
+            headers: { 'Content-Type': 'application/xml' },
+        });
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -32,7 +37,6 @@ export default async function handler(req, res) {
                 const availability = (p.stock > 0) ? 'in stock' : 'out of stock';
                 const imageUrl = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : '';
 
-                // Sanitize basic XML chars
                 const safeName = (p.name || 'Producto').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const safeDesc = (p.description || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -53,11 +57,17 @@ export default async function handler(req, res) {
 
         xml += `</channel></rss>`;
 
-        res.setHeader('Content-Type', 'application/xml');
-        res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate');
-        return res.status(200).send(xml);
+        return new Response(xml, {
+            headers: {
+                'Content-Type': 'application/xml',
+                'Cache-Control': 's-maxage=60, stale-while-revalidate'
+            }
+        });
 
     } catch (err) {
-        return res.status(500).send(`<?xml version="1.0"?><error>${err.message}</error>`);
+        return new Response(`<?xml version="1.0"?><error>${err.message}</error>`, {
+            status: 500,
+            headers: { 'Content-Type': 'application/xml' },
+        });
     }
 }
