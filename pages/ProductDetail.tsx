@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import { ShoppingBag, ArrowLeft, Star, Share2, Heart } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -53,7 +54,16 @@ const ProductDetail: React.FC = () => {
         if (isTotallyOutOfStock) return;
 
         if (product.sizes && product.sizes.length > 0 && !selectedSize && !isAccessory) {
-            alert('Por favor selecciona un talle para continuar.');
+            toast('Por favor selecciona un talle para continuar.',
+                {
+                    icon: '❌',
+                    style: {
+                        borderRadius: '10px',
+                        background: '#333',
+                        color: '#fff',
+                    },
+                }
+            );
             return;
         }
 

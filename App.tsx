@@ -8,6 +8,7 @@ import { ShopProvider, useShop } from './context/ShopContext';
 import { AuthProvider } from './context/AuthContext';
 import SEO from './components/SEO';
 import LoadingScreen from './components/LoadingScreen';
+import { Toaster } from 'react-hot-toast'; //añadimos la libreria Toaster de react para que aparezcan los mensajes de error y demas
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
@@ -37,6 +38,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <ShopProvider>
+        <Toaster position="top-center" reverseOrder={false} style={{ backgroundColor: 'black', color: 'red' }} /> {/* libreria TOAST de react */}
         <MainContent />
       </ShopProvider>
     </AuthProvider>
