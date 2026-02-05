@@ -85,20 +85,32 @@ const CartDrawer: React.FC = () => {
         // Helper for formatting currency
         const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
 
-        const message = `👋 Hola! Me gustaría confirmar la disponibilidad de talles para el siguiente pedido:\n\n` +
-            `*PEDIDO #${displayId}*\n` +
+        // Usamos el dominio oficial directamente
+        const baseUrl = "https://www.savageeepy.com";
+
+        const message = `👋 *HOLA SAVAGE!* Quiero confirmar este pedido:\n\n` +
+            `🧾 *RECIBO #${displayId}*\n` +
+            `🗓️ Fecha: ${new Date().toLocaleDateString()}\n` +
+            `----------------------------------\n\n` +
             cart.map(item => {
-                const imgLink = item.images && item.images.length > 0
-                    ? `\n🖼️ Ver foto: ${item.images[0]}`
-                    : '';
-                return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle Seleccionado: ${item.selectedSize}${imgLink}`;
+                // Link comercial (slug o ID si no hay slug)
+                const productUrl = `${baseUrl}/product/${item.slug || item.id}`;
+
+                return `▪️ *${item.name.toUpperCase()}*\n` +
+                    `   Cant: ${item.quantity} | Talle: ${item.selectedSize}\n` +
+                    `   🔗 ${productUrl}`;
             }).join('\n\n') +
-            `\n\n--------------------------------\n` +
-            `💵 *PRODUCTOS:* ${formatPrice(cartTotal)}\n` +
+            `\n\n----------------------------------\n` +
+            `💰 *SUBTOTAL:* ${formatPrice(cartTotal)}\n` +
             `🚚 *ENVÍO:* ${shippingCost > 0 ? formatPrice(shippingCost) : 'A convenir'}\n` +
-            `--------------------------------\n` +
-            `*TOTAL FINAL:* ${formatPrice(finalTotal)}\n` +
-            `\n📍 *Ubicación:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}`;
+            `⭐️ *TOTAL FINAL:* ${formatPrice(finalTotal)}\n` +
+            `----------------------------------\n` +
+            `📍 *UBICACIÓN:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}`;
+
+        // Debugging para el usuario en localhost
+        console.log("--------------- WHATSAPP MESSAGE DEBUG ---------------");
+        console.log(message);
+        console.log("------------------------------------------------------");
 
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
