@@ -7,7 +7,7 @@ import CartDrawer from './components/CartDrawer';
 import { ShopProvider, useShop } from './context/ShopContext';
 import { AuthProvider } from './context/AuthContext';
 import SEO from './components/SEO';
-import LoadingScreen from './components/LoadingScreen';
+import HomePageSkeleton from './components/skeletons/HomePageSkeleton';
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
@@ -15,7 +15,7 @@ const MainContent: React.FC = () => {
   const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
 
   if (loading) {
-    return <LoadingScreen />;
+    return <HomePageSkeleton />;
   }
 
   return (
