@@ -1,4 +1,9 @@
 {
+    "functions": {
+        "api/og_product.js": {
+            "maxDuration": 10
+        }
+    },
     "rewrites": [
         {
             "source": "/product/:slug",
