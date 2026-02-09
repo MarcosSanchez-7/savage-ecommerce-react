@@ -9,7 +9,7 @@
                     "value": "(.*facebookexternalhit.*|.*WhatsApp.*|.*twitterbot.*|.*linkedinbot.*|.*telegrambot.*|.*Pinterest.*|.*Slackbot.*|.*Discordbot.*)"
                 }
             ],
-            "destination": "/api/og-product?slug=:slug"
+            "destination": "/api/og_product?slug=:slug"
         },
         {
             "source": "/((?!api/.*|assets/.*|favicon.ico).*)",
