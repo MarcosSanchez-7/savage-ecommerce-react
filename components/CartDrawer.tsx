@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { X, Plus, Minus, Trash2, MapPin, Truck, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-toastify';
 import LocationPicker from './LocationPicker';
 import { isPointInPolygon } from '../types';
 
@@ -65,7 +66,7 @@ const CartDrawer: React.FC = () => {
 
     const handleCheckout = () => {
         if (!phoneNumber || phoneNumber.length < 6) {
-            alert("Por favor, ingresa tu número de WhatsApp para poder contactarte.");
+            toast.error("Por favor, ingresa tu número de WhatsApp para poder contactarte.");
             return;
         }
 
