@@ -25,6 +25,10 @@ const CartDrawer: React.FC = () => {
     const [selectedLocation, setSelectedLocation] = React.useState<{ lat: number, lng: number } | null>(null);
     const [shippingCost, setShippingCost] = React.useState(0);
 
+    // Form States
+    const [customerName, setCustomerName] = React.useState('');
+    const [phoneNumber, setPhoneNumber] = React.useState('');
+
     // Lock Body Scroll when Cart is Open
     React.useEffect(() => {
         if (isCartOpen) {
@@ -60,6 +64,11 @@ const CartDrawer: React.FC = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = () => {
+        if (!phoneNumber || phoneNumber.length < 6) {
+            alert("Por favor, ingresa tu número de WhatsApp para poder contactarte.");
+            return;
+        }
+
         const orderId = crypto.randomUUID();
         const displayId = Math.floor(1000 + Math.random() * 9000); // Simple ID for display
 
@@ -68,19 +77,22 @@ const CartDrawer: React.FC = () => {
             display_id: displayId,
             product_ids: cart.map(item => item.id), // Storing Product IDs
             customerInfo: {
-                location: selectedLocation || undefined
+                location: selectedLocation || undefined,
+                name: customerName,
+                phone: phoneNumber,
+                needs_confirmation: true
             },
             items: cart, // Storing full cart items for local UI
             total_amount: finalTotal,
             delivery_cost: shippingCost,
             status: 'Pendiente',
-            created_at: new Date().toLocaleDateString()
+            created_at: new Date().toISOString() // ISO for better DB compatibility
         };
 
         createOrder(newOrder);
 
         // WhatsApp Checkout Logic
-        const phoneNumber = socialConfig.whatsapp || "595983840235";
+        const shopNumber = socialConfig.whatsapp || "595983840235";
 
         // Helper for formatting currency
         const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
@@ -89,6 +101,7 @@ const CartDrawer: React.FC = () => {
         const baseUrl = "https://www.savageeepy.com";
 
         const message = `👋 *HOLA SAVAGE!* Quiero confirmar este pedido:\n\n` +
+            `👤 *CLIENTE:* ${customerName || 'Sin Nombre'} (${phoneNumber})\n` +
             `🧾 *RECIBO #${displayId}*\n` +
             `🗓️ Fecha: ${new Date().toLocaleDateString()}\n` +
             `----------------------------------\n\n` +
@@ -112,7 +125,7 @@ const CartDrawer: React.FC = () => {
         console.log(message);
         console.log("------------------------------------------------------");
 
-        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        const url = `https://wa.me/${shopNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     };
 
@@ -219,6 +232,25 @@ const CartDrawer: React.FC = () => {
 
                 {cart.length > 0 && (
                     <div className="p-4 border-t border-gray-800 bg-[#0a0a0a] flex-none z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+                        {/* CUSTOMER INFO FORM */}
+                        <div className="mb-6 space-y-3 p-4 bg-white/5 rounded-lg border border-white/5">
+                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tus Datos (Requerido)</h4>
+                            <input
+                                type="text"
+                                placeholder="Nombre Completo"
+                                value={customerName}
+                                onChange={e => setCustomerName(e.target.value)}
+                                className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white placeholder:text-gray-600 focus:border-white outline-none transition-colors"
+                            />
+                            <input
+                                type="tel"
+                                placeholder="WhatsApp (Ej: 0981...)"
+                                value={phoneNumber}
+                                onChange={e => setPhoneNumber(e.target.value)}
+                                className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white placeholder:text-gray-600 focus:border-white outline-none transition-colors"
+                            />
+                        </div>
+
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-gray-400 text-xs">Subtotal</span>
                             <span className="text-sm font-bold font-mono">Gs. {cartTotal.toLocaleString()}</span>

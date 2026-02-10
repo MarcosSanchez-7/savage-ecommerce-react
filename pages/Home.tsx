@@ -14,12 +14,14 @@ import { ArrowRight, ChevronRight } from 'lucide-react';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import SeasonSection from '../components/SeasonSection';
 
+import ProductSkeleton from '../components/ProductSkeleton'; // Import Skeleton
+
 const Home: React.FC = () => {
-    const { products, addToCart, cart, categories } = useShop();
+    const { products, addToCart, cart, categories, loading } = useShop(); // Add loading
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    // Filter New Arrivals
+    // Filter New Arrivals logic...
     const newArrivals = products
         .filter(p => p.isActive !== false)
         .filter(p => p.isNew)
@@ -34,15 +36,19 @@ const Home: React.FC = () => {
                 <SeasonSection />
 
                 {/* NUEVOS INGRESOS Section */}
-                {newArrivals.length > 0 && (
-                    <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
-                        <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
-                            <div>
-                                <h2 className="text-3xl font-black uppercase tracking-tight">RECIEN LLEGADOS</h2>
-                                <p className="text-gray-500 mt-1 text-sm font-bold uppercase tracking-widest">Artículos limitados</p>
-                            </div>
+                <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
+                    <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                        <div>
+                            <h2 className="text-3xl font-black uppercase tracking-tight">RECIEN LLEGADOS</h2>
+                            <p className="text-gray-500 mt-1 text-sm font-bold uppercase tracking-widest">Artículos limitados</p>
                         </div>
+                    </div>
 
+                    {loading ? (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                            {[...Array(4)].map((_, i) => <ProductSkeleton key={i} />)}
+                        </div>
+                    ) : (
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                             {newArrivals.map(product => (
                                 <ProductCard
@@ -52,8 +58,8 @@ const Home: React.FC = () => {
                                 />
                             ))}
                         </div>
-                    </section>
-                )}
+                    )}
+                </section>
 
                 {/* Featured Products Section (Max 8) */}
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">

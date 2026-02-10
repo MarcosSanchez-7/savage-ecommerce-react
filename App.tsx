@@ -8,16 +8,18 @@ import { ShopProvider, useShop } from './context/ShopContext';
 import { AuthProvider } from './context/AuthContext';
 import SEO from './components/SEO';
 import LoadingScreen from './components/LoadingScreen';
-import { Toaster } from 'react-hot-toast'; //añadimos la libreria Toaster de react para que aparezcan los mensajes de error y demas
+import { Toaster } from 'react-hot-toast'; // Remove this line? No, replace it.
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
   // Check if we are in "Admin/Stock Mode" via env var or just default to Web Store
   const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  // if (loading) {
+  //   return <LoadingScreen />;
+  // }
 
   return (
     <BrowserRouter>
@@ -38,7 +40,21 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <ShopProvider>
-        <Toaster position="top-center" reverseOrder={false} style={{ backgroundColor: 'black', color: 'red' }} /> {/* libreria TOAST de react */}
+        <ToastContainer
+          aria-label="Notificaciones"
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+          limit={3}
+          toastClassName="savage-toast"
+        />
         <MainContent />
       </ShopProvider>
     </AuthProvider>

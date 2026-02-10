@@ -34,3 +34,61 @@
 .animate-fade-in-up {
   animation: fadeInUp 0.8s ease-out forwards;
 }
+
+/* --- REACT TOASTIFY CUSTOMIZATION (SAVAGE STYLE) --- */
+:root {
+  --toastify-color-dark: #09090b;
+  /* Zinc 950 */
+  --toastify-color-info: #fafafa;
+  --toastify-color-success: #EAB308;
+  /* Savage Gold */
+  --toastify-color-warning: #facc15;
+  --toastify-color-error: #ef4444;
+  --toastify-text-color-dark: #fafafa;
+}
+
+.Toastify__toast-container {
+  z-index: 999999 !important;
+  /* Above everything */
+}
+
+.Toastify__toast {
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 600 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.Toastify__toast--success {
+  background: #18181b !important;
+  /* Zinc 900 */
+  border-left: 4px solid #EAB308 !important;
+  /* Primary Gold */
+  color: white !important;
+}
+
+.Toastify__toast--error {
+  background: #18181b !important;
+  border-left: 4px solid #ef4444 !important;
+  /* Red */
+  color: white !important;
+}
+
+.Toastify__toast--info {
+  background: #18181b !important;
+  border-left: 4px solid #ffffff !important;
+  color: white !important;
+}
+
+.Toastify__progress-bar--success {
+  background: #EAB308 !important;
+}
+
+.Toastify__progress-bar--error {
+  background: #ef4444 !important;
+}
+
+.Toastify__close-button {
+  color: rgba(255, 255, 255, 0.5) !important;
+}

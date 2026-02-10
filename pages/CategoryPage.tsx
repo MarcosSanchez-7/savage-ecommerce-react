@@ -6,10 +6,12 @@ import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
 import { ArrowLeft } from 'lucide-react';
 
+import ProductSkeleton from '../components/ProductSkeleton';
+
 const CategoryPage: React.FC = () => {
     const { category, subcategory } = useParams<{ category: string; subcategory?: string }>();
     const navigate = useNavigate();
-    const { products, categories, addToCart, cart } = useShop();
+    const { products, categories, addToCart, cart, loading } = useShop();
 
     // The "Current" Category Node we are viewing.
     const [currentScopeId, setCurrentScopeId] = React.useState<string>('');
@@ -190,7 +192,12 @@ const CategoryPage: React.FC = () => {
                     </div>
                 )}
 
-                {categoryProducts.length > 0 ? (
+                {/* Loading State with Skeletons */}
+                {loading ? (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                        {[...Array(8)].map((_, i) => <ProductSkeleton key={i} />)}
+                    </div>
+                ) : categoryProducts.length > 0 ? (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {categoryProducts.map(product => (
                             <ProductCard

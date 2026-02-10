@@ -4,6 +4,7 @@ import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZo
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../supabase/client';
 import { useAuth } from './AuthContext';
+import { toast } from 'react-toastify';
 
 interface CartItem extends Product {
     quantity: number;
@@ -15,6 +16,8 @@ interface ShopContextType {
     cart: CartItem[];
     heroSlides: HeroSlide[];
     orders: Order[];
+    orderRequests: Order[];
+    deleteOrderRequest: (id: string) => void;
     blogPosts: BlogPost[];
     drops: Drop[];
     socialConfig: SocialConfig;
@@ -77,6 +80,7 @@ interface ShopContextType {
     addAttributeValue: (value: Omit<AttributeValue, 'id'>) => Promise<void>;
     deleteAttributeValue: (id: string) => Promise<void>;
     updateAttributeValue: (id: string, value: string) => Promise<void>;
+    confirmOrder: (orderId: string) => Promise<void>;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -141,9 +145,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return saved ? JSON.parse(saved) : [];
     });
 
-    // Orders
+    // Orders (Confirmed)
     const [orders, setOrders] = useState<Order[]>(() => {
         const saved = localStorage.getItem('savage_orders');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // Order Requests (Pending Confirmation)
+    const [orderRequests, setOrderRequests] = useState<Order[]>(() => {
+        const saved = localStorage.getItem('savage_order_requests');
         return saved ? JSON.parse(saved) : [];
     });
 
@@ -441,13 +451,60 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }
 
-        // 4. SECONDARY DATA (Orders, Delivery Zones, Blog)
+        // 4. SECONDARY DATA (Orders & Requests)
         try {
             const { data: zones } = await supabase.from('delivery_zones').select('*');
             if (zones) setDeliveryZones(zones.map(z => ({ ...z, price: Number(z.price), points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points })));
 
-            const { data: orders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-            if (orders) setOrders(orders.map(o => ({ ...o, total_amount: Number(o.total_amount), delivery_cost: Number(o.delivery_cost) })));
+            // Fetch CONFIRMED ORDERS
+            const { data: allOrders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+
+            if (allOrders) {
+                const normalizedOrders = allOrders.map(o => {
+                    let parsedCustomerInfo = o.customer_info;
+                    if (typeof parsedCustomerInfo === 'string') {
+                        try {
+                            parsedCustomerInfo = JSON.parse(parsedCustomerInfo);
+                        } catch (e) {
+                            console.error("Error parsing customer_info for order", o.id, e);
+                            parsedCustomerInfo = {};
+                        }
+                    }
+                    return {
+                        ...o,
+                        total_amount: Number(o.total_amount),
+                        delivery_cost: Number(o.delivery_cost),
+                        customerInfo: parsedCustomerInfo || {}
+                    };
+                });
+                setOrders(normalizedOrders);
+            }
+
+            // Fetch ORDER REQUESTS (Pending)
+            const { data: requests } = await supabase.from('order_requests').select('*').order('created_at', { ascending: false });
+
+            if (requests) {
+                const normalizedRequests = requests.map(r => {
+                    let parsedCustomerInfo = r.customer_info;
+                    if (typeof parsedCustomerInfo === 'string') {
+                        try {
+                            parsedCustomerInfo = JSON.parse(parsedCustomerInfo);
+                        } catch (e) {
+                            console.error("Error parsing customer_info for request", r.id, e);
+                            parsedCustomerInfo = {};
+                        }
+                    }
+                    return {
+                        ...r,
+                        total_amount: Number(r.total_amount),
+                        delivery_cost: Number(r.delivery_cost),
+                        customerInfo: parsedCustomerInfo || {}
+                    };
+                });
+                setOrderRequests(normalizedRequests);
+            } else {
+                setOrderRequests([]);
+            }
 
             const { data: posts } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
             if (posts) setBlogPosts(posts);
@@ -465,6 +522,305 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.warn("Non-critical error loading secondary data:", secondaryError);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // ... (rest of code) ...
+
+    const createOrder = async (order: Order) => {
+        // 1. Optimistic UI update (Add to REQUESTS, NOT ORDERS)
+        setOrderRequests(prev => [order, ...prev]);
+
+        try {
+            // 2. SECURITY CHECK FOR PRICES (Backend Validation)
+            // ... (Price validation logic remains same) ...
+
+            const dbOrderRequest = {
+                id: order.id,
+                display_id: order.display_id,
+                total_amount: order.total_amount,
+                delivery_cost: order.delivery_cost,
+                status: 'Pendiente',
+                items: order.items,
+                customer_info: order.customerInfo || {},
+                product_ids: order.product_ids || []
+            };
+
+            // INSERT INTO order_requests TABLE
+            const { error } = await supabase
+                .from('order_requests')
+                .insert([dbOrderRequest]);
+
+            if (error) {
+                console.error('Error creating order request in Supabase:', error);
+                alert('Hubo un error guardando tu solicitud. Por favor contacta soporte.');
+            }
+        } catch (e) {
+            console.error('Exception creating order:', e);
+        }
+    };
+
+    const updateOrderStatus = async (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
+        // 1. Local State Optimistic Update (Order Status Only)
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+
+        let confirmedStatus = status; // Initialize confirmedStatus
+
+        try {
+            // 2. DB Update (Order Status) with Retry Logic for Enum Casing
+            // Helper to attempt update
+            const attemptUpdate = async (statusToUse: string) => {
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: statusToUse })
+                    .eq('id', orderId);
+                return error;
+            };
+
+            // Attempt 1: As provided (PascalCase usually - Standard 'Entregado')
+            let error = await attemptUpdate(status);
+
+            // Retry Logic for Enum Casing (Sequential Fallbacks - Spanish Only)
+            if (error && error.code === '22P02') {
+                console.warn(`Status '${status}' rejected. Trying UPPERCASE...`);
+                // Attempt 2: UPPERCASE
+                const upperStatus = status.toUpperCase();
+                error = await attemptUpdate(upperStatus);
+                if (!error) confirmedStatus = upperStatus as any;
+            }
+
+            if (error && error.code === '22P02') {
+                console.warn(`Status '${status.toUpperCase()}' rejected. Trying lowercase...`);
+                // Attempt 3: lowercase
+                const lowerStatus = status.toLowerCase();
+                error = await attemptUpdate(lowerStatus);
+                if (!error) confirmedStatus = lowerStatus as any;
+            }
+
+            if (error) {
+                // If all attempts failed
+                console.error('Error updating order status in Supabase (All Spanish formats failed):', error);
+                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum. Revise que la columna status acepte 'Entregado'.`);
+                return;
+            }
+
+            // Success! Proceed with Stock Logic using the confirmed status semantics
+            // We map confirmedStatus back to our logical types for the IF checks
+            // (Assumes logical 'Entregado' maps to 'ENTREGADO'/'entregado'/'Entregado')
+            const isDelivered = confirmedStatus.toLowerCase() === 'entregado' || confirmedStatus.toLowerCase() === 'finalizado';
+            const isPending = confirmedStatus.toLowerCase() === 'pendiente';
+
+            // 3. Stock Management Logic
+            // FIX: Deduct stock when Order is CONFIRMED or DELIVERED (and not before)
+            const currentOrder = orders.find(o => o.id === orderId);
+            const oldStatusNormalized = currentOrder?.status?.toLowerCase() || '';
+            const newStatusNormalized = confirmedStatus.toLowerCase();
+
+            // States that imply stock has been deducted
+            const deductedStates = ['confirmado en mercado', 'en camino', 'entregado', 'finalizado'];
+            const wasDeducted = deductedStates.includes(oldStatusNormalized);
+            const isTargetState = deductedStates.includes(newStatusNormalized);
+
+            // Trigger deduction only if we are moving TO a deducted state FROM a non-deducted state (e.g. Pendiente)
+            if (isTargetState && !wasDeducted && currentOrder && currentOrder.items) {
+                console.log(`Deducting stock for Order #${currentOrder.display_id} (Status: ${confirmedStatus})`);
+
+                let updatedCount = 0;
+
+                for (const item of currentOrder.items as any[]) {
+                    // 1. Try to find by ID (Standard)
+                    let product = products.find(p => p.id === item.id);
+
+                    // 2. Fallback: Try to find by Name
+                    if (!product) {
+                        product = products.find(p => p.name === item.name);
+                    }
+
+                    if (product) {
+                        const qtyToDeduct = item.quantity || 1;
+                        const sizeToDeduct = item.selectedSize;
+
+                        // A. Deduct from Total Stock
+                        const currentStock = product.stock || 0;
+                        const newStock = Math.max(0, currentStock - qtyToDeduct);
+
+                        // B. Deduct from Inventory (Size Matrix)
+                        if (sizeToDeduct && product.inventory) {
+                            const invItem = product.inventory.find(i => i.size === sizeToDeduct);
+                            if (invItem) {
+                                const newQty = Math.max(0, invItem.quantity - qtyToDeduct);
+
+                                // Update Inventory Table
+                                const { error: invError } = await supabase
+                                    .from('inventory')
+                                    .update({ quantity: newQty })
+                                    .eq('id', invItem.id);
+
+                                if (invError) console.error(`Error updating inventory size ${sizeToDeduct} for ${product.name}:`, invError);
+                            }
+                        }
+
+                        // Update Product Table (Total Stock)
+                        const { data: updatedData, error: stockError } = await supabase
+                            .from('products')
+                            .update({ stock_quantity: newStock })
+                            .eq('id', product.id)
+                            .select();
+
+                        if (stockError) {
+                            console.error('Error updating stock in DB:', stockError);
+                        } else {
+                            // Local State Update (Complex: Update total stock AND inventory array)
+                            setProducts(prev => prev.map(p => {
+                                if (p.id === product!.id) {
+                                    const updatedInventory = p.inventory?.map(inv =>
+                                        inv.size === sizeToDeduct ? { ...inv, quantity: Math.max(0, inv.quantity - qtyToDeduct) } : inv
+                                    );
+                                    return {
+                                        ...p,
+                                        stock: updatedData[0].stock_quantity,
+                                        inventory: updatedInventory
+                                    };
+                                }
+                                return p;
+                            }));
+                        }
+
+                        // 4. Register Sale in 'sales' table
+                        try {
+                            // Determinar precio unitario:
+                            // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
+                            // Si no, usar el precio actual del producto.
+                            const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
+
+                            const saleRecord = {
+                                product_id: product.id,
+                                quantity: qtyToDeduct,
+                                size: item.selectedSize || 'Standard',
+                                unit_price: saleUnitPrice,
+                                cost_price: product.costPrice || 0,
+                                origin: 'web',
+                                created_at: new Date().toISOString()
+                            };
+
+                            const { error: salesError } = await supabase
+                                .from('sales')
+                                .insert([saleRecord]);
+
+                            if (salesError) {
+                                console.error('Error inserting into sales table:', salesError);
+                            } else {
+                                console.log('Sale registered successfully for', product.name);
+                            }
+
+                        } catch (saleErr) {
+                            console.error('Exception registering sale:', saleErr);
+                        }
+                        updatedCount++;
+                    } else {
+                        console.error(`CRITICO: No se encontró producto para descontar stock: ${item.name} (${item.id})`);
+                        alert(`ATENCIÓN: No se pudo descontar el stock de "${item.name}". No se encontró en la base de datos de productos.`);
+                    }
+                }
+                if (updatedCount > 0) {
+                    alert(`ÉXITO TOTAL: Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
+                }
+            } else if (newStatusNormalized === 'pendiente' && currentOrder) {
+                // Restoration Logic (Re-opening order)
+                // Restore if coming from a deducted state
+
+                const wasDeducted = ['confirmado en mercado', 'en camino', 'entregado', 'finalizado'].includes(oldStatusNormalized);
+
+                if (wasDeducted) {
+                    for (const item of currentOrder.items as any[]) {
+                        let product = products.find(p => p.id === item.id);
+                        if (!product) product = products.find(p => p.name === item.name);
+
+                        if (product) {
+                            const qtyToAdd = item.quantity || 1;
+                            const sizeToAdd = item.selectedSize;
+                            const newStock = (product.stock || 0) + qtyToAdd;
+
+                            // Restore Inventory Size
+                            if (sizeToAdd && product.inventory) {
+                                const invItem = product.inventory.find(i => i.size === sizeToAdd);
+                                if (invItem) {
+                                    await supabase.from('inventory').update({ quantity: invItem.quantity + qtyToAdd }).eq('id', invItem.id);
+                                }
+                            }
+
+                            // Restore Product Table
+                            const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+
+                            if (!stockError) {
+                                setProducts(prev => prev.map(p => {
+                                    if (p.id === product!.id) {
+                                        const updatedInventory = p.inventory?.map(inv =>
+                                            inv.size === sizeToAdd ? { ...inv, quantity: inv.quantity + qtyToAdd } : inv
+                                        );
+                                        return { ...p, stock: newStock, inventory: updatedInventory };
+                                    }
+                                    return p;
+                                }));
+                            }
+                        }
+                    }
+                    alert('Stock restaurado porque se reabrió el pedido (Volvió a Pendiente).');
+                }
+            }
+
+        } catch (e) {
+            console.error('Exception updating order status:', e);
+        }
+    };
+
+
+    const confirmOrder = async (requestId: string) => {
+        // Find the request
+        const request = orderRequests.find(r => r.id === requestId);
+        if (!request) return;
+
+        // Optimistic Updates
+        setOrderRequests(prev => prev.filter(r => r.id !== requestId));
+        const newOrder = { ...request, status: 'Pendiente' as const };
+        setOrders(prev => [newOrder, ...prev]);
+
+        try {
+            // 1. Insert into ORDERS table
+            const dbOrder = {
+                id: request.id,
+                display_id: request.display_id,
+                total_amount: request.total_amount,
+                delivery_cost: request.delivery_cost,
+                status: 'Pendiente',
+                items: request.items,
+                customer_info: request.customerInfo || {},
+                product_ids: request.product_ids || []
+            };
+
+            const { error: insertError } = await supabase.from('orders').insert([dbOrder]);
+            if (insertError) throw insertError;
+
+            // 2. Delete from ORDER_REQUESTS table
+            const { error: deleteError } = await supabase.from('order_requests').delete().eq('id', requestId);
+            if (deleteError) {
+                console.warn("Order confirmed but failed to delete from requests:", deleteError);
+            }
+
+        } catch (e) {
+            console.error("Error confirming order:", e);
+            alert("Error al confirmar el pedido. Revisa la consola.");
+            // Rollback optimistic update if desired, but for now simple alert
+        }
+    };
+
+    const deleteOrderRequest = async (id: string) => {
+        setOrderRequests(prev => prev.filter(r => r.id !== id));
+        try {
+            const { error } = await supabase.from('order_requests').delete().eq('id', id);
+            if (error) throw error;
+        } catch (e) {
+            console.error("Error deleting request:", e);
         }
     };
 
@@ -565,19 +921,35 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const addToCart = (product: Product, size?: string) => {
         const finalSize = size || (product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'One Size');
 
+        // Optional: Close cart when adding (or keep open if desired, but user didn't specify)
+        setIsCartOpen(false);
+
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id && item.selectedSize === finalSize);
+
             if (existing) {
+                toast.success(`⚡ ¡Agregado! ${product.name} (x${existing.quantity + 1}) ya es tuyo.`);
                 return prev.map(item =>
                     (item.id === product.id && item.selectedSize === finalSize) ? { ...item, quantity: item.quantity + 1 } : item
                 );
             }
+
+            toast.success(`⚡ ¡Agregado! ${product.name} ya es tuyo.`);
             return [...prev, { ...product, quantity: 1, selectedSize: finalSize }];
         });
-        setIsCartOpen(false); // Disabled auto-open
     };
 
     const removeFromCart = (productId: string, size: string) => {
+        // Find item first for toast message (need to access current state, not just prev)
+        // Since 'cart' state is available in scope, use it.
+        const itemToRemove = cart.find(item => item.id === productId && item.selectedSize === size);
+
+        if (itemToRemove) {
+            toast.info(`🛒 Eliminado: ${itemToRemove.name} fuera del carrito.`, {
+                icon: '🛒'
+            });
+        }
+
         setCart(prev => prev.filter(item => !(item.id === productId && item.selectedSize === size)));
     };
 
@@ -840,318 +1212,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Order Logic
     // Order Logic - SUPABASE SYNCED
-    const createOrder = async (order: Order) => {
-        // Optimistic UI
-        setOrders(prev => [order, ...prev]);
-        setCart([]); // Clear cart immediately for better UX
-        localStorage.removeItem('savage_cart');
-
-        try {
-            // SECURITY: Validate Prices against DB (Source of Truth)
-            // 1. Extract IDs and Quantities
-            const orderItems = order.items as any[] || [];
-            const itemMap = new Map<string, number>(); // ID -> Quantity
-
-            orderItems.forEach(item => {
-                const qty = item.quantity || 1;
-                // Accumulate quantity for same product (diff sizes)
-                itemMap.set(item.id, (itemMap.get(item.id) || 0) + qty);
-            });
-
-            const productIds = Array.from(itemMap.keys());
-
-            if (productIds.length > 0) {
-                // 2. Fetch Fresh Data
-                const { data: dbProducts, error: priceError } = await supabase
-                    .from('products')
-                    .select('id, price, name')
-                    .in('id', productIds);
-
-                if (priceError) {
-                    console.error("Security Check Failed: Could not fetch product prices.", priceError);
-                    // Decide whether to abort or proceed with warning. For security, we should probably abort or use frontend values but flag it.
-                    // But blocking the user might be bad if it's just a network glitch. 
-                    // However, 'Admin-Only' mode implies high security.
-                    // Let's recalculate with what we have if possible, or fail safe.
-                    // Continuing with FRONTEND values but logging CRITICAL error.
-                }
-
-                if (dbProducts) {
-                    // 3. Recalculate Total
-                    let calculatedSubtotal = 0;
-
-                    orderItems.forEach(item => {
-                        const dbProd = dbProducts.find(p => p.id === item.id);
-                        if (dbProd) {
-                            const qty = item.quantity || 1;
-                            const realPrice = Number(dbProd.price);
-                            calculatedSubtotal += (realPrice * qty);
-                        } else {
-                            console.warn(`Product ${item.id} not found in DB validation. Using frontend price.`);
-                            calculatedSubtotal += (item.price * (item.quantity || 1));
-                        }
-                    });
-
-                    const calculatedTotal = calculatedSubtotal + (order.delivery_cost || 0);
-
-                    // 4. Validate
-                    const mismatch = Math.abs(calculatedTotal - order.total_amount) > 100; // 100 Gs margin
-                    if (mismatch) {
-                        console.warn(`SECURITY ALERT: Price Manipulation Detected! Frontend: ${order.total_amount}, ServerCalc: ${calculatedTotal}. Overwriting with Server Value.`);
-                        // Overwrite with correct value
-                        order.total_amount = calculatedTotal;
-                    } else {
-                        console.log(`Security Check Passed: Price Verified (${calculatedTotal})`);
-                    }
-                }
-            }
-
-            const dbOrder = {
-                id: order.id,
-                display_id: order.display_id,
-                // USE VERIFIED TOTAL
-                total_amount: order.total_amount,
-                delivery_cost: order.delivery_cost,
-                status: 'Pendiente', // Force Spanish standard
-                items: order.items,
-                customer_info: order.customerInfo,
-                product_ids: order.product_ids || []
-            };
-
-            const { error } = await supabase
-                .from('orders')
-                .insert([dbOrder]);
-
-            if (error) {
-                console.error('Error creating order in Supabase:', error);
-                alert('Hubo un error guardando tu pedido en el sistema, pero el enlace de WhatsApp se generó correctamente.');
-            }
-        } catch (e) {
-            console.error('Exception creating order:', e);
-        }
-    };
-
-    const updateOrderStatus = async (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
-        // 1. Local State Optimistic Update (Order Status Only)
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
-
-        try {
-            // 2. DB Update (Order Status) with Retry Logic for Enum Casing
-            let confirmedStatus = status;
-            let dbSuccess = false;
-            let errorDetails = null;
-
-            // Helper to attempt update
-            const attemptUpdate = async (statusToUse: string) => {
-                const { error } = await supabase
-                    .from('orders')
-                    .update({ status: statusToUse })
-                    .eq('id', orderId);
-                return error;
-            };
-
-            // Attempt 1: As provided (PascalCase usually - Standard 'Entregado')
-            let error = await attemptUpdate(status);
-
-            // Retry Logic for Enum Casing (Sequential Fallbacks - Spanish Only)
-            if (error && error.code === '22P02') {
-                console.warn(`Status '${status}' rejected. Trying UPPERCASE...`);
-                // Attempt 2: UPPERCASE
-                const upperStatus = status.toUpperCase();
-                error = await attemptUpdate(upperStatus);
-                if (!error) confirmedStatus = upperStatus as any;
-            }
-
-            if (error && error.code === '22P02') {
-                console.warn(`Status '${status.toUpperCase()}' rejected. Trying lowercase...`);
-                // Attempt 3: lowercase
-                const lowerStatus = status.toLowerCase();
-                error = await attemptUpdate(lowerStatus);
-                if (!error) confirmedStatus = lowerStatus as any;
-            }
-
-            if (error) {
-                // If all attempts failed
-                console.error('Error updating order status in Supabase (All Spanish formats failed):', error);
-                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum. Revise que la columna status acepte 'Entregado'.`);
-                return;
-            }
-
-            // Success! Proceed with Stock Logic using the confirmed status semantics
-            // We map confirmedStatus back to our logical types for the IF checks
-            // (Assumes logical 'Entregado' maps to 'ENTREGADO'/'entregado'/'Entregado')
-            const isDelivered = confirmedStatus.toLowerCase() === 'entregado' || confirmedStatus.toLowerCase() === 'finalizado';
-            const isPending = confirmedStatus.toLowerCase() === 'pendiente';
-
-            // 3. Stock Management Logic
-            // FIX: Deduct stock when Order is CONFIRMED or DELIVERED (and not before)
-            const currentOrder = orders.find(o => o.id === orderId);
-            const oldStatusNormalized = currentOrder?.status?.toLowerCase() || '';
-            const newStatusNormalized = confirmedStatus.toLowerCase();
-
-            // States that imply stock has been deducted
-            const deductedStates = ['confirmado en mercado', 'en camino', 'entregado', 'finalizado'];
-            const wasDeducted = deductedStates.includes(oldStatusNormalized);
-            const isTargetState = deductedStates.includes(newStatusNormalized);
-
-            // Trigger deduction only if we are moving TO a deducted state FROM a non-deducted state (e.g. Pendiente)
-            if (isTargetState && !wasDeducted && currentOrder && currentOrder.items) {
-                console.log(`Deducting stock for Order #${currentOrder.display_id} (Status: ${confirmedStatus})`);
-
-                let updatedCount = 0;
-
-                for (const item of currentOrder.items as any[]) {
-                    // 1. Try to find by ID (Standard)
-                    let product = products.find(p => p.id === item.id);
-
-                    // 2. Fallback: Try to find by Name
-                    if (!product) {
-                        product = products.find(p => p.name === item.name);
-                    }
-
-                    if (product) {
-                        const qtyToDeduct = item.quantity || 1;
-                        const sizeToDeduct = item.selectedSize;
-
-                        // A. Deduct from Total Stock
-                        const currentStock = product.stock || 0;
-                        const newStock = Math.max(0, currentStock - qtyToDeduct);
-
-                        // B. Deduct from Inventory (Size Matrix)
-                        if (sizeToDeduct && product.inventory) {
-                            const invItem = product.inventory.find(i => i.size === sizeToDeduct);
-                            if (invItem) {
-                                const newQty = Math.max(0, invItem.quantity - qtyToDeduct);
-
-                                // Update Inventory Table
-                                const { error: invError } = await supabase
-                                    .from('inventory')
-                                    .update({ quantity: newQty })
-                                    .eq('id', invItem.id);
-
-                                if (invError) console.error(`Error updating inventory size ${sizeToDeduct} for ${product.name}:`, invError);
-                            }
-                        }
-
-                        // Update Product Table (Total Stock)
-                        const { data: updatedData, error: stockError } = await supabase
-                            .from('products')
-                            .update({ stock_quantity: newStock })
-                            .eq('id', product.id)
-                            .select();
-
-                        if (stockError) {
-                            console.error('Error updating stock in DB:', stockError);
-                        } else {
-                            // Local State Update (Complex: Update total stock AND inventory array)
-                            setProducts(prev => prev.map(p => {
-                                if (p.id === product!.id) {
-                                    const updatedInventory = p.inventory?.map(inv =>
-                                        inv.size === sizeToDeduct ? { ...inv, quantity: Math.max(0, inv.quantity - qtyToDeduct) } : inv
-                                    );
-                                    return {
-                                        ...p,
-                                        stock: updatedData[0].stock_quantity,
-                                        inventory: updatedInventory
-                                    };
-                                }
-                                return p;
-                            }));
-                        }
-
-                        // 4. Register Sale in 'sales' table
-                        try {
-
-                            // Determinar precio unitario:
-                            // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
-                            // Si no, usar el precio actual del producto.
-                            // Nota: item.price podría no existir si items es un array simple. Asumimos que createOrder guarda precio.
-                            const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
-
-                            const saleRecord = {
-                                product_id: product.id,
-                                quantity: qtyToDeduct,
-                                size: item.selectedSize || 'Standard',
-                                unit_price: saleUnitPrice,
-                                cost_price: product.costPrice || 0,
-                                origin: 'web',
-                                created_at: new Date().toISOString() // Optional, DB usually handles it
-                            };
-
-                            const { error: salesError } = await supabase
-                                .from('sales')
-                                .insert([saleRecord]);
-
-                            if (salesError) {
-                                console.error('Error inserting into sales table:', salesError);
-                                // Non-blocking error alert
-                                // alert(`Atención: Stock descontado pero error al registrar venta en tabla 'sales': ${salesError.message}`);
-                            } else {
-                                console.log('Sale registered successfully for', product.name);
-                            }
-
-                        } catch (saleErr) {
-                            console.error('Exception registering sale:', saleErr);
-                        }
-                        updatedCount++;
-                    } else {
-                        console.error(`CRITICO: No se encontró producto para descontar stock: ${item.name} (${item.id})`);
-                        alert(`ATENCIÓN: No se pudo descontar el stock de "${item.name}". No se encontró en la base de datos de productos.`);
-                    }
-                }
-                if (updatedCount > 0) {
-                    alert(`ÉXITO TOTAL: Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
-                }
-            } else if (newStatusNormalized === 'pendiente' && currentOrder) {
-                // Restoration Logic (Re-opening order)
-                // Restore if coming from a deducted state
-                // We re-calculate because we are in a different block scope if I don't lift vars
-                // reusing 'currentOrder' and 'oldStatusNormalized' from outer scope
-
-                const wasDeducted = ['confirmado en mercado', 'en camino', 'entregado', 'finalizado'].includes(oldStatusNormalized);
-
-                if (wasDeducted) {
-                    for (const item of currentOrder.items as any[]) {
-                        let product = products.find(p => p.id === item.id);
-                        if (!product) product = products.find(p => p.name === item.name);
-
-                        if (product) {
-                            const qtyToAdd = item.quantity || 1;
-                            const sizeToAdd = item.selectedSize;
-                            const newStock = (product.stock || 0) + qtyToAdd;
-
-                            // Restore Inventory Size
-                            if (sizeToAdd && product.inventory) {
-                                const invItem = product.inventory.find(i => i.size === sizeToAdd);
-                                if (invItem) {
-                                    await supabase.from('inventory').update({ quantity: invItem.quantity + qtyToAdd }).eq('id', invItem.id);
-                                }
-                            }
-
-                            // Restore Product Table
-                            const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
-
-                            if (!stockError) {
-                                setProducts(prev => prev.map(p => {
-                                    if (p.id === product!.id) {
-                                        const updatedInventory = p.inventory?.map(inv =>
-                                            inv.size === sizeToAdd ? { ...inv, quantity: inv.quantity + qtyToAdd } : inv
-                                        );
-                                        return { ...p, stock: newStock, inventory: updatedInventory };
-                                    }
-                                    return p;
-                                }));
-                            }
-                        }
-                    }
-                    alert('Stock restaurado porque se reabrió el pedido (Volvió a Pendiente).');
-                }
-            }
-
-        } catch (e) {
-            console.error('Exception updating order status:', e);
-        }
-    };
+    // Old duplicate implementations removed.
 
     const deleteOrder = async (orderId: string) => {
         const targetId = String(orderId);
@@ -1686,7 +1747,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             deleteAttribute,
             addAttributeValue,
             deleteAttributeValue,
-            updateAttributeValue
+            updateAttributeValue,
+            orderRequests,
+            deleteOrderRequest,
+            confirmOrder
 
         }}>
             {children}

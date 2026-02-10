@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 const Hero: React.FC = () => {
-  const { heroSlides, heroCarouselConfig } = useShop();
+  const { heroSlides, heroCarouselConfig, loading } = useShop();
   const [currentSlide, setCurrentSlide] = useState(0);
   const timeoutRef = useRef<number | null>(null);
 
@@ -77,6 +77,23 @@ const Hero: React.FC = () => {
     touchEndX.current = null;
   };
 
+  if (loading) {
+    // Return just the Skeleton structure immediately if loading, avoiding the "No Slides" check below
+    return (
+      <header className="relative w-full h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden bg-black animate-pulse">
+        <div className="absolute inset-0 bg-zinc-900 w-full h-full" />
+        <div className="relative z-20 flex flex-col items-center text-center px-4 max-w-4xl mx-auto w-full gap-4">
+          {/* Title Skeleton */}
+          <div className="h-16 md:h-24 w-3/4 bg-zinc-800/50 rounded-lg backdrop-blur-sm mb-4"></div>
+          {/* Subtitle Skeleton */}
+          <div className="h-6 md:h-8 w-1/2 bg-zinc-800/30 rounded backdrop-blur-sm mb-8"></div>
+          {/* Button Skeleton */}
+          <div className="h-10 md:h-12 w-40 bg-zinc-800/80 rounded shadow-xl"></div>
+        </div>
+      </header>
+    );
+  }
+
   if (heroSlides.length === 0) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-black text-white">
@@ -90,7 +107,7 @@ const Hero: React.FC = () => {
 
   const current = heroSlides[currentSlide];
 
-  if (!current) return null;
+  // if (!current) return null; // Removed to allow Skeleton rendering while loading
 
   return (
     <header
@@ -100,10 +117,15 @@ const Hero: React.FC = () => {
       onTouchEnd={handleTouchEnd}
     >
       {/* Background Image with Overlay */}
+      {/* If loading, show a dark placeholder background */}
+      {(!heroSlides || heroSlides.length === 0) && (
+        <div className="absolute inset-0 bg-zinc-900 w-full h-full" />
+      )}
+
       {heroSlides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 bg-cover transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-0' : 'opacity-0 -z-10'}`}
+          className={`absolute inset-0 bg-cover bg-no-repeat transition-opacity duration-1000 ease-in-out ${index === currentSlide && !loading ? 'opacity-100 z-0' : 'opacity-0 -z-10'}`}
           style={{
             backgroundImage: `url('${slide.image}')`,
             backgroundPosition: isMobile
@@ -117,22 +139,42 @@ const Hero: React.FC = () => {
       ))}
 
       {/* Content */}
-      <div className="relative z-20 flex flex-col items-center text-center px-4 max-w-4xl mx-auto animate-fade-in-up">
-        <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-2 md:mb-4 uppercase">
-          {current.title.split(' ').slice(0, 1)} <span className="text-stroke text-transparent" style={{ WebkitTextStroke: '1px white' }}>{current.title.split(' ').slice(1).join(' ')}</span>
-        </h1>
-        <h2 className="text-gray-300 text-sm md:text-xl font-light tracking-widest mb-6 md:mb-8 uppercase">
-          {current.subtitle}
-        </h2>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            to={current.buttonLink || '/'}
-            className="bg-primary hover:opacity-90 text-white h-10 md:h-12 px-6 md:px-8 rounded font-bold text-xs md:text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-yellow-900/20 flex items-center justify-center"
-          >
-            {current.buttonText || 'EXPLORAR AHORA'}
-          </Link>
-
-        </div>
+      <div className="relative z-20 flex flex-col items-center text-center px-4 max-w-4xl mx-auto animate-fade-in-up w-full">
+        {loading ? (
+          // SKELETON STATE
+          <div className="flex flex-col items-center w-full gap-4 animate-pulse">
+            {/* Title Skeleton */}
+            <div className="h-16 md:h-24 w-3/4 bg-zinc-800/50 rounded-lg backdrop-blur-sm mb-4"></div>
+            {/* Subtitle Skeleton */}
+            <div className="h-6 md:h-8 w-1/2 bg-zinc-800/30 rounded backdrop-blur-sm mb-8"></div>
+            {/* Button Skeleton */}
+            <div className="h-10 md:h-12 w-40 bg-zinc-800/80 rounded shadow-xl"></div>
+          </div>
+        ) : (
+          // REAL CONTENT
+          <>
+            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-2 md:mb-4 uppercase z-10 transition-all duration-300">
+              {current ? (
+                <>
+                  {current.title?.split(' ').slice(0, 1)} <span className="text-stroke text-transparent" style={{ WebkitTextStroke: '1px white' }}>{current.title?.split(' ').slice(1).join(' ')}</span>
+                </>
+              ) : (
+                "SAVAGE"
+              )}
+            </h1>
+            <h2 className="text-gray-300 text-sm md:text-xl font-light tracking-widest mb-6 md:mb-8 uppercase z-10 transition-all duration-300">
+              {current?.subtitle}
+            </h2>
+            <div className="flex flex-wrap justify-center gap-4 z-20">
+              <Link
+                to={current?.buttonLink || '/'}
+                className="bg-primary hover:opacity-90 text-white h-10 md:h-12 px-6 md:px-8 rounded font-bold text-xs md:text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-yellow-900/20 flex items-center justify-center"
+              >
+                {current?.buttonText || 'EXPLORAR AHORA'}
+              </Link>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Navigation */}
