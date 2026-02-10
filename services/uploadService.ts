@@ -1,5 +1,5 @@
 
-import { supabase } from './supabase';
+import { supabase } from '../supabase/client';
 
 /**
  * Uploads a file to Supabase Storage and returns the public URL.

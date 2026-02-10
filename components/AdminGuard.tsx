@@ -1,10 +1,13 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Login from '../pages/Login';
 
 const AdminGuard: React.FC = () => {
-    const { isAdmin, loading, session } = useAuth();
+    const { isAdmin, loading, session, user } = useAuth();
+    const location = useLocation();
+
+    // LAST LINE OF DEFENSE
+    // Verificamos nuevamente toda la cadena de confianza
 
     if (loading) {
         return (
@@ -14,16 +17,19 @@ const AdminGuard: React.FC = () => {
         );
     }
 
-    // 1. Debe estar logueado
-    if (!session) {
-        return <Navigate to="/login" replace />;
+    // 1. Check Session
+    if (!session || !user) {
+        console.warn("Intento de acceso a Admin sin sesión.", location.pathname);
+        return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    // 2. Debe ser Admin (CEO)
+    // 2. Check Strict Role
     if (!isAdmin) {
+        console.warn(`Intento de acceso NO AUTORIZADO a Admin. Usuario: ${user.email}, Rol insuficiente.`);
         return <Navigate to="/" replace />;
     }
 
+    // Autorizado
     return <Outlet />;
 };
 

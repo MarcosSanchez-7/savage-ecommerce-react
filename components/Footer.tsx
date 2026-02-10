@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabase/client';
 import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
