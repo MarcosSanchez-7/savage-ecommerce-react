@@ -53,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
         const tagMatch = p.tags && Array.isArray(p.tags) ? p.tags.some(tag => tag && tag.toLowerCase().includes(query)) : false;
 
         return nameMatch || catMatch || subMatch || tagMatch;
-      }).slice(0, 5);
+      }).slice(0, 50);
       setSearchResults(results);
     } else {
       setSearchResults([]);
