@@ -456,28 +456,38 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const { data: zones } = await supabase.from('delivery_zones').select('*');
             if (zones) setDeliveryZones(zones.map(z => ({ ...z, price: Number(z.price), points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points })));
 
-            // Fetch CONFIRMED ORDERS
-            const { data: allOrders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+            // Fetch CONFIRMED ORDERS (Protected)
+            // Only fetch if user looks like admin? RLS will handle strictness, we just handle the error.
+            if (user) {
+                const { data: allOrders, error: ordersError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
 
-            if (allOrders) {
-                const normalizedOrders = allOrders.map(o => {
-                    let parsedCustomerInfo = o.customer_info;
-                    if (typeof parsedCustomerInfo === 'string') {
-                        try {
-                            parsedCustomerInfo = JSON.parse(parsedCustomerInfo);
-                        } catch (e) {
-                            console.error("Error parsing customer_info for order", o.id, e);
-                            parsedCustomerInfo = {};
-                        }
+                if (ordersError) {
+                    // RLS or Permissions Error
+                    if (ordersError.code === '42501' || ordersError.code === 'PGRST301') {
+                        console.warn("User unauthorized to fetch orders (Normal for customers).");
+                    } else {
+                        console.error("Error fetching orders:", ordersError);
                     }
-                    return {
-                        ...o,
-                        total_amount: Number(o.total_amount),
-                        delivery_cost: Number(o.delivery_cost),
-                        customerInfo: parsedCustomerInfo || {}
-                    };
-                });
-                setOrders(normalizedOrders);
+                } else if (allOrders) {
+                    const normalizedOrders = allOrders.map(o => {
+                        let parsedCustomerInfo = o.customer_info;
+                        if (typeof parsedCustomerInfo === 'string') {
+                            try {
+                                parsedCustomerInfo = JSON.parse(parsedCustomerInfo);
+                            } catch (e) {
+                                console.error("Error parsing customer_info for order", o.id, e);
+                                parsedCustomerInfo = {};
+                            }
+                        }
+                        return {
+                            ...o,
+                            total_amount: Number(o.total_amount),
+                            delivery_cost: Number(o.delivery_cost),
+                            customerInfo: parsedCustomerInfo || {}
+                        };
+                    });
+                    setOrders(normalizedOrders);
+                }
             }
 
             // Fetch ORDER REQUESTS (Pending)
@@ -528,13 +538,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // ... (rest of code) ...
 
     const createOrder = async (order: Order) => {
-        // 1. Optimistic UI update (Add to REQUESTS, NOT ORDERS)
-        setOrderRequests(prev => [order, ...prev]);
+        // 1. CLIENT-SIDE PRE-FLIGHT VALIDATION
+        if (order.total_amount <= 0) {
+            console.error("Critical: Attempted to create invalid order (Amount <= 0)", order);
+            toast.error("Error: El pedido no es válido (Monto incorrecto).");
+            return;
+        }
 
         try {
-            // 2. SECURITY CHECK FOR PRICES (Backend Validation)
-            // ... (Price validation logic remains same) ...
-
+            // 2. PREPARE DB OBJECT
             const dbOrderRequest = {
                 id: order.id,
                 display_id: order.display_id,
@@ -546,17 +558,25 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 product_ids: order.product_ids || []
             };
 
-            // INSERT INTO order_requests TABLE
+            // 3. INSERT INTO order_requests TABLE (Wait for confirmation)
             const { error } = await supabase
                 .from('order_requests')
                 .insert([dbOrderRequest]);
 
             if (error) {
                 console.error('Error creating order request in Supabase:', error);
-                alert('Hubo un error guardando tu solicitud. Por favor contacta soporte.');
+                toast.error('Hubo un error guardando tu solicitud. Por favor contacta soporte.');
+                return; // STOP EXECUTION
             }
+
+            // 4. SUCCESS: Update State & Clear Cart
+            setOrderRequests(prev => [order, ...prev]);
+            setCart([]); // Clear cart ONLY after successful DB insert
+            toast.success("¡Pedido registrado correctamente!");
+
         } catch (e) {
             console.error('Exception creating order:', e);
+            toast.error("Error inesperado al crear el pedido.");
         }
     };
 
@@ -1016,17 +1036,26 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const addProduct = async (product: Product): Promise<string | null> => {
-        // Optimistic UI update (using the temporary ID passed from Admin)
-        setProducts(prev => [...prev, product]);
+        // CLIENT-SIDE VALIDATION
+        if (product.price <= 0) {
+            alert("Error: El precio del producto debe ser mayor a 0.");
+            return null;
+        }
 
         try {
-            // DB Mapping: OMIT 'id' so Supabase generates a UUID
+            // SANITIZATION
+            const safePrice = Math.max(0, parseFloat(product.price.toString()));
+            const safeOriginalPrice = product.originalPrice ? Math.max(0, parseFloat(product.originalPrice.toString())) : null;
+            const safeStock = Math.max(0, product.stock || 0);
+            const safeCost = Math.max(0, product.costPrice || 0);
+
+            // DB Mapping
             const dbProduct = {
                 // id: product.id, <--- REMOVED to let DB generate UUID
-                savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
+                savage_id: `SVG-${product.id}`,
                 name: product.name,
-                price: parseFloat(product.price.toString()),
-                original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
+                price: safePrice,
+                original_price: safeOriginalPrice,
                 category: product.category,
                 subcategory: product.subcategory,
                 type: product.type,
@@ -1038,13 +1067,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_featured: product.isFeatured,
                 is_category_featured: product.isCategoryFeatured,
                 description: product.description,
-                stock_quantity: product.stock || 0,
-                cost_price: product.costPrice || 0,
+                stock_quantity: safeStock,
+                cost_price: safeCost,
                 slug: product.slug,
                 image_alts: product.imageAlts,
                 is_imported: product.isImported,
                 visual_tag: product.visualTag,
-                section_id: product.section, // Map Level 3
+                section_id: product.section,
                 is_active: product.isActive ?? true,
                 is_offer: product.isOffer ?? false
             };
@@ -1057,19 +1086,16 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error adding product to Supabase:', error);
-
-                // Security policy error check
                 if (error.code === '42501') {
                     alert('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
                 } else {
                     alert(`Hubo un error guardando en la base de datos: ${error.message}`);
                 }
-
-                // Revert optimistic update on error
-                setProducts(prev => prev.filter(p => p.id !== product.id));
                 return null;
-            } else if (data) {
-                // Save Attributes
+            }
+
+            if (data) {
+                // 1. Save Attributes
                 if (product.selectedAttributes) {
                     const attrInserts = Object.values(product.selectedAttributes)
                         .filter(valId => valId)
@@ -1082,32 +1108,36 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
                 }
 
-                // Save Inventory
+                // 2. Save Inventory
                 if (product.inventory) {
                     await saveInventory(data.id, product.inventory);
                 }
 
-                // Success! Update the local state with the REAL UUID from the DB
-                setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
+                // 3. SUCCESS: Update State with real DB data
+                const newProduct = { ...product, id: data.id };
+                setProducts(prev => [...prev, newProduct]);
+
                 return data.id;
             }
             return null;
         } catch (err) {
             console.error(err);
-            setProducts(prev => prev.filter(p => p.id !== product.id));
             return null;
         }
     };
 
     const updateProduct = async (updatedProduct: Product) => {
-        // Optimistic UI
-        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-
         try {
+            // SANITIZATION
+            const safePrice = Math.max(0, parseFloat(updatedProduct.price.toString()));
+            const safeOriginalPrice = updatedProduct.originalPrice ? Math.max(0, parseFloat(updatedProduct.originalPrice.toString())) : null;
+            const safeStock = Math.max(0, updatedProduct.stock || 0);
+            const safeCost = Math.max(0, updatedProduct.costPrice || 0);
+
             const dbProduct = {
                 name: updatedProduct.name,
-                price: parseFloat(updatedProduct.price.toString()),
-                original_price: updatedProduct.originalPrice ? parseFloat(updatedProduct.originalPrice.toString()) : null,
+                price: safePrice,
+                original_price: safeOriginalPrice,
                 category: updatedProduct.category,
                 subcategory: updatedProduct.subcategory,
                 type: updatedProduct.type,
@@ -1119,13 +1149,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_featured: updatedProduct.isFeatured,
                 is_category_featured: updatedProduct.isCategoryFeatured,
                 description: updatedProduct.description,
-                stock_quantity: updatedProduct.stock || 0,
-                cost_price: updatedProduct.costPrice || 0,
+                stock_quantity: safeStock,
+                cost_price: safeCost,
                 slug: updatedProduct.slug,
                 image_alts: updatedProduct.imageAlts,
                 is_imported: updatedProduct.isImported,
                 visual_tag: updatedProduct.visualTag,
-                section_id: updatedProduct.section, // Map Level 3
+                section_id: updatedProduct.section,
                 is_active: updatedProduct.isActive,
                 is_offer: updatedProduct.isOffer
             };
@@ -1137,6 +1167,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error updating product in Supabase:', error);
+                alert(`Error al actualizar producto: ${error.message}`);
             } else {
                 // Save Attributes
                 if (updatedProduct.selectedAttributes) {
@@ -1158,6 +1189,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (updatedProduct.inventory) {
                     await saveInventory(updatedProduct.id, updatedProduct.inventory);
                 }
+
+                // SUCCESS: Update Local State
+                setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+                toast.success?.("Producto actualizado correctamente") || alert("Producto actualizado");
             }
         } catch (err) {
             console.error(err);
