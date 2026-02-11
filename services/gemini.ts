@@ -1,18 +1,23 @@
-
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// SERVICES: AI Stylist Service (Proxy to Backend)
+// We moved the logic to /api/stylist to protect the API Key.
 
 export async function getStylingAdvice(userInput: string) {
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: userInput,
-      config: {
-        systemInstruction: "You are an elite urban streetwear stylist for the brand SAVAGE. Provide aggressive, bold, and high-fashion styling advice. Keep it short (max 2 sentences). Use Spanish. Be charismatic and direct.",
+    const response = await fetch('/api/stylist', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ userInput }),
     });
-    return response.text;
+
+    if (!response.ok) {
+      throw new Error(`Error del servidor: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.text || "El estilo no espera. Elige lo que te haga sentir imparable.";
+
   } catch (error) {
     console.error("AI Stylist error:", error);
     return "El estilo no espera. Elige lo que te haga sentir imparable.";
