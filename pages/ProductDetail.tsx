@@ -24,23 +24,37 @@ const ProductDetail: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
 
-    // GA4 View Item Event
+    // GA4 View Item & Meta Pixel ViewContent Event
     React.useEffect(() => {
-        if (product && typeof window !== 'undefined' && (window as any).gtag) {
-            (window as any).gtag('event', 'view_item', {
-                currency: 'PYG',
-                value: product.price,
-                items: [{
-                    item_id: product.id,
-                    item_name: product.name,
-                    index: 0,
-                    item_category: product.category,
-                    item_category2: product.subcategory,
-                    item_variant: product.fit,
-                    price: product.price,
-                    quantity: 1
-                }]
-            });
+        if (product && typeof window !== 'undefined') {
+            // GA4
+            if ((window as any).gtag) {
+                (window as any).gtag('event', 'view_item', {
+                    currency: 'PYG',
+                    value: product.price,
+                    items: [{
+                        item_id: product.id,
+                        item_name: product.name,
+                        index: 0,
+                        item_category: product.category,
+                        item_category2: product.subcategory,
+                        item_variant: product.fit,
+                        price: product.price,
+                        quantity: 1
+                    }]
+                });
+            }
+
+            // Meta Pixel
+            if ((window as any).fbq) {
+                (window as any).fbq('track', 'ViewContent', {
+                    content_name: product.name,
+                    content_ids: [product.savage_id || product.id], // Must match Catalog <g:id>
+                    content_type: 'product',
+                    value: product.price,
+                    currency: 'PYG'
+                });
+            }
         }
     }, [product]);
 

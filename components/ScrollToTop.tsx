@@ -12,13 +12,18 @@ const ScrollToTop = () => {
   useEffect(() => {
     // Force set scroll to top immediately on route change
     window.scrollTo(0, 0);
-    
+
     // Some browsers need a slight delay or a direct set on documentElement
     // especially on mobile when the page height is still adjusting.
     const timer = setTimeout(() => {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTo(0, 0);
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTo(0, 0);
     }, 10);
+
+    // Meta Pixel PageView Trigger on Route Change (SPA Support)
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'PageView');
+    }
 
     return () => clearTimeout(timer);
   }, [pathname]);
