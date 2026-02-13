@@ -18,6 +18,7 @@ interface ShopContextType {
     orders: Order[];
     orderRequests: Order[];
     deleteOrderRequest: (id: string) => void;
+    clearOrderRequests: () => Promise<void>;
     blogPosts: BlogPost[];
     drops: Drop[];
     socialConfig: SocialConfig;
@@ -843,6 +844,19 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.error("Error deleting request:", e);
         }
     };
+
+    const clearOrderRequests = async () => {
+        setOrderRequests([]);
+        try {
+            const { error } = await supabase.from('order_requests').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (error) throw error;
+        } catch (e) {
+            console.error("Error clearing requests:", e);
+            alert("Error al eliminar todas las solicitudes");
+        }
+    };
+
+
 
     // --- ATTRIBUTE CRUD ---
     const addAttribute = async (attribute: Omit<Attribute, 'id'>) => {
@@ -1785,6 +1799,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateAttributeValue,
             orderRequests,
             deleteOrderRequest,
+            clearOrderRequests,
             confirmOrder
 
         }}>

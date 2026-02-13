@@ -189,21 +189,32 @@ const CartDrawer: React.FC = () => {
 
                                         {/* Size Selector Compact */}
                                         <div className="relative">
-                                            {item.sizes && item.sizes.length > 0 && (
-                                                <select
-                                                    value={item.selectedSize}
-                                                    onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
-                                                    className="bg-[#111] border border-gray-700 text-white text-[10px] rounded px-1.5 py-0.5 outline-none focus:border-white appearance-none cursor-pointer hover:bg-gray-900 transition-colors text-center w-full min-w-[30px]"
-                                                    style={{ backgroundImage: 'none', textAlignLast: 'center' }}
-                                                >
-                                                    {item.sizes.map(s => (
-                                                        <option key={s} value={s} className="bg-white text-black">{s}</option>
-                                                    ))}
-                                                </select>
-                                            )}
-                                            {(!item.sizes || item.sizes.length === 0) && (
-                                                <span className="text-[10px] text-gray-400">Único</span>
-                                            )}
+                                            {(() => {
+                                                const displaySizes = item.isImported
+                                                    ? ['P', 'M', 'G', 'XL', 'XXL']
+                                                    : (item.sizes && item.sizes.length > 0 ? item.sizes : []);
+
+                                                if (displaySizes && displaySizes.length > 0) {
+                                                    return (
+                                                        <select
+                                                            value={item.selectedSize}
+                                                            onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
+                                                            className="bg-[#111] border border-gray-700 text-white text-[10px] rounded px-1.5 py-0.5 outline-none focus:border-white appearance-none cursor-pointer hover:bg-gray-900 transition-colors text-center w-full min-w-[30px]"
+                                                            style={{ backgroundImage: 'none', textAlignLast: 'center' }}
+                                                        >
+                                                            {displaySizes.map(s => (
+                                                                <option key={s} value={s} className="bg-white text-black">{s}</option>
+                                                            ))}
+                                                        </select>
+                                                    );
+                                                } else {
+                                                    return (
+                                                        <span className="text-[10px] text-gray-400">
+                                                            {item.selectedSize && item.selectedSize !== 'One Size' && item.selectedSize !== 'Único' ? item.selectedSize : 'Único'}
+                                                        </span>
+                                                    );
+                                                }
+                                            })()}
                                         </div>
                                     </div>
 

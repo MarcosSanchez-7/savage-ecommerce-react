@@ -136,7 +136,8 @@ const AdminDashboard: React.FC = () => {
         seasonConfig, updateSeasonConfig,
         confirmOrder,
         orderRequests,
-        deleteOrderRequest
+        deleteOrderRequest,
+        clearOrderRequests
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
@@ -1690,6 +1691,18 @@ const AdminDashboard: React.FC = () => {
                                 <h3 className="text-xl font-black text-yellow-500 uppercase tracking-tighter flex items-center gap-2 mb-4">
                                     <AlertCircle size={24} /> SOLICITUDES DE PEDIDO (SIN CONFIRMAR)
                                 </h3>
+                                {orderRequests.length > 0 && (
+                                    <button
+                                        onClick={() => {
+                                            if (window.confirm('¿ESTÁS SEGURO DE ELIMINAR TODAS LAS SOLICITUDES? Esta acción no se puede deshacer.')) {
+                                                clearOrderRequests();
+                                            }
+                                        }}
+                                        className="bg-red-900/20 hover:bg-red-900/40 text-red-500 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors border border-red-900/30 flex items-center gap-2 mb-4"
+                                    >
+                                        <Trash2 size={16} /> ELIMINAR TODO
+                                    </button>
+                                )}
 
                                 {orderRequests.length === 0 ? (
                                     <div className="text-center py-10 bg-[#0a0a0a] border border-gray-800 rounded-xl border-dashed border-yellow-900/30">
