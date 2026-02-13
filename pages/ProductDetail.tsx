@@ -34,6 +34,16 @@ const ProductDetail: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
 
+    // Pre-calculate Related Products (Must be unconditional hook)
+    const relatedProducts = React.useMemo(() => {
+        if (!product) return [];
+        const candidates = products.filter(p => p.id !== product.id && p.category === product.category);
+        const sameSub = candidates.filter(p => p.subcategory === product.subcategory);
+        const otherSub = candidates.filter(p => p.subcategory !== product.subcategory);
+        const shuffle = (list: typeof products) => [...list].sort(() => 0.5 - Math.random());
+        return [...shuffle(sameSub), ...shuffle(otherSub)].slice(0, 3);
+    }, [product, products]);
+
     // GA4 View Item & Meta Pixel ViewContent Event
     React.useEffect(() => {
         if (product && typeof window !== 'undefined') {
@@ -108,15 +118,7 @@ const ProductDetail: React.FC = () => {
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    // ... (Related products logic remains)
-    const relatedProducts = React.useMemo(() => {
-        if (!product) return [];
-        const candidates = products.filter(p => p.id !== product.id && p.category === product.category);
-        const sameSub = candidates.filter(p => p.subcategory === product.subcategory);
-        const otherSub = candidates.filter(p => p.subcategory !== product.subcategory);
-        const shuffle = (list: typeof products) => [...list].sort(() => 0.5 - Math.random());
-        return [...shuffle(sameSub), ...shuffle(otherSub)].slice(0, 3);
-    }, [product, products]);
+    // ... (Related products logic moved to top)
 
     return (
         <div className="min-h-screen bg-background-dark text-white">
