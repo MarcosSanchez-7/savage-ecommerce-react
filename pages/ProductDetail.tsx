@@ -24,7 +24,25 @@ const ProductDetail: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
 
-    // Scroll handling is now managed by ScrollToTop component in App.tsx
+    // GA4 View Item Event
+    React.useEffect(() => {
+        if (product && typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'view_item', {
+                currency: 'PYG',
+                value: product.price,
+                items: [{
+                    item_id: product.id,
+                    item_name: product.name,
+                    index: 0,
+                    item_category: product.category,
+                    item_category2: product.subcategory,
+                    item_variant: product.fit,
+                    price: product.price,
+                    quantity: 1
+                }]
+            });
+        }
+    }, [product]);
 
     if (!product || product.isActive === false) {
         return (

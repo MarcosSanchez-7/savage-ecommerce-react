@@ -127,6 +127,24 @@ const CartDrawer: React.FC = () => {
         console.log(message);
         console.log("------------------------------------------------------");
 
+        // GA4 Purchase Event (Triggered when user clicks confirm and opens WhatsApp)
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'purchase', {
+                transaction_id: displayId.toString(),
+                value: finalTotal,
+                currency: 'PYG',
+                shipping: shippingCost,
+                items: cart.map(item => ({
+                    item_id: item.id,
+                    item_name: item.name,
+                    item_category: item.category,
+                    item_variant: item.selectedSize,
+                    price: item.price,
+                    quantity: item.quantity
+                }))
+            });
+        }
+
         const url = `https://wa.me/${shopNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     };

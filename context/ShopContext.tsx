@@ -954,6 +954,24 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 );
             }
 
+            // GA4 Add to Cart Event
+            if (typeof window !== 'undefined' && (window as any).gtag) {
+                (window as any).gtag('event', 'add_to_cart', {
+                    currency: 'PYG',
+                    value: product.price,
+                    items: [{
+                        item_id: product.id,
+                        item_name: product.name,
+                        index: 0,
+                        item_category: product.category,
+                        item_category2: product.subcategory,
+                        item_variant: product.fit,
+                        price: product.price,
+                        quantity: 1
+                    }]
+                });
+            }
+
             toast.success(`⚡ ¡Agregado! ${product.name} ya es tuyo.`);
             return [...prev, { ...product, quantity: 1, selectedSize: finalSize }];
         });
