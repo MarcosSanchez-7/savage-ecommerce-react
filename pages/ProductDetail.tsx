@@ -100,6 +100,8 @@ const ProductDetail: React.FC = () => {
 
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
 
+    // Logic: Product is out of stock ONLY if it's NOT imported AND has no physical stock.
+    // Imported products are always available for reservation.
     const isTotallyOutOfStock = !product.isImported && (product.inventory && product.inventory.length > 0
         ? product.inventory.every(i => Number(i.quantity) === 0)
         : product.stock === 0);
