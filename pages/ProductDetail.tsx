@@ -8,17 +8,27 @@ import SEO from '../components/SEO';
 import { ShoppingBag, ArrowLeft, Star, Share2, Heart } from 'lucide-react';
 import { toast } from 'react-toastify';
 
+import LoadingScreen from '../components/LoadingScreen';
+
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { products, addToCart, cart, socialConfig, toggleCart } = useShop();
-    // const { favorites, toggleFavorite } = useShop(); // Removed favorites
+    const { products, addToCart, cart, socialConfig, toggleCart, loading } = useShop();
 
-    // Check if slug looks like a UUID (fallback for old links)
-    const isUuid = (str?: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || '');
+    // Normalize slug to handle potential issues with external links (e.g. trailing slashes, encoding)
+    const cleanSlug = React.useMemo(() => {
+        if (!slug) return '';
+        return decodeURIComponent(slug).replace(/\/$/, '').toLowerCase();
+    }, [slug]);
 
-    // Find by slug OR by ID
-    const product = products.find(p => p.slug === slug || p.id === slug);
+    // Find by slug OR by ID (Case Insensitive & Robust)
+    const product = React.useMemo(() => {
+        if (!cleanSlug) return undefined;
+        return products.find(p =>
+            (p.slug && p.slug.toLowerCase() === cleanSlug) ||
+            (p.id && p.id.toString().toLowerCase() === cleanSlug)
+        );
+    }, [products, cleanSlug]);
 
     // State
     const [selectedImage, setSelectedImage] = useState(0);
@@ -57,6 +67,10 @@ const ProductDetail: React.FC = () => {
             }
         }
     }, [product]);
+
+    if (loading) {
+        return <LoadingScreen />;
+    }
 
     if (!product || product.isActive === false) {
         return (
