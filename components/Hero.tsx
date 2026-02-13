@@ -94,14 +94,18 @@ const Hero: React.FC = () => {
     );
   }
 
-  if (heroSlides.length === 0) {
+  // No slides state: Show a clean branded banner instead of a dev message
+  if (heroSlides.length === 0 && !loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-black text-white">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">SAVAGE</h1>
-          <p className="text-gray-400">Configura el Banner Principal en el Admin</p>
+      <header className="relative w-full h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden bg-[#050505]">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] to-black" />
+        <div className="relative z-20 flex flex-col items-center text-center px-4 animate-fade-in">
+          <h1 className="text-5xl md:text-8xl font-black italic tracking-tighter text-white/10 mb-2">
+            SAVAGE
+          </h1>
+          <div className="h-[2px] w-20 bg-primary/20 mb-8" />
         </div>
-      </div>
+      </header>
     );
   }
 

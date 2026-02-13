@@ -65,8 +65,9 @@ const CartDrawer: React.FC = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = () => {
-        if (!phoneNumber || phoneNumber.length < 6) {
-            toast.error("Por favor, ingresa tu número de WhatsApp para poder contactarte.");
+        if (!selectedLocation) {
+            toast.error("Por favor, marca tu ubicación de envío en el mapa para continuar.");
+            setShowMap(true);
             return;
         }
 
@@ -102,7 +103,7 @@ const CartDrawer: React.FC = () => {
         const baseUrl = "https://www.savageeepy.com";
 
         const message = `👋 *HOLA SAVAGE!* Quiero confirmar este pedido:\n\n` +
-            `👤 *CLIENTE:* ${customerName || 'Sin Nombre'} (${phoneNumber})\n` +
+            `👤 *CLIENTE:* (Confirmar en chat)\n` +
             `🧾 *RECIBO #${displayId}*\n` +
             `🗓️ Fecha: ${new Date().toLocaleDateString()}\n` +
             `----------------------------------\n\n` +
@@ -233,23 +234,30 @@ const CartDrawer: React.FC = () => {
 
                 {cart.length > 0 && (
                     <div className="p-4 border-t border-gray-800 bg-[#0a0a0a] flex-none z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-                        {/* CUSTOMER INFO FORM */}
-                        <div className="mb-6 space-y-3 p-4 bg-white/5 rounded-lg border border-white/5">
-                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tus Datos (Requerido)</h4>
-                            <input
-                                type="text"
-                                placeholder="Nombre Completo"
-                                value={customerName}
-                                onChange={e => setCustomerName(e.target.value)}
-                                className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white placeholder:text-gray-600 focus:border-white outline-none transition-colors"
-                            />
-                            <input
-                                type="tel"
-                                placeholder="WhatsApp (Ej: 0981...)"
-                                value={phoneNumber}
-                                onChange={e => setPhoneNumber(e.target.value)}
-                                className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white placeholder:text-gray-600 focus:border-white outline-none transition-colors"
-                            />
+                        {/* UBICACIÓN MANDATORIA */}
+                        <div className="mb-6">
+                            {!selectedLocation ? (
+                                <button
+                                    onClick={() => setShowMap(true)}
+                                    className="w-full bg-white/5 border-2 border-primary border-dashed hover:bg-white/10 text-primary py-4 rounded-lg flex flex-col items-center justify-center gap-2 transition-all animate-pulse hover:animate-none"
+                                >
+                                    <MapPin size={24} />
+                                    <div className="text-center">
+                                        <p className="text-xs font-black uppercase tracking-widest">PASO OBLIGATORIO</p>
+                                        <p className="text-[10px] font-bold opacity-80">MARCAR UBICACIÓN DE ENVÍO</p>
+                                    </div>
+                                </button>
+                            ) : (
+                                <div className="bg-white/5 border border-green-500/30 rounded-lg p-3 flex justify-between items-center group">
+                                    <div className="flex items-center gap-2 text-green-500">
+                                        <MapPin size={16} />
+                                        <span className="text-xs font-bold uppercase">Ubicación Seleccionada</span>
+                                    </div>
+                                    <button onClick={() => setShowMap(true)} className="text-xs text-gray-500 hover:text-white underline">
+                                        Cambiar
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex justify-between items-center mb-4">
@@ -278,26 +286,7 @@ const CartDrawer: React.FC = () => {
                         </button>
 
 
-                        <div className="mt-4">
-                            {!selectedLocation ? (
-                                <button
-                                    onClick={() => setShowMap(true)}
-                                    className="w-full border border-gray-700 hover:border-white text-gray-400 hover:text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all text-sm font-bold uppercase"
-                                >
-                                    <MapPin size={16} /> Marcar Ubicación de Envío
-                                </button>
-                            ) : (
-                                <div className="bg-white/5 border border-green-500/30 rounded-lg p-3 flex justify-between items-center group">
-                                    <div className="flex items-center gap-2 text-green-500">
-                                        <MapPin size={16} />
-                                        <span className="text-xs font-bold uppercase">Ubicación Marcada</span>
-                                    </div>
-                                    <button onClick={() => setShowMap(true)} className="text-xs text-gray-500 hover:text-white underline">
-                                        Cambiar
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+
 
                         <button
                             onClick={() => { toggleCart(); navigate('/'); }}

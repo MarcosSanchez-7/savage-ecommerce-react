@@ -8,7 +8,7 @@ import { ShopProvider, useShop } from './context/ShopContext';
 import { AuthProvider } from './context/AuthContext';
 import SEO from './components/SEO';
 import LoadingScreen from './components/LoadingScreen';
-import { Toaster } from 'react-hot-toast'; // Remove this line? No, replace it.
+import ScrollToTop from './components/ScrollToTop';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -23,6 +23,7 @@ const MainContent: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <SEO />
       {/* Only show CartDrawer on Web App, not Stock App, unless requested otherwise. Keeping it separate is cleaner. */}
       {!isStockApp && <CartDrawer />}
@@ -43,16 +44,16 @@ const App: React.FC = () => {
         <ToastContainer
           aria-label="Notificaciones"
           position="top-center"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
+          autoClose={2500}
+          hideProgressBar={true}
+          newestOnTop={true}
           closeOnClick
           rtl={false}
           pauseOnFocusLoss
           draggable
           pauseOnHover
           theme="dark"
-          limit={3}
+          limit={2}
           toastClassName="savage-toast"
         />
         <MainContent />

@@ -78,18 +78,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 2. Listen for Auth Changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             console.log("AuthContext: Auth change event:", _event);
-            setSession(session);
-            setUser(session?.user ?? null);
 
-            // If we signed out, clear everything immediately
             if (_event === 'SIGNED_OUT' || !session) {
+                setSession(null);
+                setUser(null);
                 setProfile(null);
                 setIsAdmin(false);
                 setLoading(false);
-            } else {
-                // If signed in, start loading again until profile is fetched
-                setLoading(true);
+                return;
             }
+
+            // Update session
+            setSession(prev => prev?.access_token === session?.access_token ? prev : session);
+
+            // Update user and only trigger loading if it's a NEW user
+            // This prevents "Double SIGNED_IN" events from locking the UI in loading state
+            setUser(prevUser => {
+                const newUser = session.user;
+                if (newUser?.id !== prevUser?.id) {
+                    setLoading(true);
+                    return newUser;
+                }
+                // If it's the same user, don't trigger loading to avoid flickers
+                return prevUser;
+            });
         });
 
         return () => subscription.unsubscribe();

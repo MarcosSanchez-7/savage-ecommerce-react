@@ -32,7 +32,6 @@ const CategoryPage: React.FC = () => {
         }
 
         setCurrentScopeId(foundId);
-        window.scrollTo(0, 0);
     }, [category, subcategory, categories]);
 
     const currentCategoryInfo = categories.find(c => String(c.id) === currentScopeId);
@@ -151,7 +150,7 @@ const CategoryPage: React.FC = () => {
         <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
             <Navbar cartCount={cartCount} />
 
-            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
+            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[60vh]">
                 <div className="flex items-center gap-4 mb-8">
                     {parentCategory ? (
                         <Link to={`/category/${parentCategory.id}`} className="text-gray-400 hover:text-white transition-colors">

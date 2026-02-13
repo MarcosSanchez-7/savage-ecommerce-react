@@ -68,8 +68,8 @@ const Home: React.FC = () => {
                             <h2 className="text-3xl font-bold uppercase tracking-tight">Destacados</h2>
                             <p className="text-accent-gray mt-1 text-sm">Selección exclusiva de temporada</p>
                         </div>
-                        <Link to="/destacados" className="hidden md:flex bg-white hover:bg-gray-200 text-black px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
-                            <span className="skew-x-[12deg] group-hover:skew-x-0 block">VER MÁS OPCIONES</span>
+                        <Link to="/destacados" className="flex bg-white hover:bg-gray-200 text-black px-4 md:px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
+                            <span className="skew-x-[12deg] group-hover:skew-x-0 block whitespace-nowrap">VER MÁS</span>
                             <ChevronRight size={14} className="skew-x-[12deg] group-hover:skew-x-0" />
                         </Link>
                     </div>
@@ -95,8 +95,8 @@ const Home: React.FC = () => {
                                 <h2 className="text-3xl font-black uppercase tracking-tight text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">OFERTAS IMPERDIBLES</h2>
                                 <p className="text-gray-400 mt-1 text-sm font-bold uppercase tracking-widest">Precios de locura por tiempo limitado</p>
                             </div>
-                            <Link to="/ofertas" className="hidden md:flex bg-white hover:bg-gray-200 text-black px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
-                                <span className="skew-x-[12deg] group-hover:skew-x-0 block">VER MÁS OPCIONES</span>
+                            <Link to="/ofertas" className="flex bg-white hover:bg-gray-200 text-black px-4 md:px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
+                                <span className="skew-x-[12deg] group-hover:skew-x-0 block whitespace-nowrap">VER MÁS</span>
                                 <ChevronRight size={14} className="skew-x-[12deg] group-hover:skew-x-0" />
                             </Link>
                         </div>
@@ -159,7 +159,7 @@ const Home: React.FC = () => {
                                     {hasMore && (
                                         <Link
                                             to={`/category/${category}`}
-                                            className="hidden md:flex items-center text-xs font-black tracking-[0.2em] text-primary hover:text-white transition-all gap-2 group"
+                                            className="hidden md:flex items-center text-[10px] font-black tracking-[0.2em] text-primary hover:text-white transition-all gap-2 group whitespace-nowrap"
                                         >
                                             VER TODO <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                                         </Link>

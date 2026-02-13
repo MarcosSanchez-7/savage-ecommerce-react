@@ -24,9 +24,7 @@ const ProductDetail: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
 
-    React.useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [slug]);
+    // Scroll handling is now managed by ScrollToTop component in App.tsx
 
     if (!product || product.isActive === false) {
         return (
@@ -88,7 +86,7 @@ const ProductDetail: React.FC = () => {
             />
             {/* ... Schema Script ... */}
 
-            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
+            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[70vh]">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"
