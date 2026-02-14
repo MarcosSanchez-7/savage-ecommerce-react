@@ -3,11 +3,12 @@ import { useShop } from '../context/ShopContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
+import ProductSkeleton from '../components/ProductSkeleton';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const OffersPage: React.FC = () => {
-    const { products, addToCart, cart } = useShop();
+    const { products, addToCart, cart, loading } = useShop();
 
     const offerProducts = products
         .filter(p => p.isActive !== false && p.isOffer)
@@ -38,7 +39,13 @@ const OffersPage: React.FC = () => {
                     </div>
                 </div>
 
-                {offerProducts.length > 0 ? (
+                {loading ? (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <ProductSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : offerProducts.length > 0 ? (
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {offerProducts.map(product => (
                             <ProductCard

@@ -5,9 +5,10 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
+import ProductSkeleton from '../components/ProductSkeleton';
 
 const SeasonPage: React.FC = () => {
-    const { seasonConfig, products, addToCart, cart } = useShop();
+    const { seasonConfig, products, addToCart, cart, loading } = useShop();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     const seasonProducts = products.filter(p =>
@@ -62,7 +63,13 @@ const SeasonPage: React.FC = () => {
                     </div>
                 </div>
 
-                {seasonProducts.length > 0 ? (
+                {loading ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-12">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <ProductSkeleton key={i} />
+                        ))}
+                    </div>
+                ) : seasonProducts.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-12">
                         {seasonProducts.map((product, idx) => (
                             <div key={product.id} className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 50}ms` }}>
