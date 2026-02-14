@@ -9,11 +9,56 @@ import ProductSkeleton from '../components/ProductSkeleton';
 
 const SeasonPage: React.FC = () => {
     const { seasonConfig, products, addToCart, cart, loading } = useShop();
+    const [localLoading, setLocalLoading] = React.useState(true);
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     const seasonProducts = products.filter(p =>
         seasonConfig.productIds.includes(p.id) && p.isActive !== false
     );
+
+    // Artificial Loading Delay to prevent flash of 'Not Available'
+    React.useEffect(() => {
+        if (!loading) {
+            const timer = setTimeout(() => {
+                setLocalLoading(false);
+            }, 1500); // 1.5s delay
+            return () => clearTimeout(timer);
+        }
+    }, [loading]);
+
+    const showLoading = loading || localLoading;
+
+    if (showLoading) {
+        return (
+            <div className="min-h-screen bg-[#050505] text-white selection:bg-primary selection:text-white">
+                <Navbar cartCount={cartCount} />
+
+                {/* Hero Skeleton */}
+                <div className="relative h-[40vh] md:h-[50vh] flex items-center justify-center overflow-hidden border-b border-white/5 bg-gray-900/50 animate-pulse">
+                    <div className="text-center px-4 opacity-50">
+                        <div className="h-12 w-64 bg-gray-800 rounded mb-6 mx-auto"></div>
+                        <div className="h-6 w-32 bg-gray-800 rounded mx-auto"></div>
+                    </div>
+                </div>
+
+                {/* Grid Skeleton */}
+                <div className="max-w-[1400px] mx-auto px-6 py-20">
+                    <div className="flex justify-between items-end mb-10 pb-4 border-b border-white/10">
+                        <div className="space-y-2 w-full">
+                            <div className="h-8 w-48 bg-gray-800/50 rounded animate-pulse"></div>
+                            <div className="h-4 w-32 bg-gray-800/30 rounded animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-12">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                            <ProductSkeleton key={i} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!seasonConfig?.isEnabled) {
         return (
@@ -63,13 +108,7 @@ const SeasonPage: React.FC = () => {
                     </div>
                 </div>
 
-                {loading ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-12">
-                        {Array.from({ length: 8 }).map((_, i) => (
-                            <ProductSkeleton key={i} />
-                        ))}
-                    </div>
-                ) : seasonProducts.length > 0 ? (
+                {seasonProducts.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-12">
                         {seasonProducts.map((product, idx) => (
                             <div key={product.id} className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 50}ms` }}>
