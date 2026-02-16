@@ -12,21 +12,22 @@ import ScrollToTop from './components/ScrollToTop';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import WhatsAppFloatingButton from './components/WhatsAppFloatingButton';
+
 const MainContent: React.FC = () => {
   const { loading } = useShop();
   // Check if we are in "Admin/Stock Mode" via env var or just default to Web Store
   const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
 
-  // if (loading) {
-  //   return <LoadingScreen />;
-  // }
-
   return (
     <BrowserRouter>
       <ScrollToTop />
       <SEO />
-      {/* Only show CartDrawer on Web App, not Stock App, unless requested otherwise. Keeping it separate is cleaner. */}
+      {/* Only show CartDrawer on Web App, not Stock App */}
       {!isStockApp && <CartDrawer />}
+
+      {/* WhatsApp Conversion Button */}
+      {!isStockApp && <WhatsAppFloatingButton />}
 
       {isStockApp ? (
         <StockRoutes />
