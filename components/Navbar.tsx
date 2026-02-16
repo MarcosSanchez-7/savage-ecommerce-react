@@ -136,7 +136,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
                 {/* Mega Menu Content (Expanded) */}
                 <div className="absolute top-[calc(100%-1rem)] -left-[450px] pt-6 hidden group-hover:block z-50">
-                  <div className={`border border-border rounded-[32px] p-10 shadow-[0_40px_80px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-10 w-[1100px] ${theme === 'light' ? 'bg-white shadow-2xl' : 'bg-black/60'}`}>
+                  <div className={`border border-border rounded-[32px] p-10 shadow-[0_40px_80px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-10 w-[1100px] ${theme === 'light' ? 'bg-white shadow-2xl' : 'bg-black/95'}`}>
                     <div className="grid grid-cols-5 gap-x-8 gap-y-12 w-full">
                       {(Array.isArray(categories) ? categories : []).filter(c => c && !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes((c.name || '').toUpperCase())).map(parent => {
                         const children = categories.filter(c => c && String(c.parent_id) === String(parent.id));
