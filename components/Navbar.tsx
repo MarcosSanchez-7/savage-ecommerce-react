@@ -123,20 +123,20 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           {/* CENTER: Desktop Links */}
           <div className="hidden md:flex flex-1 justify-center items-center h-full gap-8 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl pointer-events-none">
             <div className="flex gap-8 pointer-events-auto h-full items-center">
-              <Link to="/" className="h-full flex items-center px-2 text-sm font-bold text-gray-400 hover:text-white uppercase tracking-widest transition-colors relative group">
+              <Link to="/" className="h-full flex items-center px-2 text-sm font-bold text-text hover:text-primary uppercase tracking-widest transition-colors relative group">
                 INICIO
                 <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
               </Link>
 
               {/* Hierarchical Categories Dropdown */}
               <div className="relative group h-full flex items-center">
-                <button className="h-full flex items-center px-2 gap-1 text-sm font-bold text-text-muted group-hover:text-text uppercase tracking-widest transition-colors relative">
+                <button className="h-full flex items-center px-2 gap-1 text-sm font-bold text-text group-hover:text-primary uppercase tracking-widest transition-colors relative">
                   PRODUCTOS <ChevronDown size={14} className="group-hover:rotate-180 transition-transform" />
                 </button>
 
                 {/* Mega Menu Content (Expanded) */}
                 <div className="absolute top-[calc(100%-1rem)] -left-[450px] pt-6 hidden group-hover:block z-50">
-                  <div className="bg-surface/95 border border-border rounded-[32px] p-10 shadow-[0_40px_80px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-10 w-[1100px]">
+                  <div className={`border border-border rounded-[32px] p-10 shadow-[0_40px_80px_rgba(0,0,0,0.7)] backdrop-blur-3xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-10 w-[1100px] ${theme === 'light' ? 'bg-white shadow-2xl' : 'bg-surface/95'}`}>
                     <div className="grid grid-cols-5 gap-x-8 gap-y-12 w-full">
                       {(Array.isArray(categories) ? categories : []).filter(c => c && !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes((c.name || '').toUpperCase())).map(parent => {
                         const children = categories.filter(c => c && String(c.parent_id) === String(parent.id));
@@ -144,7 +144,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                           <div key={parent.id} className="space-y-4">
                             <Link
                               to={`/category/${parent.id}`}
-                              className="group/cat flex items-center gap-3 text-[12px] font-black tracking-[0.25em] text-text hover:text-primary uppercase transition-colors mb-2"
+                              className="group/cat flex items-center gap-3 text-[12px] font-black tracking-[0.25em] text-primary hover:text-text uppercase transition-colors mb-2"
                             >
                               <span className="w-5 h-[2px] bg-primary/40 group-hover/cat:w-8 group-hover/cat:bg-primary transition-all"></span>
                               {parent.name}
@@ -164,7 +164,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                         <div className="flex items-center justify-between group/sub mb-1">
                                           <Link
                                             to={`/category/${parent.id}/${child.id}`}
-                                            className="text-[11px] font-bold text-text-muted hover:text-text uppercase tracking-wider block"
+                                            className="text-[11px] font-bold text-text hover:text-primary uppercase tracking-wider block"
                                           >
                                             {child.name}
                                           </Link>
@@ -177,7 +177,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                                 [String(child.id)]: !prev[String(child.id)]
                                               }));
                                             }}
-                                            className="text-text-muted hover:text-primary transition-colors p-1 -mr-2"
+                                            className="text-text hover:text-primary transition-colors p-1 -mr-2"
                                           >
                                             {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                           </button>
@@ -188,7 +188,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                               <Link
                                                 key={grand.id}
                                                 to={`/category/${parent.id}/${grand.id}`}
-                                                className="text-[10px] font-medium text-text-muted hover:text-primary uppercase tracking-wide block transition-colors"
+                                                className="text-[10px] font-medium text-text hover:text-primary uppercase tracking-wide block transition-colors"
                                               >
                                                 {grand.name}
                                               </Link>
@@ -203,7 +203,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                                     <Link
                                       key={child.id}
                                       to={`/category/${parent.id}/${child.id}`}
-                                      className="text-[12px] font-bold text-text-muted hover:text-text uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
+                                      className="text-[12px] font-bold text-text hover:text-primary uppercase tracking-wider transition-all hover:translate-x-2 flex items-center gap-2 group/item"
                                     >
                                       <ChevronRight size={12} className="opacity-0 group-hover/item:opacity-100 -ml-5 transition-all text-primary" />
                                       {child.name}
@@ -222,12 +222,12 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 </div>
               </div>
 
-              <Link to="/nosotros" className="h-full flex items-center px-2 text-sm font-bold text-text-muted hover:text-text uppercase tracking-widest transition-colors relative group">
+              <Link to="/nosotros" className="h-full flex items-center px-2 text-sm font-bold text-text hover:text-primary uppercase tracking-widest transition-colors relative group">
                 NOSOTROS
                 <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
               </Link>
 
-              <Link to="/ayuda" className="h-full flex items-center px-2 text-sm font-bold text-text-muted hover:text-text uppercase tracking-widest transition-colors relative group">
+              <Link to="/ayuda" className="h-full flex items-center px-2 text-sm font-bold text-text hover:text-primary uppercase tracking-widest transition-colors relative group">
                 AYUDA
                 <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
               </Link>
