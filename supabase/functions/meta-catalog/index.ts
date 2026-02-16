@@ -18,37 +18,48 @@ serve(async (req) => {
 
         const { data: products, error } = await supabase
             .from('products')
-            .select('savage_id, name, description, price, images, stock_quantity, slug, is_active')
+            .select('id, savage_id, name, description, price, images, stock_quantity, slug, is_active, is_imported')
             .eq('is_active', true);
 
         if (error) {
             throw error;
         }
 
-        const xmlItems = products.map((product) => {
-            const stock = product.stock_quantity || 0;
-            const availability = stock > 0 ? 'in stock' : 'out of stock';
-            const condition = 'new';
-            const brand = 'Savage Store';
-            const price = `${product.price} PYG`;
-            const link = `https://www.savageeepy.com/product/${product.slug}`;
-            // Usar la primera imagen si existe
-            const image_link = (product.images && product.images.length > 0) ? product.images[0] : '';
+        const xmlItems = products
+            .filter(p => p.price && (p.savage_id || p.id) && p.name) // Filter invalid items
+            .map((product) => {
+                const stock = product.stock_quantity || 0;
+                // Availability Rule
+                const isImported = product.is_imported === true;
+                const availability = (isImported || stock > 0) ? 'in stock' : 'out of stock';
 
-            const description = product.description || product.name;
+                const condition = 'new';
+                const brand = 'Savage Store';
+                const price = `${Number(product.price).toFixed(0)} PYG`;
 
-            // Escape special XML chars
-            const escape = (str: string) => str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&apos;');
+                // Link construction: Encode slug/id to ensure valid URL
+                const urlKey = product.slug || product.id;
+                const link = `https://www.savageeepy.com/product/${encodeURIComponent(urlKey)}`;
 
-            return `
+                // Image
+                const image_link = (product.images && product.images.length > 0) ? product.images[0] : '';
+
+                const description = product.description || product.name || 'Sin descripción';
+                const title = product.name;
+                const finalId = product.savage_id || product.id; // Fallback to UUID
+
+                // Escape special XML chars (basic)
+                const escape = (str: string | number) => String(str || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+
+                return `
     <item>
-      <g:id>${escape(product.savage_id || '')}</g:id>
-      <g:title>${escape(product.name)}</g:title>
+      <g:id>${escape(finalId)}</g:id>
+      <g:title>${escape(title)}</g:title>
       <g:description>${escape(description)}</g:description>
       <g:link>${escape(link)}</g:link>
       <g:image_link>${escape(image_link)}</g:image_link>
@@ -56,8 +67,10 @@ serve(async (req) => {
       <g:condition>${escape(condition)}</g:condition>
       <g:availability>${escape(availability)}</g:availability>
       <g:price>${escape(price)}</g:price>
+      <g:item_group_id>${escape(finalId)}</g:item_group_id>
+      <g:google_product_category>Apparel &amp; Accessories &gt; Clothing</g:google_product_category>
     </item>`;
-        }).join('');
+            }).join('');
 
         const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
