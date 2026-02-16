@@ -157,16 +157,16 @@ const Hero: React.FC = () => {
         ) : (
           // REAL CONTENT with Glassmorphism Background
           <div className="backdrop-blur-md bg-black/40 rounded-3xl px-6 py-8 md:px-12 md:py-12 border border-white/10 shadow-2xl">
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-2 md:mb-4 uppercase z-10 transition-all duration-300 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+            <h1 className="text-5xl md:text-8xl lg:text-9xl font-black leading-none tracking-tight mb-3 md:mb-5 uppercase z-10 transition-all duration-300 drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)] text-white" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', fontWeight: 900, letterSpacing: '-0.02em' }}>
               {current ? (
                 <>
-                  {current.title?.split(' ').slice(0, 1)} <span className="text-stroke text-transparent" style={{ WebkitTextStroke: '1px white' }}>{current.title?.split(' ').slice(1).join(' ')}</span>
+                  {current.title}
                 </>
               ) : (
                 "SAVAGE"
               )}
             </h1>
-            <h2 className="text-gray-200 text-sm md:text-xl font-light tracking-widest mb-6 md:mb-8 uppercase z-10 transition-all duration-300 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+            <h2 className="text-white text-base md:text-2xl font-semibold tracking-[0.3em] mb-6 md:mb-10 uppercase z-10 transition-all duration-300 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]" style={{ fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
               {current?.subtitle}
             </h2>
             <div className="flex flex-wrap justify-center gap-4 z-20">
