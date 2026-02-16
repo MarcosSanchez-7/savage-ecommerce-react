@@ -7,7 +7,11 @@ import { toast } from 'react-toastify';
 import LocationPicker from './LocationPicker';
 import { isPointInPolygon } from '../types';
 
+import { useTheme } from '../context/ThemeContext';
+// ... prev imports
+
 const CartDrawer: React.FC = () => {
+    const { theme } = useTheme();
     const navigate = useNavigate();
     const {
         cart,   // carrito 
@@ -158,22 +162,22 @@ const CartDrawer: React.FC = () => {
             />
 
             {/* Drawer */}
-            <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-[100dvh] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 isolate overscroll-contain">
-                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a] flex-none z-10">
+            <div className={`relative w-full max-w-md border-l h-[100dvh] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 isolate overscroll-contain transition-colors duration-300 ${theme === 'light' ? 'bg-surface border-border' : 'bg-[#0a0a0a] border-gray-800'}`}>
+                <div className={`p-4 border-b flex justify-between items-center flex-none z-10 transition-colors duration-300 ${theme === 'light' ? 'bg-surface border-border text-text' : 'bg-[#0a0a0a] border-gray-800 text-white'}`}>
                     <div className="flex items-center gap-3">
-                        <button onClick={toggleCart} className="md:hidden text-gray-400 hover:text-white">
+                        <button onClick={toggleCart} className="md:hidden text-text-muted hover:text-text">
                             <ArrowLeft size={20} />
                         </button>
                         <h2 className="text-lg font-bold tracking-wider">CARRITO ({cart.length})</h2>
                     </div>
-                    <button onClick={toggleCart} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                    <button onClick={toggleCart} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors text-text">
                         <X size={18} />
                     </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {cart.length === 0 ? (
-                        <div className="text-center text-gray-500 mt-20">
+                        <div className="text-center text-text-muted mt-20">
                             <p>Tu carrito está vacío.</p>
                             <button
                                 onClick={() => {
@@ -187,7 +191,7 @@ const CartDrawer: React.FC = () => {
                         </div>
                     ) : (
                         cart.map(item => (
-                            <div key={`${item.id}-${item.selectedSize}`} className="flex gap-3 p-2 bg-white/5 rounded-lg border border-white/5">
+                            <div key={`${item.id}-${item.selectedSize}`} className={`flex gap-3 p-2 rounded-lg border transition-colors ${theme === 'light' ? 'bg-background border-border shadow-sm' : 'bg-white/5 border-white/5'}`}>
                                 <img
                                     src={item.images ? item.images[0] : 'https://via.placeholder.com/150'}
                                     alt={item.name}
@@ -195,16 +199,16 @@ const CartDrawer: React.FC = () => {
                                 />
                                 <div className="flex-1">
                                     <div className="flex justify-between items-start mb-1">
-                                        <h3 className="font-bold text-xs line-clamp-2 md:line-clamp-1 pr-2">{item.name}</h3>
+                                        <h3 className="font-bold text-xs line-clamp-2 md:line-clamp-1 pr-2 text-text">{item.name}</h3>
                                         <button
                                             onClick={() => removeFromCart(item.id, item.selectedSize)}
-                                            className="text-gray-500 hover:text-red-500 transition-colors"
+                                            className="text-text-muted hover:text-red-500 transition-colors"
                                         >
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <p className="text-accent-gray text-[10px] uppercase">{item.category}</p>
+                                        <p className="text-text-muted text-[10px] uppercase">{item.category}</p>
 
                                         {/* Size Selector Compact */}
                                         <div className="relative">
@@ -212,11 +216,11 @@ const CartDrawer: React.FC = () => {
                                                 <select
                                                     value={item.selectedSize}
                                                     onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
-                                                    className="bg-[#111] border border-gray-700 text-white text-[10px] rounded px-1.5 py-0.5 outline-none focus:border-white appearance-none cursor-pointer hover:bg-gray-900 transition-colors text-center w-full min-w-[30px]"
+                                                    className={`border text-[10px] rounded px-1.5 py-0.5 outline-none focus:border-primary appearance-none cursor-pointer transition-colors text-center w-full min-w-[30px] ${theme === 'light' ? 'bg-surface text-text border-border hover:bg-gray-50' : 'bg-[#111] border-gray-700 text-white hover:bg-gray-900'}`}
                                                     style={{ backgroundImage: 'none', textAlignLast: 'center' }}
                                                 >
                                                     {item.sizes.map(s => (
-                                                        <option key={s} value={s} className="bg-white text-black">{s}</option>
+                                                        <option key={s} value={s} className="bg-background text-text">{s}</option>
                                                     ))}
                                                 </select>
                                             )}
@@ -227,18 +231,18 @@ const CartDrawer: React.FC = () => {
                                     </div>
 
                                     <div className="flex justify-between items-center">
-                                        <span className="font-mono font-bold text-sm">Gs. {item.price.toLocaleString()}</span>
-                                        <div className="flex items-center gap-2 bg-black rounded px-1.5 py-0.5 border border-gray-800">
+                                        <span className="font-mono font-bold text-sm text-primary">Gs. {item.price.toLocaleString()}</span>
+                                        <div className={`flex items-center gap-2 rounded px-1.5 py-0.5 border ${theme === 'light' ? 'bg-background border-border' : 'bg-black border-gray-800'}`}>
                                             <button
                                                 onClick={() => updateQuantity(item.id, item.selectedSize, -1)}
-                                                className="hover:text-primary transition-colors disabled:opacity-50"
+                                                className="hover:text-primary transition-colors disabled:opacity-50 text-text"
                                             >
                                                 <Minus size={10} />
                                             </button>
-                                            <span className="text-xs w-3 text-center font-bold">{item.quantity}</span>
+                                            <span className="text-xs w-3 text-center font-bold text-text">{item.quantity}</span>
                                             <button
                                                 onClick={() => updateQuantity(item.id, item.selectedSize, 1)}
-                                                className="hover:text-primary transition-colors"
+                                                className="hover:text-primary transition-colors text-text"
                                             >
                                                 <Plus size={10} />
                                             </button>
@@ -251,13 +255,13 @@ const CartDrawer: React.FC = () => {
                 </div>
 
                 {cart.length > 0 && (
-                    <div className="p-4 border-t border-gray-800 bg-[#0a0a0a] flex-none z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+                    <div className={`p-4 border-t flex-none z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)] transition-colors duration-300 ${theme === 'light' ? 'bg-surface border-border' : 'bg-[#0a0a0a] border-gray-800'}`}>
                         {/* UBICACIÓN MANDATORIA */}
                         <div className="mb-6">
                             {!selectedLocation ? (
                                 <button
                                     onClick={() => setShowMap(true)}
-                                    className="w-full bg-white/5 border-2 border-primary border-dashed hover:bg-white/10 text-primary py-4 rounded-lg flex flex-col items-center justify-center gap-2 transition-all animate-pulse hover:animate-none"
+                                    className={`w-full border-2 border-primary border-dashed py-4 rounded-lg flex flex-col items-center justify-center gap-2 transition-all animate-pulse hover:animate-none ${theme === 'light' ? 'bg-primary/5 hover:bg-primary/10 text-primary' : 'bg-white/5 hover:bg-white/10 text-primary'}`}
                                 >
                                     <MapPin size={24} />
                                     <div className="text-center">
@@ -266,12 +270,12 @@ const CartDrawer: React.FC = () => {
                                     </div>
                                 </button>
                             ) : (
-                                <div className="bg-white/5 border border-green-500/30 rounded-lg p-3 flex justify-between items-center group">
-                                    <div className="flex items-center gap-2 text-green-500">
+                                <div className={`border border-green-500/30 rounded-lg p-3 flex justify-between items-center group ${theme === 'light' ? 'bg-green-50' : 'bg-white/5'}`}>
+                                    <div className="flex items-center gap-2 text-green-600 dark:text-green-500">
                                         <MapPin size={16} />
                                         <span className="text-xs font-bold uppercase">Ubicación Seleccionada</span>
                                     </div>
-                                    <button onClick={() => setShowMap(true)} className="text-xs text-gray-500 hover:text-white underline">
+                                    <button onClick={() => setShowMap(true)} className="text-xs text-text-muted hover:text-text underline">
                                         Cambiar
                                     </button>
                                 </div>
@@ -279,21 +283,21 @@ const CartDrawer: React.FC = () => {
                         </div>
 
                         <div className="flex justify-between items-center mb-4">
-                            <span className="text-gray-400 text-xs">Subtotal</span>
-                            <span className="text-sm font-bold font-mono">Gs. {cartTotal.toLocaleString()}</span>
+                            <span className="text-text-muted text-xs">Subtotal</span>
+                            <span className="text-sm font-bold font-mono text-text">Gs. {cartTotal.toLocaleString()}</span>
                         </div>
                         {selectedLocation && (
                             <div className="flex justify-between items-center mb-4 animate-in fade-in">
-                                <span className="text-gray-400 flex items-center gap-1 text-xs"><Truck size={12} /> Envío</span>
+                                <span className="text-text-muted flex items-center gap-1 text-xs"><Truck size={12} /> Envío</span>
                                 {shippingCost > 0 ? (
-                                    <span className="text-white font-bold font-mono text-sm">Gs. {shippingCost.toLocaleString()}</span>
+                                    <span className="text-text font-bold font-mono text-sm">Gs. {shippingCost.toLocaleString()}</span>
                                 ) : (
                                     <span className="text-yellow-500 font-bold text-[10px] uppercase">A convenir</span>
                                 )}
                             </div>
                         )}
-                        <div className="flex justify-between items-center mb-4 pt-3 border-t border-gray-800">
-                            <span className="text-gray-200 font-bold uppercase text-sm">Total</span>
+                        <div className="flex justify-between items-center mb-4 pt-3 border-t border-border">
+                            <span className="text-text font-bold uppercase text-sm">Total</span>
                             <span className="text-lg text-primary font-black font-mono">Gs. {finalTotal.toLocaleString()}</span>
                         </div>
                         <button
@@ -308,12 +312,12 @@ const CartDrawer: React.FC = () => {
 
                         <button
                             onClick={() => { toggleCart(); navigate('/'); }}
-                            className="w-full mt-3 bg-transparent border border-gray-800 hover:border-gray-500 text-gray-400 hover:text-white py-3 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2 text-xs font-bold"
+                            className={`w-full mt-3 bg-transparent border hover:border-text-muted text-text-muted hover:text-text py-3 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2 text-xs font-bold ${theme === 'light' ? 'border-border' : 'border-gray-800'}`}
                         >
                             SEGUIR COMPRANDO
                         </button>
 
-                        <p className="text-center text-xs text-gray-500 mt-4">
+                        <p className="text-center text-xs text-text-muted mt-4">
                             El pedido se enviará a través de WhatsApp para confirmar detalles.
                         </p>
                     </div>
