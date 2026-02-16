@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
@@ -13,6 +14,7 @@ import LoadingScreen from '../components/LoadingScreen';
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
+    const { theme } = useTheme();
     const { products, addToCart, cart, socialConfig, toggleCart, loading } = useShop();
 
     // Normalize slug to handle potential issues with external links (e.g. trailing slashes, encoding)
@@ -213,7 +215,7 @@ const ProductDetail: React.FC = () => {
                             {product.isNew && <span className="px-2 py-1 bg-primary text-xs font-bold uppercase rounded text-white">NUEVO</span>}
                         </div>
 
-                        <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4 leading-none">{product.name}</h1>
+                        <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4 leading-none text-text">{product.name}</h1>
 
                         <div className="flex items-end gap-4 mb-8">
                             <span className="text-4xl font-bold font-mono text-primary">Gs. {product.price.toLocaleString()}</span>
@@ -237,8 +239,8 @@ const ProductDetail: React.FC = () => {
                                                 onClick={() => setSelectedSize(size)}
                                                 className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden 
                                                 ${selectedSize === size
-                                                        ? 'bg-blue-600 text-white border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                                                        : 'border-gray-800 text-gray-400 hover:border-blue-500/50 hover:text-blue-400'
+                                                        ? (theme === 'light' ? 'bg-black text-white border-black' : 'bg-white text-black border-white')
+                                                        : (theme === 'light' ? 'border-border text-text-muted hover:border-black hover:text-black' : 'border-gray-800 text-gray-400 hover:border-white hover:text-white')
                                                     }`}
                                             >
                                                 <span className="text-xs sm:text-base">{size}</span>
@@ -260,10 +262,10 @@ const ProductDetail: React.FC = () => {
                                                     disabled={isOutOfStock}
                                                     className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden 
                                                     ${isOutOfStock
-                                                            ? 'bg-gray-900 border-gray-800 text-gray-700 cursor-not-allowed opacity-50 relative'
+                                                            ? (theme === 'light' ? 'bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed opacity-50' : 'bg-gray-900 border-gray-800 text-gray-700 cursor-not-allowed opacity-50')
                                                             : selectedSize === size
-                                                                ? 'bg-white text-black border-white'
-                                                                : 'border-gray-800 text-gray-400 hover:border-gray-600'
+                                                                ? (theme === 'light' ? 'bg-black text-white border-black' : 'bg-white text-black border-white')
+                                                                : (theme === 'light' ? 'border-border text-text-muted hover:border-black hover:text-black' : 'border-gray-800 text-gray-400 hover:border-white hover:text-white')
                                                         }`}
                                                 >
                                                     <span className={`text-xs sm:text-base ${isOutOfStock ? 'opacity-20' : ''}`}>{size}</span>
