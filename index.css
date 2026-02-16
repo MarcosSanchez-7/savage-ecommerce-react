@@ -1,22 +1,55 @@
+:root {
+  --background: #050505;
+  --surface: #0a0a0a;
+  --text: #ffffff;
+  --text-muted: #a1a1aa;
+  --primary: #D4AF37;
+  /* Savage Gold */
+  --border: rgba(255, 255, 255, 0.1);
+
+  /* React Toastify Overrides */
+  --toastify-color-dark: #09090b;
+  --toastify-color-info: #fafafa;
+  --toastify-color-success: #EAB308;
+  --toastify-color-warning: #facc15;
+  --toastify-color-error: #ef4444;
+  --toastify-text-color-dark: #fafafa;
+}
+
+.light-theme {
+  --background: #ffffff;
+  --surface: #f4f4f5;
+  --text: #09090b;
+  --text-muted: #52525b;
+  --primary: #D4AF37;
+  --border: rgba(0, 0, 0, 0.1);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--surface);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #D4AF37;
+  background: var(--primary);
 }
 
 .text-stroke {
-  -webkit-text-stroke: 1px white;
+  -webkit-text-stroke: 1px var(--text);
 }
 
 @keyframes fadeInUp {
@@ -36,20 +69,8 @@
 }
 
 /* --- REACT TOASTIFY CUSTOMIZATION (SAVAGE STYLE) --- */
-:root {
-  --toastify-color-dark: #09090b;
-  /* Zinc 950 */
-  --toastify-color-info: #fafafa;
-  --toastify-color-success: #EAB308;
-  /* Savage Gold */
-  --toastify-color-warning: #facc15;
-  --toastify-color-error: #ef4444;
-  --toastify-text-color-dark: #fafafa;
-}
-
 .Toastify__toast-container {
   z-index: 999999 !important;
-  /* Above everything */
 }
 
 .Toastify__toast {
@@ -60,12 +81,10 @@
   letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--border) !important;
   margin: 6px auto !important;
   min-height: 40px !important;
-  /* Shorter header/height */
   width: 340px !important;
-  /* Wider as requested */
   max-width: calc(100vw - 40px) !important;
   padding: 8px 16px !important;
 }
@@ -82,7 +101,6 @@
     width: 100% !important;
     padding: 0 !important;
     top: 50px !important;
-    /* Avoid overlapping navbar if sticky */
   }
 
   .Toastify__toast {
@@ -92,8 +110,8 @@
 
 .Toastify__toast--success {
   background: #000000 !important;
-  border-bottom: 2px solid #EAB308 !important;
-  color: #EAB308 !important;
+  border-bottom: 2px solid var(--primary) !important;
+  color: var(--primary) !important;
 }
 
 .Toastify__toast--error {
@@ -104,8 +122,8 @@
 
 .Toastify__toast--info {
   background: #000000 !important;
-  border-bottom: 2px solid #ffffff !important;
-  color: white !important;
+  border-bottom: 2px solid var(--text) !important;
+  color: var(--text) !important;
 }
 
 .Toastify__close-button {

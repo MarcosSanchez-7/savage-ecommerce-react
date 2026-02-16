@@ -38,27 +38,31 @@ const MainContent: React.FC = () => {
   );
 };
 
+import { ThemeProvider } from './context/ThemeContext';
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <ShopProvider>
-        <ToastContainer
-          aria-label="Notificaciones"
-          position="top-center"
-          autoClose={2500}
-          hideProgressBar={true}
-          newestOnTop={true}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-          limit={2}
-          toastClassName="savage-toast"
-        />
-        <MainContent />
-      </ShopProvider>
+      <ThemeProvider>
+        <ShopProvider>
+          <ToastContainer
+            aria-label="Notificaciones"
+            position="top-center"
+            autoClose={2500}
+            hideProgressBar={true}
+            newestOnTop={true}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+            limit={2}
+            toastClassName="savage-toast"
+          />
+          <MainContent />
+        </ShopProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 };

@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, X, ArrowLeft, Heart, User, ShoppingCart, Menu, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
+import { Search, X, ArrowLeft, Heart, User, ShoppingCart, Menu, ChevronDown, ChevronUp, ChevronRight, Moon, Sun } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
+import { useTheme } from '../context/ThemeContext';
 
 interface NavbarProps {
   cartCount: number;
@@ -12,7 +13,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   const { toggleCart, products, categories, favorites } = useShop();
   const { user, signOut, isAdmin } = useAuth();
-
+  const { theme, toggleTheme } = useTheme();
 
   const [animateCart, setAnimateCart] = useState(false);
 
@@ -99,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   return (
     <>
       <AnnouncementBar />
-      <nav className="sticky top-0 z-50 w-full border-b border-[#333] bg-[#0a0a0a]/80 backdrop-blur-md">
+      <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between relative">
 
           {/* LEFT: Logo */}
@@ -234,7 +235,17 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           </div>
 
           {/* RIGHT: Icons */}
-          <div className="flex items-center gap-2 md:gap-6 z-50">
+          <div className="flex items-center gap-2 md:gap-5 z-50">
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 hover:border-primary/50 text-[10px] font-black tracking-[0.2em] text-white hover:text-primary transition-all group"
+              title={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
+            >
+              <div className={`w-2 h-2 rounded-full ${theme === 'dark' ? 'bg-primary shadow-[0_0_8px_rgba(212,175,55,0.8)]' : 'bg-gray-400'} group-hover:scale-110 transition-transform`}></div>
+              TEMAS
+            </button>
 
             {/* Desktop Search Trigger */}
             <div ref={searchRef} className="relative hidden md:block">
@@ -328,20 +339,35 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
       </nav>
 
       {/* MOBILE MENU FULLSCREEN */}
-      <div className={`fixed inset-0 bg-black z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col`}>
-        <div className="flex items-center justify-between p-6 border-b border-gray-900">
+      <div className={`fixed inset-0 bg-background z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col`}>
+        <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="size-8">
               <img src="/crown.png" alt="" className="w-full h-full object-contain brightness-110" />
             </div>
-            <span className="text-xl font-black text-white tracking-widest">SAVAGE</span>
+            <span className="text-xl font-black text-text tracking-widest">SAVAGE</span>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-400 hover:text-white p-2">
+          <button onClick={() => setIsMobileMenuOpen(false)} className="text-text-muted hover:text-text p-2">
             <X size={28} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+          {/* Mobile Theme Toggle */}
+          <button
+            onClick={() => { toggleTheme(); }}
+            className="flex items-center justify-between w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-white group active:scale-[0.98] transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-primary/20 text-primary' : 'bg-zinc-800 text-zinc-400'}`}>
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </div>
+              <span className="text-sm font-black tracking-[0.2em] uppercase">CAMBIAR TEMA</span>
+            </div>
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-full">
+              {theme === 'dark' ? 'MODO OSCURO' : 'MODO CLARO'}
+            </span>
+          </button>
           <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-white uppercase tracking-widest hover:text-primary transition-colors">
             INICIO
           </Link>

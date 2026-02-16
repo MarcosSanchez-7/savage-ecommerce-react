@@ -45,8 +45,8 @@ const WhatsAppFloatingButton: React.FC = () => {
         const label = productName || location.pathname;
 
         const baseMessage = productName
-            ? `Hola! Estoy viendo el ${productName} y me gustaría recibir más información.`
-            : 'Hola! Vengo de la web y tengo una consulta sobre el catálogo.';
+            ? `HOLA, ME GUSTARIA CONSULTARLES SOBRE LA DISPONIBILIDAD DEL PRODUCTO: ${productName.toUpperCase()} 😊`
+            : 'HOLA, ME GUSTARIA CONSULTARLES SOBRE LA DISPONIBILIDAD DE UN PRODUCTO 😊';
 
         trackConversionEvent(context, label);
 
