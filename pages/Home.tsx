@@ -28,7 +28,7 @@ const Home: React.FC = () => {
         .slice(0, 8); // Max 4-8 products
 
     return (
-        <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white overflow-x-hidden">
+        <div className="min-h-screen bg-background text-text selection:bg-primary selection:text-white overflow-x-hidden transition-colors duration-300">
             <Navbar cartCount={cartCount} />
 
             <main>
@@ -39,8 +39,8 @@ const Home: React.FC = () => {
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
                     <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                         <div>
-                            <h2 className="text-3xl font-black uppercase tracking-tight">RECIEN LLEGADOS</h2>
-                            <p className="text-gray-500 mt-1 text-sm font-bold uppercase tracking-widest">Artículos limitados</p>
+                            <h2 className="text-3xl font-black uppercase tracking-tight text-text">RECIEN LLEGADOS</h2>
+                            <p className="text-text-muted mt-1 text-sm font-bold uppercase tracking-widest">Artículos limitados</p>
                         </div>
                     </div>
 
@@ -65,10 +65,10 @@ const Home: React.FC = () => {
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
                     <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                         <div>
-                            <h2 className="text-3xl font-bold uppercase tracking-tight">Destacados</h2>
-                            <p className="text-accent-gray mt-1 text-sm">Selección exclusiva de temporada</p>
+                            <h2 className="text-3xl font-bold uppercase tracking-tight text-text">Destacados</h2>
+                            <p className="text-text-muted mt-1 text-sm">Selección exclusiva de temporada</p>
                         </div>
-                        <Link to="/destacados" className="flex bg-white hover:bg-gray-200 text-black px-4 md:px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
+                        <Link to="/destacados" className="flex bg-text text-background hover:opacity-80 px-4 md:px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
                             <span className="skew-x-[12deg] group-hover:skew-x-0 block whitespace-nowrap">VER MÁS</span>
                             <ChevronRight size={14} className="skew-x-[12deg] group-hover:skew-x-0" />
                         </Link>
@@ -93,9 +93,9 @@ const Home: React.FC = () => {
                         <div className="flex items-end justify-between mb-10 pb-4 border-b border-red-900/30">
                             <div>
                                 <h2 className="text-3xl font-black uppercase tracking-tight text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">OFERTAS IMPERDIBLES</h2>
-                                <p className="text-gray-400 mt-1 text-sm font-bold uppercase tracking-widest">Precios de locura por tiempo limitado</p>
+                                <p className="text-text-muted mt-1 text-sm font-bold uppercase tracking-widest">Precios de locura por tiempo limitado</p>
                             </div>
-                            <Link to="/ofertas" className="flex bg-white hover:bg-gray-200 text-black px-4 md:px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
+                            <Link to="/ofertas" className="flex bg-text text-background hover:opacity-80 px-4 md:px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
                                 <span className="skew-x-[12deg] group-hover:skew-x-0 block whitespace-nowrap">VER MÁS</span>
                                 <ChevronRight size={14} className="skew-x-[12deg] group-hover:skew-x-0" />
                             </Link>
@@ -151,8 +151,8 @@ const Home: React.FC = () => {
                             >
                                 <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                                     <div className="space-y-1">
-                                        <h2 className="text-3xl font-black uppercase tracking-tight">{categoryObj.name}</h2>
-                                        <p className="text-gray-500 text-sm font-bold tracking-widest uppercase opacity-70">
+                                        <h2 className="text-3xl font-black uppercase tracking-tight text-text">{categoryObj.name}</h2>
+                                        <p className="text-text-muted text-sm font-bold tracking-widest uppercase opacity-70">
                                             {children.length > 0 ? children.map(c => c.name).join(' / ') : 'Colección Oficial'}
                                         </p>
                                     </div>

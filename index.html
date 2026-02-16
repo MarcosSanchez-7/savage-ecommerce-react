@@ -78,9 +78,11 @@
         extend: {
           colors: {
             "primary": "#D4AF37",
-            "background-light": "#f8f6f6",
-            "background-dark": "#0a0a0a",
-            "surface-dark": "#1f1f1f",
+            "background": "var(--background)",
+            "surface": "var(--surface)",
+            "text": "var(--text)",
+            "text-muted": "var(--text-muted)",
+            "border": "var(--border)",
             "accent-gray": "#a1a1aa",
           },
           fontFamily: {
@@ -127,7 +129,7 @@
 </head>
 
 <body
-  class="bg-background-dark text-white font-display antialiased overflow-x-hidden selection:bg-primary selection:text-white">
+  class="bg-background text-text font-display antialiased overflow-x-hidden selection:bg-primary selection:text-white transition-colors duration-300">
   <!-- Meta Pixel NoScript -->
   <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=1559990158588581&ev=PageView&noscript=1" /></noscript>

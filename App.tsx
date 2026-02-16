@@ -11,6 +11,8 @@ import HomePageSkeleton from './components/skeletons/HomePageSkeleton';
 import ScrollToTop from './components/ScrollToTop';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import WhatsAppFloatingButton from './components/WhatsAppFloatingButton';
+import { ThemeProvider } from './context/ThemeContext';
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
@@ -25,8 +27,11 @@ const MainContent: React.FC = () => {
     <BrowserRouter>
       <ScrollToTop />
       <SEO />
-      {/* Only show CartDrawer on Web App, not Stock App, unless requested otherwise. Keeping it separate is cleaner. */}
+      {/* Only show CartDrawer on Web App, not Stock App */}
       {!isStockApp && <CartDrawer />}
+
+      {/* WhatsApp Conversion Button */}
+      {!isStockApp && <WhatsAppFloatingButton />}
 
       {isStockApp ? (
         <StockRoutes />
@@ -40,24 +45,26 @@ const MainContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <ShopProvider>
-        <ToastContainer
-          aria-label="Notificaciones"
-          position="top-center"
-          autoClose={2500}
-          hideProgressBar={true}
-          newestOnTop={true}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="dark"
-          limit={2}
-          toastClassName="savage-toast"
-        />
-        <MainContent />
-      </ShopProvider>
+      <ThemeProvider>
+        <ShopProvider>
+          <ToastContainer
+            aria-label="Notificaciones"
+            position="top-center"
+            autoClose={2500}
+            hideProgressBar={true}
+            newestOnTop={true}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="dark"
+            limit={2}
+            toastClassName="savage-toast"
+          />
+          <MainContent />
+        </ShopProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 };
