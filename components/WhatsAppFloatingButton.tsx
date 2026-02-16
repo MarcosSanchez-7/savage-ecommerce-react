@@ -8,9 +8,10 @@ import { MessageCircle } from 'lucide-react';
  * WhatsAppFloatingButton Component
  * Designed for SAVAGE E-commerce to maximize Meta Ads conversions.
  * Minimalist version: Only the animated button without the floating tooltip.
+ * Smart Hide: Disappears during cart/checkout flow to avoid UI conflicts.
  */
 const WhatsAppFloatingButton: React.FC = () => {
-    const { products, socialConfig } = useShop();
+    const { products, socialConfig, isCartOpen } = useShop();
     const location = useLocation();
     const { slug } = useParams<{ slug: string }>();
 
@@ -26,6 +27,14 @@ const WhatsAppFloatingButton: React.FC = () => {
 
         return foundProduct?.name || null;
     }, [location.pathname, slug, products]);
+
+    /**
+     * Hide button on specific routes (e.g., /checkout)
+     */
+    const shouldHideOnRoute = useMemo(() => {
+        const hiddenRoutes = ['/checkout'];
+        return hiddenRoutes.some(route => location.pathname.startsWith(route));
+    }, [location.pathname]);
 
     /**
      * Placeholder for Analytics Tracking (Meta Pixel / GA4 / GTM)
@@ -54,8 +63,13 @@ const WhatsAppFloatingButton: React.FC = () => {
         window.open(waUrl, '_blank', 'noopener,noreferrer');
     };
 
+    // Hide button when cart is open or on checkout routes
+    if (isCartOpen || shouldHideOnRoute) {
+        return null;
+    }
+
     return (
-        <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end pointer-events-none sm:bottom-10 sm:right-10">
+        <div className="fixed bottom-6 right-6 z-[9998] flex flex-col items-end pointer-events-none sm:bottom-10 sm:right-10 animate-in fade-in duration-300">
             {/* SAVAGE WhatsApp Button */}
             <button
                 onClick={handleWhatsAppRedirect}
