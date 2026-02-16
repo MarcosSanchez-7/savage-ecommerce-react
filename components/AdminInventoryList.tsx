@@ -215,7 +215,6 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                                                             <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-500 text-[8px] font-black uppercase rounded">ADMIN</span>
                                                                             <span className="px-1.5 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded">ACTIVE</span>
                                                                             {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
-                                                                            {product.isNew && <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-500 text-[8px] font-black uppercase rounded">NEW</span>}
                                                                             {product.isOffer && <span className="px-1.5 py-0.5 bg-red-500/10 text-red-500 text-[8px] font-black uppercase rounded">OFFER</span>}
                                                                             {seasonProductIds.includes(product.id) && <span className="px-1.5 py-0.5 bg-pink-500/10 text-pink-500 text-[8px] font-black uppercase rounded">SEASON</span>}
                                                                         </div>
@@ -290,35 +289,54 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                                                                 </div>
                                                             </div>
 
-                                                            {/* Actions - Positioned to the side */}
-                                                            <div className="absolute top-4 right-4 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                                            {/* Actions - Moved to bottom and added confirmation */}
+                                                            <div className="flex justify-end gap-2 mt-2 pt-4 border-t border-gray-800/30 group-hover:bg-white/2 transition-colors rounded-b-xl -mx-4 -mb-4 px-4 pb-4">
                                                                 <button
-                                                                    onClick={() => onToggleActive(product)}
+                                                                    onClick={() => {
+                                                                        const action = product.isActive === false ? 'mostrar' : 'ocultar';
+                                                                        if (window.confirm(`¿Deseas ${action} el artículo "${product.name}"?`)) {
+                                                                            onToggleActive(product);
+                                                                        }
+                                                                    }}
                                                                     className={`p-2.5 rounded-xl text-white transition-all shadow-xl backdrop-blur-md ${product.isActive === false ? 'bg-gray-600 hover:bg-gray-500' : 'bg-green-600/90 hover:bg-green-500'}`}
                                                                     title={product.isActive === false ? 'Activar' : 'Desactivar'}
                                                                 >
-                                                                    {product.isActive === false ? <EyeOff size={14} /> : <Eye size={14} />}
+                                                                    {product.isActive === false ? <EyeOff size={16} /> : <Eye size={16} />}
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => onToggleSeason(product)}
+                                                                    onClick={() => {
+                                                                        const isSeason = seasonProductIds.includes(product.id);
+                                                                        const action = isSeason ? 'quitar de' : 'añadir a';
+                                                                        if (window.confirm(`¿Deseas ${action} la colección de temporada al producto "${product.name}"?`)) {
+                                                                            onToggleSeason(product);
+                                                                        }
+                                                                    }}
                                                                     className={`p-2.5 rounded-xl text-white transition-all shadow-xl backdrop-blur-md ${seasonProductIds.includes(product.id) ? 'bg-pink-600/90 hover:bg-pink-500 shadow-pink-500/20' : 'bg-gray-700/50 hover:bg-gray-600 border border-white/10'}`}
-                                                                    title="Añadir/Quitar Temporada"
+                                                                    title="Temporada"
                                                                 >
-                                                                    <Calendar size={14} />
+                                                                    <Calendar size={16} />
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => onEdit(product)}
+                                                                    onClick={() => {
+                                                                        if (window.confirm(`¿Deseas editar el producto "${product.name}"?`)) {
+                                                                            onEdit(product);
+                                                                        }
+                                                                    }}
                                                                     className="p-2.5 bg-blue-600/90 text-white rounded-xl hover:bg-blue-500 transition-all shadow-xl backdrop-blur-md"
                                                                     title="Editar"
                                                                 >
-                                                                    <Edit size={14} />
+                                                                    <Edit size={16} />
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => onDelete(product.id)}
+                                                                    onClick={() => {
+                                                                        if (window.confirm(`¿Deseas eliminar de forma permanente el producto "${product.name}"?`)) {
+                                                                            onDelete(product.id);
+                                                                        }
+                                                                    }}
                                                                     className="p-2.5 bg-red-600/90 text-white rounded-xl hover:bg-red-500 transition-all shadow-xl backdrop-blur-md"
                                                                     title="Eliminar"
                                                                 >
-                                                                    <Trash2 size={14} />
+                                                                    <Trash2 size={16} />
                                                                 </button>
                                                             </div>
                                                         </div>

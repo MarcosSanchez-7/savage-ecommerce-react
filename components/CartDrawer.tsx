@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { X, Plus, Minus, Trash2, MapPin, Truck, ArrowLeft } from 'lucide-react';
+import { toast } from 'react-toastify';
 import LocationPicker from './LocationPicker';
 import { isPointInPolygon } from '../types';
 
@@ -24,6 +25,10 @@ const CartDrawer: React.FC = () => {
     const [showMap, setShowMap] = React.useState(false);
     const [selectedLocation, setSelectedLocation] = React.useState<{ lat: number, lng: number } | null>(null);
     const [shippingCost, setShippingCost] = React.useState(0);
+
+    // Form States
+    const [customerName, setCustomerName] = React.useState('');
+    const [phoneNumber, setPhoneNumber] = React.useState('');
 
     // Lock Body Scroll when Cart is Open
     React.useEffect(() => {
@@ -60,6 +65,12 @@ const CartDrawer: React.FC = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = () => {
+        if (!selectedLocation) {
+            toast.error("Por favor, marca tu ubicación de envío en el mapa para continuar.");
+            setShowMap(true);
+            return;
+        }
+
         const orderId = crypto.randomUUID();
         const displayId = Math.floor(1000 + Math.random() * 9000); // Simple ID for display
 
@@ -68,39 +79,73 @@ const CartDrawer: React.FC = () => {
             display_id: displayId,
             product_ids: cart.map(item => item.id), // Storing Product IDs
             customerInfo: {
-                location: selectedLocation || undefined
+                location: selectedLocation || undefined,
+                name: customerName,
+                phone: phoneNumber,
+                needs_confirmation: true
             },
             items: cart, // Storing full cart items for local UI
             total_amount: finalTotal,
             delivery_cost: shippingCost,
             status: 'Pendiente',
-            created_at: new Date().toLocaleDateString()
+            created_at: new Date().toISOString() // ISO for better DB compatibility
         };
 
         createOrder(newOrder);
 
         // WhatsApp Checkout Logic
-        const phoneNumber = socialConfig.whatsapp || "595983840235";
+        const shopNumber = socialConfig.whatsapp || "595983840235";
 
         // Helper for formatting currency
         const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
 
-        const message = `👋 Hola! Me gustaría confirmar la disponibilidad de talles para el siguiente pedido:\n\n` +
-            `*PEDIDO #${displayId}*\n` +
-            cart.map(item => {
-                const imgLink = item.images && item.images.length > 0
-                    ? `\n🖼️ Ver foto: ${item.images[0]}`
-                    : '';
-                return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle Seleccionado: ${item.selectedSize}${imgLink}`;
-            }).join('\n\n') +
-            `\n\n--------------------------------\n` +
-            `💵 *PRODUCTOS:* ${formatPrice(cartTotal)}\n` +
-            `🚚 *ENVÍO:* ${shippingCost > 0 ? formatPrice(shippingCost) : 'A convenir'}\n` +
-            `--------------------------------\n` +
-            `*TOTAL FINAL:* ${formatPrice(finalTotal)}\n` +
-            `\n📍 *Ubicación:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}`;
+        // Usamos el dominio oficial directamente
+        const baseUrl = "https://www.savageeepy.com";
 
-        const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        const message = `👋 *HOLA SAVAGE!* Quiero confirmar este pedido:\n\n` +
+            `👤 *CLIENTE:* (Confirmar en chat)\n` +
+            `🧾 *RECIBO #${displayId}*\n` +
+            `🗓️ Fecha: ${new Date().toLocaleDateString()}\n` +
+            `----------------------------------\n\n` +
+            cart.map(item => {
+                // Link comercial (slug o ID si no hay slug)
+                const productUrl = `${baseUrl}/product/${item.slug || item.id}`;
+
+                return `▪️ *${item.name.toUpperCase()}*\n` +
+                    `   Cant: ${item.quantity} | Talle: ${item.selectedSize}\n` +
+                    `   🔗 ${productUrl}`;
+            }).join('\n\n') +
+            `\n\n----------------------------------\n` +
+            `💰 *SUBTOTAL:* ${formatPrice(cartTotal)}\n` +
+            `🚚 *ENVÍO:* ${shippingCost > 0 ? formatPrice(shippingCost) : 'A convenir'}\n` +
+            `⭐️ *TOTAL FINAL:* ${formatPrice(finalTotal)}\n` +
+            `----------------------------------\n` +
+            `📍 *UBICACIÓN:* ${selectedLocation ? `https://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : 'A coordinar'}`;
+
+        // Debugging para el usuario en localhost
+        console.log("--------------- WHATSAPP MESSAGE DEBUG ---------------");
+        console.log(message);
+        console.log("------------------------------------------------------");
+
+        // GA4 Purchase Event (Triggered when user clicks confirm and opens WhatsApp)
+        if (typeof window !== 'undefined' && (window as any).gtag) {
+            (window as any).gtag('event', 'purchase', {
+                transaction_id: displayId.toString(),
+                value: finalTotal,
+                currency: 'PYG',
+                shipping: shippingCost,
+                items: cart.map(item => ({
+                    item_id: item.id,
+                    item_name: item.name,
+                    item_category: item.category,
+                    item_variant: item.selectedSize,
+                    price: item.price,
+                    quantity: item.quantity
+                }))
+            });
+        }
+
+        const url = `https://wa.me/${shopNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     };
 
@@ -207,6 +252,32 @@ const CartDrawer: React.FC = () => {
 
                 {cart.length > 0 && (
                     <div className="p-4 border-t border-gray-800 bg-[#0a0a0a] flex-none z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+                        {/* UBICACIÓN MANDATORIA */}
+                        <div className="mb-6">
+                            {!selectedLocation ? (
+                                <button
+                                    onClick={() => setShowMap(true)}
+                                    className="w-full bg-white/5 border-2 border-primary border-dashed hover:bg-white/10 text-primary py-4 rounded-lg flex flex-col items-center justify-center gap-2 transition-all animate-pulse hover:animate-none"
+                                >
+                                    <MapPin size={24} />
+                                    <div className="text-center">
+                                        <p className="text-xs font-black uppercase tracking-widest">PASO OBLIGATORIO</p>
+                                        <p className="text-[10px] font-bold opacity-80">MARCAR UBICACIÓN DE ENVÍO</p>
+                                    </div>
+                                </button>
+                            ) : (
+                                <div className="bg-white/5 border border-green-500/30 rounded-lg p-3 flex justify-between items-center group">
+                                    <div className="flex items-center gap-2 text-green-500">
+                                        <MapPin size={16} />
+                                        <span className="text-xs font-bold uppercase">Ubicación Seleccionada</span>
+                                    </div>
+                                    <button onClick={() => setShowMap(true)} className="text-xs text-gray-500 hover:text-white underline">
+                                        Cambiar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-gray-400 text-xs">Subtotal</span>
                             <span className="text-sm font-bold font-mono">Gs. {cartTotal.toLocaleString()}</span>
@@ -233,26 +304,7 @@ const CartDrawer: React.FC = () => {
                         </button>
 
 
-                        <div className="mt-4">
-                            {!selectedLocation ? (
-                                <button
-                                    onClick={() => setShowMap(true)}
-                                    className="w-full border border-gray-700 hover:border-white text-gray-400 hover:text-white py-3 rounded-lg flex items-center justify-center gap-2 transition-all text-sm font-bold uppercase"
-                                >
-                                    <MapPin size={16} /> Marcar Ubicación de Envío
-                                </button>
-                            ) : (
-                                <div className="bg-white/5 border border-green-500/30 rounded-lg p-3 flex justify-between items-center group">
-                                    <div className="flex items-center gap-2 text-green-500">
-                                        <MapPin size={16} />
-                                        <span className="text-xs font-bold uppercase">Ubicación Marcada</span>
-                                    </div>
-                                    <button onClick={() => setShowMap(true)} className="text-xs text-gray-500 hover:text-white underline">
-                                        Cambiar
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+
 
                         <button
                             onClick={() => { toggleCart(); navigate('/'); }}

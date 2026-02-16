@@ -1,27 +1,29 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
     const { slug } = req.query;
-    const userAgent = req.headers['user-agent'] || '';
 
-    // Configuration
+    // Configuration via Env Vars or Hardcoded Fallback
     const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://cwlaqfjqgrtyhyscwpnq.supabase.co';
     const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3bGFxZmpxZ3J0eWh5c2N3cG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxMDM3NTcsImV4cCI6MjA4MTY3OTc1N30.qt20ysweHhOMO81o6snFuBf3z5QDL-M1E0jN-ifQC4I';
 
-    // Default metadata
+    // Default metadata using Production Domain
     let title = 'SAVAGE STORE | Camisetas de Fútbol Premium';
     let description = 'Las mejores camisetas de fútbol en Paraguay: Retro, internacionales y ediciones especiales.';
     let image = 'https://www.savageeepy.com/crown.png';
     const siteUrl = 'https://www.savageeepy.com';
     let currentUrl = `${siteUrl}/product/${slug}`;
 
-    // Fallback for root or invalid slug
+    // Redirect to home if no slug
     if (!slug) {
         return res.redirect(307, '/');
     }
 
     try {
-        // Fetch product from Supabase
+        // Direct Supabase REST call to avoid dependency issues or heavy client init if not needed
+        // but using supabase-js checks connection better usually. Let's use fetch for speed/lightness like before.
+
+        // 1. Try finding by Slug
         const params = new URLSearchParams({
             slug: `eq.${slug}`,
             select: 'name,description,images,id'
@@ -35,32 +37,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
 
         let data = await response.json();
-        let product: any = null;
+        let product = null;
 
         if (data && data.length > 0) {
             product = data[0];
         } else {
-            // Fallback: Try ID
+            // 2. Fallback: Try ID (if slug was actually an ID)
             const idParams = new URLSearchParams({
                 id: `eq.${slug}`,
                 select: 'name,description,images,id'
             });
-            response = await fetch(`${supabaseUrl}/rest/v1/products?${idParams}`, {
+            const res2 = await fetch(`${supabaseUrl}/rest/v1/products?${idParams}`, {
                 headers: {
                     'apikey': supabaseKey,
                     'Authorization': `Bearer ${supabaseKey}`
                 }
             });
-            data = await response.json();
-            if (data && data.length > 0) {
-                product = data[0];
+            const data2 = await res2.json();
+            if (data2 && data2.length > 0) {
+                product = data2[0];
             }
         }
 
         if (product) {
             title = `${product.name} | Savage Store`;
             if (product.description) {
-                description = product.description.replace(/\s+/g, ' ').substring(0, 160) + '...';
+                // Strip HTML tags if any and truncate
+                const cleanDesc = product.description.replace(/<[^>]*>?/gm, '');
+                description = cleanDesc.replace(/\s+/g, ' ').substring(0, 160) + '...';
             }
             if (product.images && product.images.length > 0) {
                 if (typeof product.images[0] === 'string') {
@@ -70,26 +74,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
     } catch (error) {
-        console.error('Error fetching product:', error);
+        console.error('OG API Error:', error);
+        // Continue with default metadata on error
     }
 
-    // Generate HTML
+    // Generate HTML with Open Graph Tags
     const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
     <meta name="description" content="${description}">
-    <link rel="canonical" href="${currentUrl}" />
     
-    <!-- Open Graph -->
+    <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="product">
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${image}">
     <meta property="og:url" content="${currentUrl}">
     <meta property="og:site_name" content="Savage Store">
+    
+    <!-- WhatsApp specific hint for image size -->
     <meta property="og:image:width" content="800">
     <meta property="og:image:height" content="800">
     
@@ -101,11 +106,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 </head>
 <body>
     <h1>${title}</h1>
-    <img src="${image}" alt="${title}" style="max-width:100%" />
+    <img src="${image}" alt="${title}" style="max-width: 600px;" />
     <p>${description}</p>
+    <script>window.location.href = "${currentUrl}";</script>
 </body>
 </html>`;
 
-    // Force 200 OK header
-    res.status(200).setHeader('Content-Type', 'text/html').send(html);
+    res.status(200).setHeader('Content-Type', 'text/html; charset=utf-8').send(html);
 }

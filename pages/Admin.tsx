@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { useAuth } from '../context/AuthContext';
-import { Trash2, Plus, Edit, X, Save, UploadCloud, Search, Eye, Filter, MoreVertical, Layout, Type, Image as ImageIcon, MessageSquare, Briefcase, Map, Menu, Layers, Box, FileText, Activity, Settings, Globe, LogOut, Loader2, Star, Zap, CornerDownRight, Percent, Sparkles, Tag, ArrowLeft, ArrowRight, Check, Calendar, Folder, FolderOpen, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, Package } from 'lucide-react';
+import { Trash2, Plus, Edit, X, Save, UploadCloud, Search, Eye, Filter, MoreVertical, Layout, Type, Image as ImageIcon, MessageSquare, Briefcase, Map, Menu, Layers, Box, FileText, Activity, Settings, Globe, LogOut, Loader2, Star, Zap, CornerDownRight, Percent, Sparkles, Tag, ArrowLeft, ArrowRight, Check, Calendar, Folder, FolderOpen, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, Package, AlertCircle, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
 import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Attribute, AttributeValue, Product, SeasonConfig } from '../types';
@@ -133,7 +133,10 @@ const AdminDashboard: React.FC = () => {
         saveAllData, loading,
         updateCategoryOrder,
         attributes, attributeValues,
-        seasonConfig, updateSeasonConfig
+        seasonConfig, updateSeasonConfig,
+        confirmOrder,
+        orderRequests,
+        deleteOrderRequest
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
@@ -1682,71 +1685,160 @@ const AdminDashboard: React.FC = () => {
                                 )}
                             </header>
 
-                            <div className="space-y-4" key={orders?.map(o => o?.id || 'null').join(',') || 'empty'}>
-                                {orders.length === 0 ? (
-                                    <div className="text-center py-20 bg-[#0a0a0a] border border-gray-800 rounded-xl">
-                                        <p className="text-gray-500">No hay pedidos registrados aún.</p>
+                            {/* PENDING CONFIRMATIONS */}
+                            <div className="space-y-4 mb-12 animate-in slide-in-from-top-4 duration-500">
+                                <h3 className="text-xl font-black text-yellow-500 uppercase tracking-tighter flex items-center gap-2 mb-4">
+                                    <AlertCircle size={24} /> SOLICITUDES DE PEDIDO (SIN CONFIRMAR)
+                                </h3>
+
+                                {orderRequests.length === 0 ? (
+                                    <div className="text-center py-10 bg-[#0a0a0a] border border-gray-800 rounded-xl border-dashed border-yellow-900/30">
+                                        <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">No hay solicitudes pendientes.</p>
                                     </div>
                                 ) : (
-                                    orders.map(order => (
-                                        <div key={order.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row justify-between md:items-center gap-6">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <span className={`px-3 py-1 rounded text-xs font-black uppercase tracking-wider ${order.status === 'Pendiente' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
-                                                        {order.status}
-                                                    </span>
-                                                    <span className="text-gray-500 text-xs">{order.created_at}</span>
-                                                    <span className="text-[10px] text-gray-700 font-mono">#{order.display_id || order.id.toString().slice(-4)}</span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (window.confirm('¿ELIMINAR ESTE PEDIDO? ESTA ACCIÓN NO SE PUEDE DESHACER.')) {
-                                                                deleteOrder(order.id);
-                                                            }
-                                                        }}
-                                                        className="p-3 text-red-500 hover:bg-red-900/20 rounded-lg transition-all ml-auto md:ml-2 border border-red-900/30"
-                                                        title="Eliminar DEFINITIVAMENTE"
-                                                    >
-                                                        <Trash2 size={20} />
-                                                    </button>
-                                                </div>
-                                                <div className="flex flex-col gap-1">
-                                                    {/* Compatibility check for items */}
-                                                    {(order.items as any[])?.map((item: any) => (
-                                                        <div key={item.id + (item.selectedSize || '')} className="text-sm">
-                                                            <span className="font-bold text-white">{item.quantity || 1}x {item.name}</span>
-                                                            {item.selectedSize && <span className="text-gray-500 ml-2">({item.selectedSize})</span>}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <div className="mt-2 text-xs text-gray-400">
-                                                    Total: <span className="text-white font-bold text-base">Gs. {order.total_amount?.toLocaleString()}</span>
-                                                </div>
-                                            </div>
+                                    <>
+                                        <p className="text-gray-400 text-xs mb-6 font-bold uppercase tracking-widest bg-yellow-900/10 p-4 rounded-xl border border-yellow-900/30">
+                                            Estos pedidos se iniciaron pero no se ha confirmado si el cliente envió el mensaje de WhatsApp.
+                                            Confirma manualmente si recibiste el mensaje para procesarlos.
+                                        </p>
 
-                                            <div className="flex flex-col md:flex-row gap-4 items-center">
-                                                {order.status === 'Pendiente' ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {orderRequests.map(request => (
+                                                <div key={request.id} className="bg-gradient-to-br from-yellow-900/10 to-black border border-yellow-500/30 rounded-xl p-6 relative group hover:border-yellow-500/50 transition-all shadow-lg hover:shadow-yellow-900/20">
+                                                    <div className="flex justify-between items-start mb-4 border-b border-yellow-500/10 pb-4">
+                                                        <div>
+                                                            <p className="text-yellow-500 font-black text-[10px] uppercase tracking-[0.2em] mb-1 animate-pulse">Esperando Mensaje...</p>
+                                                            <span className="text-white font-black text-2xl tracking-tighter">Gs. {request.total_amount?.toLocaleString()}</span>
+                                                            <p className="text-[10px] text-gray-500 mt-1 font-mono">{new Date(request.created_at || '').toLocaleString()}</p>
+                                                            <p className="text-[10px] text-gray-400 font-mono">#{request.display_id || request.id.toString().slice(-4)}</p>
+                                                            {request.customerInfo?.name && (
+                                                                <p className="text-[10px] text-gray-300 font-bold mt-1 uppercase">{request.customerInfo.name} ({request.customerInfo.phone})</p>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (window.confirm('¿Descartar esta solicitud?')) deleteOrderRequest(request.id);
+                                                            }}
+                                                            className="text-red-500 hover:text-red-400 p-2 hover:bg-red-900/20 rounded-lg transition-colors"
+                                                            title="Descartar Solicitud"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+
+                                                    <div className="space-y-2 mb-6 max-h-32 overflow-y-auto pr-2 fancy-scrollbar">
+                                                        {(request.items as any[])?.map((item: any) => (
+                                                            <div key={item.id + (item.selectedSize || '')} className="flex justify-between text-xs text-gray-300 border-b border-white/5 pb-1 last:border-0">
+                                                                <span className="truncate flex-1 font-bold">{item.quantity}x {item.name}</span>
+                                                                {item.selectedSize && <span className="text-gray-500 font-mono ml-2 text-[10px] uppercase bg-white/5 px-1 rounded">{item.selectedSize}</span>}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
                                                     <button
-                                                        onClick={() => toggleOrderStatus(order.id, 'Pendiente')}
-                                                        className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors w-full md:w-auto"
+                                                        onClick={() => confirmOrder(request.id)}
+                                                        className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-lg uppercase text-[10px] tracking-[0.2em] transition-all shadow-lg hover:shadow-yellow-500/20 flex items-center justify-center gap-2"
                                                     >
-                                                        Marcar Finalizado
+                                                        <CheckCircle size={14} strokeWidth={3} />
+                                                        PEDIDO RECIBIDO
                                                     </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => toggleOrderStatus(order.id, 'Entregado')}
-                                                        className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors w-full md:w-auto"
-                                                    >
-                                                        Reabrir Pedido
-                                                    </button>
-                                                )}
-                                            </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))
+                                    </>
                                 )}
                             </div>
-                        </div>
+
+                            {/* CONFIRMED ORDERS (From 'orders' table) */}
+                            < div className="space-y-6" >
+                                <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3 pt-8 border-t border-gray-800">
+                                    <span className="bg-green-500/10 p-2 rounded-lg text-green-500 border border-green-500/20"><Package size={20} /></span>
+                                    PEDIDOS CONFIRMADOS Y VENTAS
+                                </h3>
+
+                                {
+                                    orders.length === 0 ? (
+                                        <div className="text-center py-20 bg-[#0a0a0a] border border-gray-800 rounded-xl">
+                                            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">No hay pedidos confirmados aún.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {orders.map(order => (
+                                                <div key={order.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row justify-between md:items-center gap-6 group hover:border-gray-700 transition-colors">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-3">
+                                                            <span className={`px-3 py-1 rounded text-[10px] font-black uppercase tracking-[0.1em] ${order.status === 'Pendiente' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-green-500/20 text-green-500 border border-green-500/30'}`}>
+                                                                {order.status === 'Pendiente' ? 'EN PROCESO' : order.status}
+                                                            </span>
+                                                            <span className="text-gray-500 text-[10px] font-bold uppercase">{new Date(order.created_at || '').toLocaleString()}</span>
+                                                            <span className="text-[10px] text-gray-700 font-mono bg-gray-900 px-2 py-0.5 rounded">#{order.display_id || order.id.toString().slice(-4)}</span>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (window.confirm('¿ELIMINAR ESTE PEDIDO? ESTA ACCIÓN NO SE PUEDE DESHACER.')) {
+                                                                        deleteOrder(order.id);
+                                                                    }
+                                                                }}
+                                                                className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-900/10 rounded-lg transition-all ml-auto md:ml-4 opacity-0 group-hover:opacity-100"
+                                                                title="Eliminar DEFINITIVAMENTE"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="flex flex-col gap-1 mb-2 pl-1 border-l-2 border-gray-800">
+                                                            {(order.items as any[])?.map((item: any) => (
+                                                                <div key={item.id + (item.selectedSize || '')} className="text-sm flex items-center gap-2">
+                                                                    <span className="text-gray-500 font-mono text-xs">{item.quantity || 1}x</span>
+                                                                    <span className="font-bold text-gray-300">{item.name}</span>
+                                                                    {item.selectedSize && <span className="text-[10px] font-bold text-gray-600 bg-black border border-gray-800 px-1.5 rounded uppercase">{item.selectedSize}</span>}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        <div className="mt-3 flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Total:</span>
+                                                            <span className="text-white font-black text-lg tracking-tight">Gs. {order.total_amount?.toLocaleString()}</span>
+                                                        </div>
+
+                                                        {/* Customer Info Mini Badge */}
+                                                        {order.customerInfo?.name && (
+                                                            <div className="mt-2 text-[10px] text-gray-500 font-mono flex gap-2">
+                                                                <span>{order.customerInfo.name}</span>
+                                                                {order.customerInfo.phone && <span>• {order.customerInfo.phone}</span>}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex flex-col md:flex-row gap-3 items-center min-w-[200px]">
+                                                        {order.status === 'Pendiente' ? (
+                                                            <button
+                                                                onClick={() => toggleOrderStatus(order.id, 'Pendiente')}
+                                                                className="bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-lg font-black text-[10px] uppercase tracking-[0.2em] transition-all w-full md:w-auto shadow-lg hover:shadow-white/10 flex items-center justify-center gap-2"
+                                                            >
+                                                                <CheckCircle size={14} />
+                                                                Marcar Entregado
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => toggleOrderStatus(order.id, 'Entregado')}
+                                                                className="bg-gray-800 hover:bg-gray-700 text-gray-400 px-6 py-3 rounded-lg font-bold text-[10px] uppercase tracking-[0.2em] transition-all w-full md:w-auto flex items-center justify-center gap-2"
+                                                            >
+                                                                <LogOut size={14} className="rotate-180" />
+                                                                Reabrir Pedido
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )
+                                }
+                            </div >
+                        </div >
                     )
                 }
 
@@ -1871,176 +1963,178 @@ const AdminDashboard: React.FC = () => {
 
 
                 {/* SEASON TAB */}
-                {activeTab === 'season' && (
-                    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header className="border-b border-gray-800 pb-6 flex justify-between items-end">
-                            <div>
-                                <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3">
-                                    <Calendar size={32} className="text-purple-500" />
-                                    SECCIÓN DE <span className="text-purple-500">TEMPORADA</span>
-                                </h2>
-                                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mt-1">Configura la sección especial del Home.</p>
-                            </div>
-                            <button
-                                onClick={handleSeasonSave}
-                                className="bg-primary hover:bg-yellow-500 text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95"
-                            >
-                                <Save size={18} /> GUARDAR TEMPORADA
-                            </button>
-                        </header>
-
-                        <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-8 space-y-8 shadow-2xl">
-                            {/* Enable Toggle */}
-                            <div onClick={() => setSeasonForm({ ...seasonForm, isEnabled: !seasonForm.isEnabled })} className="flex items-center gap-4 cursor-pointer p-4 border border-gray-800 rounded-xl hover:bg-white/5 transition-all group">
-                                <div className={`w-14 h-8 rounded-full relative transition-all ${seasonForm?.isEnabled ? 'bg-primary' : 'bg-gray-800'}`}>
-                                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${seasonForm?.isEnabled ? 'left-7' : 'left-1'}`} />
-                                </div>
+                {
+                    activeTab === 'season' && (
+                        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <header className="border-b border-gray-800 pb-6 flex justify-between items-end">
                                 <div>
-                                    <h3 className={`font-black uppercase italic transition-colors ${seasonForm?.isEnabled ? 'text-white' : 'text-gray-500'}`}>Activar Sección en Home</h3>
-                                    <p className="text-xs text-gray-500 font-bold tracking-widest">Mostrar debajo del Hero principal</p>
+                                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white flex items-center gap-3">
+                                        <Calendar size={32} className="text-purple-500" />
+                                        SECCIÓN DE <span className="text-purple-500">TEMPORADA</span>
+                                    </h2>
+                                    <p className="text-gray-400 font-bold uppercase tracking-widest text-xs mt-1">Configura la sección especial del Home.</p>
                                 </div>
-                            </div>
+                                <button
+                                    onClick={handleSeasonSave}
+                                    className="bg-primary hover:bg-yellow-500 text-black px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95"
+                                >
+                                    <Save size={18} /> GUARDAR TEMPORADA
+                                </button>
+                            </header>
 
-                            {/* Texts & Image */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Título Principal</label>
-                                        <input
-                                            type="text"
-                                            value={seasonForm?.title}
-                                            onChange={e => setSeasonForm({ ...seasonForm, title: e.target.value })}
-                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white font-black italic uppercase tracking-tighter focus:border-primary focus:outline-none transition-all shadow-inner text-xl"
-                                        />
+                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl p-8 space-y-8 shadow-2xl">
+                                {/* Enable Toggle */}
+                                <div onClick={() => setSeasonForm({ ...seasonForm, isEnabled: !seasonForm.isEnabled })} className="flex items-center gap-4 cursor-pointer p-4 border border-gray-800 rounded-xl hover:bg-white/5 transition-all group">
+                                    <div className={`w-14 h-8 rounded-full relative transition-all ${seasonForm?.isEnabled ? 'bg-primary' : 'bg-gray-800'}`}>
+                                        <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${seasonForm?.isEnabled ? 'left-7' : 'left-1'}`} />
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Subtítulo (Badge)</label>
-                                        <input
-                                            type="text"
-                                            value={seasonForm?.subtitle}
-                                            onChange={e => setSeasonForm({ ...seasonForm, subtitle: e.target.value })}
-                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-all shadow-inner text-xs"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Imagen de Fondo (URL)</label>
-                                        <input
-                                            type="text"
-                                            value={seasonForm?.backgroundImage}
-                                            onChange={e => setSeasonForm({ ...seasonForm, backgroundImage: e.target.value })}
-                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-gray-400 text-xs font-mono focus:border-primary focus:outline-none transition-all"
-                                        />
+                                    <div>
+                                        <h3 className={`font-black uppercase italic transition-colors ${seasonForm?.isEnabled ? 'text-white' : 'text-gray-500'}`}>Activar Sección en Home</h3>
+                                        <p className="text-xs text-gray-500 font-bold tracking-widest">Mostrar debajo del Hero principal</p>
                                     </div>
                                 </div>
 
-                                {/* Preview Image */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Vista Previa Fondo</label>
-                                    <div className="relative rounded-xl overflow-hidden border border-gray-800 aspect-video bg-gray-900 group shadow-lg">
-                                        <img src={seasonForm?.backgroundImage} className="w-full h-full object-cover opacity-60 transition-opacity duration-700" onError={(e) => (e.currentTarget.style.display = 'none')} onLoad={(e) => (e.currentTarget.style.display = 'block')} />
-                                        <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4 text-center">
-                                            <h3 className="text-3xl text-white font-black italic uppercase tracking-tighter drop-shadow-lg">{seasonForm?.title}</h3>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 px-3 py-1 rounded mt-2 text-gray-200">{seasonForm?.subtitle}</span>
+                                {/* Texts & Image */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Título Principal</label>
+                                            <input
+                                                type="text"
+                                                value={seasonForm?.title}
+                                                onChange={e => setSeasonForm({ ...seasonForm, title: e.target.value })}
+                                                className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white font-black italic uppercase tracking-tighter focus:border-primary focus:outline-none transition-all shadow-inner text-xl"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Subtítulo (Badge)</label>
+                                            <input
+                                                type="text"
+                                                value={seasonForm?.subtitle}
+                                                onChange={e => setSeasonForm({ ...seasonForm, subtitle: e.target.value })}
+                                                className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white font-bold uppercase tracking-widest focus:border-primary focus:outline-none transition-all shadow-inner text-xs"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Imagen de Fondo (URL)</label>
+                                            <input
+                                                type="text"
+                                                value={seasonForm?.backgroundImage}
+                                                onChange={e => setSeasonForm({ ...seasonForm, backgroundImage: e.target.value })}
+                                                className="w-full bg-black border border-gray-800 rounded-xl p-4 text-gray-400 text-xs font-mono focus:border-primary focus:outline-none transition-all"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Preview Image */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Vista Previa Fondo</label>
+                                        <div className="relative rounded-xl overflow-hidden border border-gray-800 aspect-video bg-gray-900 group shadow-lg">
+                                            <img src={seasonForm?.backgroundImage} className="w-full h-full object-cover opacity-60 transition-opacity duration-700" onError={(e) => (e.currentTarget.style.display = 'none')} onLoad={(e) => (e.currentTarget.style.display = 'block')} />
+                                            <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-4 text-center">
+                                                <h3 className="text-3xl text-white font-black italic uppercase tracking-tighter drop-shadow-lg">{seasonForm?.title}</h3>
+                                                <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/10 px-3 py-1 rounded mt-2 text-gray-200">{seasonForm?.subtitle}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Product Selector */}
+                                <div className="pt-8 border-t border-gray-800 animate-in fade-in slide-in-from-bottom-2">
+                                    <div className="flex justify-between items-end mb-4">
+                                        <div>
+                                            <h3 className="font-black text-white uppercase italic text-lg">Productos Seleccionados</h3>
+                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Selecciona los productos para el carrusel ({seasonForm?.productIds.length})</p>
+                                        </div>
+                                        <div className="text-xs font-bold text-gray-600 uppercase">
+                                            Click para seleccionar
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="relative">
+                                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                            <input
+                                                type="text"
+                                                placeholder="BUSCAR PRODUCTO POR NOMBRE O ID..."
+                                                value={productSearch}
+                                                onChange={e => setProductSearch(e.target.value)}
+                                                className="w-full bg-black border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:border-primary focus:outline-none transition-all placeholder:text-gray-700 font-bold uppercase"
+                                            />
+                                        </div>
+
+                                        <div className="bg-black/50 border border-gray-800 rounded-xl max-h-[500px] overflow-y-auto p-4 fancy-scrollbar space-y-8">
+                                            {Object.entries(products
+                                                .filter(p => !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.id.toLowerCase().includes(productSearch.toLowerCase()))
+                                                .filter(p => p.isActive !== false)
+                                                .reduce((acc, product) => {
+                                                    const cat = product.category || 'SIN CATEGORÍA';
+                                                    if (!acc[cat]) acc[cat] = [];
+                                                    acc[cat].push(product);
+                                                    return acc;
+                                                }, {} as Record<string, Product[]>)
+                                            ).sort((a, b) => a[0].localeCompare(b[0])).map(([category, items]) => {
+                                                const isExpanded = expandedCategories.includes(category) || productSearch.length > 0;
+                                                return (
+                                                    <div key={category} className="border border-gray-800 rounded-lg overflow-hidden bg-[#0a0a0a] transition-all">
+                                                        <div
+                                                            onClick={() => {
+                                                                setExpandedCategories(prev =>
+                                                                    prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
+                                                                );
+                                                            }}
+                                                            className={`flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none ${isExpanded ? 'bg-white/5' : ''}`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                {isExpanded ? <FolderOpen size={16} className="text-primary" /> : <Folder size={16} className="text-gray-500" />}
+                                                                <h4 className={`font-bold text-xs uppercase tracking-wider transition-colors ${isExpanded ? 'text-white' : 'text-gray-400'}`}>{category}</h4>
+                                                                <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-[10px] font-mono">{(items as Product[]).length}</span>
+                                                            </div>
+                                                            {isExpanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
+                                                        </div>
+
+                                                        {isExpanded && (
+                                                            <div className="p-3 border-t border-gray-800 bg-black/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 animate-in slide-in-from-top-1 duration-200">
+                                                                {(items as Product[]).sort((a, b) => b.id.localeCompare(a.id)).map(p => {
+                                                                    const isSelected = seasonForm?.productIds.includes(p.id);
+                                                                    return (
+                                                                        <div
+                                                                            key={p.id}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                const newIds = isSelected
+                                                                                    ? seasonForm.productIds.filter(id => id !== p.id)
+                                                                                    : [...seasonForm.productIds, p.id];
+                                                                                setSeasonForm({ ...seasonForm, productIds: newIds });
+                                                                            }}
+                                                                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all border group ${isSelected ? 'bg-primary/5 border-primary shadow-[0_0_10px_rgba(255,215,0,0.05)]' : 'bg-transparent border-gray-800 hover:border-gray-600 hover:bg-white/5'}`}
+                                                                        >
+                                                                            <div className={`w-5 h-5 min-w-[1.25rem] rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-black' : 'border-gray-700 bg-transparent group-hover:border-gray-500'}`}>
+                                                                                {isSelected && <Check size={14} strokeWidth={4} />}
+                                                                            </div>
+                                                                            <img src={p.images[0]} className="w-10 h-10 object-cover rounded bg-gray-900 border border-gray-800 group-hover:border-gray-600 transition-colors" />
+                                                                            <div className="flex-1 overflow-hidden">
+                                                                                <p className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>{p.name}</p>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <p className="text-[9px] text-gray-600 font-mono truncate">{p.id}</p>
+                                                                                    {isSelected && <span className="text-[8px] font-bold text-primary uppercase">SEASON</span>}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Product Selector */}
-                            <div className="pt-8 border-t border-gray-800 animate-in fade-in slide-in-from-bottom-2">
-                                <div className="flex justify-between items-end mb-4">
-                                    <div>
-                                        <h3 className="font-black text-white uppercase italic text-lg">Productos Seleccionados</h3>
-                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Selecciona los productos para el carrusel ({seasonForm?.productIds.length})</p>
-                                    </div>
-                                    <div className="text-xs font-bold text-gray-600 uppercase">
-                                        Click para seleccionar
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <div className="relative">
-                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                                        <input
-                                            type="text"
-                                            placeholder="BUSCAR PRODUCTO POR NOMBRE O ID..."
-                                            value={productSearch}
-                                            onChange={e => setProductSearch(e.target.value)}
-                                            className="w-full bg-black border border-gray-800 rounded-xl py-3 pl-12 pr-4 text-white text-sm focus:border-primary focus:outline-none transition-all placeholder:text-gray-700 font-bold uppercase"
-                                        />
-                                    </div>
-
-                                    <div className="bg-black/50 border border-gray-800 rounded-xl max-h-[500px] overflow-y-auto p-4 fancy-scrollbar space-y-8">
-                                        {Object.entries(products
-                                            .filter(p => !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.id.toLowerCase().includes(productSearch.toLowerCase()))
-                                            .filter(p => p.isActive !== false)
-                                            .reduce((acc, product) => {
-                                                const cat = product.category || 'SIN CATEGORÍA';
-                                                if (!acc[cat]) acc[cat] = [];
-                                                acc[cat].push(product);
-                                                return acc;
-                                            }, {} as Record<string, Product[]>)
-                                        ).sort((a, b) => a[0].localeCompare(b[0])).map(([category, items]) => {
-                                            const isExpanded = expandedCategories.includes(category) || productSearch.length > 0;
-                                            return (
-                                                <div key={category} className="border border-gray-800 rounded-lg overflow-hidden bg-[#0a0a0a] transition-all">
-                                                    <div
-                                                        onClick={() => {
-                                                            setExpandedCategories(prev =>
-                                                                prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
-                                                            );
-                                                        }}
-                                                        className={`flex items-center justify-between p-3 cursor-pointer hover:bg-white/5 transition-colors select-none ${isExpanded ? 'bg-white/5' : ''}`}
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            {isExpanded ? <FolderOpen size={16} className="text-primary" /> : <Folder size={16} className="text-gray-500" />}
-                                                            <h4 className={`font-bold text-xs uppercase tracking-wider transition-colors ${isExpanded ? 'text-white' : 'text-gray-400'}`}>{category}</h4>
-                                                            <span className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-[10px] font-mono">{(items as Product[]).length}</span>
-                                                        </div>
-                                                        {isExpanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
-                                                    </div>
-
-                                                    {isExpanded && (
-                                                        <div className="p-3 border-t border-gray-800 bg-black/50 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 animate-in slide-in-from-top-1 duration-200">
-                                                            {(items as Product[]).sort((a, b) => b.id.localeCompare(a.id)).map(p => {
-                                                                const isSelected = seasonForm?.productIds.includes(p.id);
-                                                                return (
-                                                                    <div
-                                                                        key={p.id}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            const newIds = isSelected
-                                                                                ? seasonForm.productIds.filter(id => id !== p.id)
-                                                                                : [...seasonForm.productIds, p.id];
-                                                                            setSeasonForm({ ...seasonForm, productIds: newIds });
-                                                                        }}
-                                                                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all border group ${isSelected ? 'bg-primary/5 border-primary shadow-[0_0_10px_rgba(255,215,0,0.05)]' : 'bg-transparent border-gray-800 hover:border-gray-600 hover:bg-white/5'}`}
-                                                                    >
-                                                                        <div className={`w-5 h-5 min-w-[1.25rem] rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary text-black' : 'border-gray-700 bg-transparent group-hover:border-gray-500'}`}>
-                                                                            {isSelected && <Check size={14} strokeWidth={4} />}
-                                                                        </div>
-                                                                        <img src={p.images[0]} className="w-10 h-10 object-cover rounded bg-gray-900 border border-gray-800 group-hover:border-gray-600 transition-colors" />
-                                                                        <div className="flex-1 overflow-hidden">
-                                                                            <p className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-gray-400 group-hover:text-gray-300'}`}>{p.name}</p>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <p className="text-[9px] text-gray-600 font-mono truncate">{p.id}</p>
-                                                                                {isSelected && <span className="text-[8px] font-bold text-primary uppercase">SEASON</span>}
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* CONFIG TAB */}
                 {

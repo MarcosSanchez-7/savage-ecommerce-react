@@ -87,7 +87,8 @@ export interface Order {
     location?: {
       lat: number;
       lng: number;
-    }
+    };
+    needs_confirmation?: boolean;
   };
   // Optional expanded items for UI (fetched separately or joined)
   items?: Product[];

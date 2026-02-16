@@ -6,26 +6,81 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import { ShoppingBag, ArrowLeft, Star, Share2, Heart } from 'lucide-react';
+import { toast } from 'react-toastify';
+
+import LoadingScreen from '../components/LoadingScreen';
 
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { products, addToCart, cart, socialConfig, toggleCart } = useShop();
-    // const { favorites, toggleFavorite } = useShop(); // Removed favorites
+    const { products, addToCart, cart, socialConfig, toggleCart, loading } = useShop();
 
-    // Check if slug looks like a UUID (fallback for old links)
-    const isUuid = (str?: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || '');
+    // Normalize slug to handle potential issues with external links (e.g. trailing slashes, encoding)
+    const cleanSlug = React.useMemo(() => {
+        if (!slug) return '';
+        return decodeURIComponent(slug).replace(/\/$/, '').toLowerCase();
+    }, [slug]);
 
-    // Find by slug OR by ID
-    const product = products.find(p => p.slug === slug || p.id === slug);
+    // Find by slug OR by ID (Case Insensitive & Robust)
+    const product = React.useMemo(() => {
+        if (!cleanSlug) return undefined;
+        return products.find(p =>
+            (p.slug && p.slug.toLowerCase() === cleanSlug) ||
+            (p.id && p.id.toString().toLowerCase() === cleanSlug)
+        );
+    }, [products, cleanSlug]);
 
     // State
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
 
+    // Pre-calculate Related Products (Must be unconditional hook)
+    const relatedProducts = React.useMemo(() => {
+        if (!product) return [];
+        const candidates = products.filter(p => p.id !== product.id && p.category === product.category);
+        const sameSub = candidates.filter(p => p.subcategory === product.subcategory);
+        const otherSub = candidates.filter(p => p.subcategory !== product.subcategory);
+        const shuffle = (list: typeof products) => [...list].sort(() => 0.5 - Math.random());
+        return [...shuffle(sameSub), ...shuffle(otherSub)].slice(0, 3);
+    }, [product, products]);
+
+    // GA4 View Item & Meta Pixel ViewContent Event
     React.useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [slug]);
+        if (product && typeof window !== 'undefined') {
+            // GA4
+            if ((window as any).gtag) {
+                (window as any).gtag('event', 'view_item', {
+                    currency: 'PYG',
+                    value: product.price,
+                    items: [{
+                        item_id: product.id,
+                        item_name: product.name,
+                        index: 0,
+                        item_category: product.category,
+                        item_category2: product.subcategory,
+                        item_variant: product.fit,
+                        price: product.price,
+                        quantity: 1
+                    }]
+                });
+            }
+
+            // Meta Pixel
+            if ((window as any).fbq) {
+                (window as any).fbq('track', 'ViewContent', {
+                    content_name: product.name,
+                    content_ids: [product.savage_id || product.id], // Must match Catalog <g:id>
+                    content_type: 'product',
+                    value: product.price,
+                    currency: 'PYG'
+                });
+            }
+        }
+    }, [product]);
+
+    if (loading) {
+        return <LoadingScreen />;
+    }
 
     if (!product || product.isActive === false) {
         return (
@@ -45,6 +100,8 @@ const ProductDetail: React.FC = () => {
 
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
 
+    // Logic: Product is out of stock ONLY if it's NOT imported AND has no physical stock.
+    // Imported products are always available for reservation.
     const isTotallyOutOfStock = !product.isImported && (product.inventory && product.inventory.length > 0
         ? product.inventory.every(i => Number(i.quantity) === 0)
         : product.stock === 0);
@@ -53,36 +110,17 @@ const ProductDetail: React.FC = () => {
         if (isTotallyOutOfStock) return;
 
         if (product.sizes && product.sizes.length > 0 && !selectedSize && !isAccessory) {
-            alert('Por favor selecciona un talle para continuar.');
+            toast.error('❌ Por favor selecciona un talle para continuar.');
             return;
         }
 
         addToCart(product, selectedSize || 'Único');
-        // toggleCart(); // Disabled auto-open
-        // Maybe add a toast here? User asked for "value... in preview".
-        // Use a simple alert or toast if available. For now, rely on badge count.
-        alert(`¡${product.name} añadido al carrito!`); // Quick feedback for now or just silent? User said "aparezca el valor... en vista previa".
-        // A simple alert is annoying.
-        // I'll assume the cart icon updating is what they want, or I should implement a toast.
-        // Given I can't easily add a full toast system right now without context of one existing, I'll just remove toggleCart.
-        // Actually, user said: "intenta añadir una funcion en el carrito donde aparezca el valor de los productos agregados en vista previa".
-        // This might mean in the Cart Icon (Badge)?
-        // The badge already exists in Navbar (`cartCount`).
-        // Maybe they mean a small popup.
-        // I will just remove toggleCart() for now as requested "quita esa opcion de abrir automaticamente".
+        // Success toast is handled directly in ShopContext.addToCart
     };
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    // ... (Related products logic remains)
-    const relatedProducts = React.useMemo(() => {
-        if (!product) return [];
-        const candidates = products.filter(p => p.id !== product.id && p.category === product.category);
-        const sameSub = candidates.filter(p => p.subcategory === product.subcategory);
-        const otherSub = candidates.filter(p => p.subcategory !== product.subcategory);
-        const shuffle = (list: typeof products) => [...list].sort(() => 0.5 - Math.random());
-        return [...shuffle(sameSub), ...shuffle(otherSub)].slice(0, 3);
-    }, [product, products]);
+    // ... (Related products logic moved to top)
 
     return (
         <div className="min-h-screen bg-background-dark text-white">
@@ -98,7 +136,7 @@ const ProductDetail: React.FC = () => {
             />
             {/* ... Schema Script ... */}
 
-            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
+            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[70vh]">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabase/client';
 import { Session, User } from '@supabase/supabase-js';
 import { UserProfile } from '../types';
 
@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isAdmin, setIsAdmin] = useState(false);
     const [loading, setLoading] = useState(true);
 
-    const fetchProfile = async (userId: string, currentUserEmail?: string) => {
+    const fetchProfile = async (userId: string) => {
         try {
             console.log("AuthContext: Fetching profile for", userId);
             const { data, error } = await supabase
@@ -38,12 +38,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             if (data) {
-                console.log("AuthContext: Profile found:", data.role);
+                console.log("AuthContext: Profile found, Role:", data.role);
                 setProfile(data);
-                // CLEAN SECURITY CHECK: Role must be 'ceo'
-                const isCeo = data.role === 'ceo';
-                setIsAdmin(isCeo);
-                console.log("AuthContext: isAdmin set to:", isCeo);
+
+                // SECURITY ENFORCEMENT: Only 'admin' role is allowed
+                const hasAdminPrivileges = data.role === 'admin';
+                setIsAdmin(hasAdminPrivileges);
+
+                if (hasAdminPrivileges) {
+                    console.log("AuthContext: Admin privileges GRANTED.");
+                } else {
+                    console.log("AuthContext: Admin privileges DENIED.");
+                }
+
             } else {
                 console.warn("AuthContext: No profile found for user.");
                 setProfile(null);
@@ -61,7 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setUser(session?.user ?? null);
-            // Loading handled by the user-effect below
+            // If no session, stop loading immediately
+            if (!session) setLoading(false);
         }).catch(err => {
             console.error("AuthContext: Failed to get session", err);
             setLoading(false);
@@ -70,15 +78,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 2. Listen for Auth Changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             console.log("AuthContext: Auth change event:", _event);
-            setSession(session);
-            setUser(session?.user ?? null);
 
-            // If we signed out, clear everything immediately
             if (_event === 'SIGNED_OUT' || !session) {
+                setSession(null);
+                setUser(null);
                 setProfile(null);
                 setIsAdmin(false);
                 setLoading(false);
+                return;
             }
+
+            // Update session
+            setSession(prev => prev?.access_token === session?.access_token ? prev : session);
+
+            // Update user and only trigger loading if it's a NEW user
+            // This prevents "Double SIGNED_IN" events from locking the UI in loading state
+            setUser(prevUser => {
+                const newUser = session.user;
+                if (newUser?.id !== prevUser?.id) {
+                    setLoading(true);
+                    return newUser;
+                }
+                // If it's the same user, don't trigger loading to avoid flickers
+                return prevUser;
+            });
         });
 
         return () => subscription.unsubscribe();
@@ -89,13 +112,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let isMounted = true;
 
         const loadProfile = async () => {
-            // If no user, we are done loading (unless we are in the middle of a sign-in check, but session init handles that)
+            // Wait for session check to complete first (handled by initial getSession)
             if (!user) {
-                if (session === null) setLoading(false); // Only stop loading if session is definitely null
+                // If session is checked and null, we are done.
+                // But we must be careful not to set loading=false prematurely if getSession hasn't returned?
+                // Actually the getSession promise handles the initial false.
                 return;
             }
 
-            // If we already have a profile for this user, don't re-fetch
+            // Optimization: If we already have the correct profile, verify one last time and stop loading
             if (profile && profile.id === user.id) {
                 setLoading(false);
                 return;
@@ -111,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             }, 5000);
 
-            await fetchProfile(user.id, user.email);
+            await fetchProfile(user.id);
 
             if (isMounted) {
                 clearTimeout(timeoutId);
@@ -144,58 +169,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         });
 
-        // If trigger works, profile exists immediately, or we fetch it shortly after
         if (!error && data.user) {
-            // Optional: Fetch profile immediately just in case
-            await fetchProfile(data.user.id, email);
+            await fetchProfile(data.user.id);
         }
 
         return { data, error };
     };
 
     const signOut = async () => {
-        // Instant Logout UI
         setProfile(null);
         setIsAdmin(false);
         setUser(null);
         setSession(null);
-
-        // Clear persistence immediatey
         window.localStorage.clear();
-
-        // Fire and forget to Supabase to kill server session
-        supabase.auth.signOut();
+        await supabase.auth.signOut();
     };
 
     const refreshProfile = async () => {
         if (user) {
-            await fetchProfile(user.id, user.email);
+            await fetchProfile(user.id);
         }
     };
 
-    // Safety Timeout to prevent Black Screen
+    // Safety Timeout specific to 'loading' remaining true if something gets stuck
     useEffect(() => {
-        const timer = setTimeout(() => {
-            if (loading) {
-                console.warn("AuthContext: Force stopping loading state after timeout.");
+        if (loading) {
+            const timer = setTimeout(() => {
+                console.warn("AuthContext: Safety release of loading state.");
                 setLoading(false);
-            }
-        }, 3000);
-        return () => clearTimeout(timer);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
     }, [loading]);
+
 
     return (
         <AuthContext.Provider value={{ session, user, profile, isAdmin, loading, signInWithEmail, signUpWithEmail, signOut, refreshProfile }}>
-            {loading ? (
-                <div className="min-h-screen flex items-center justify-center bg-black text-white">
-                    <div className="flex flex-col items-center gap-4">
-                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
-                        <p className="text-xs uppercase tracking-widest text-gray-500 animate-pulse">Cargando Savage...</p>
-                    </div>
-                </div>
-            ) : (
-                children
-            )}
+            {children}
         </AuthContext.Provider>
     );
 };

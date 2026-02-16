@@ -2,8 +2,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue, SeasonConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabase/client';
 import { useAuth } from './AuthContext';
+import { toast } from 'react-toastify';
 
 interface CartItem extends Product {
     quantity: number;
@@ -15,6 +16,8 @@ interface ShopContextType {
     cart: CartItem[];
     heroSlides: HeroSlide[];
     orders: Order[];
+    orderRequests: Order[];
+    deleteOrderRequest: (id: string) => void;
     blogPosts: BlogPost[];
     drops: Drop[];
     socialConfig: SocialConfig;
@@ -77,6 +80,7 @@ interface ShopContextType {
     addAttributeValue: (value: Omit<AttributeValue, 'id'>) => Promise<void>;
     deleteAttributeValue: (id: string) => Promise<void>;
     updateAttributeValue: (id: string, value: string) => Promise<void>;
+    confirmOrder: (orderId: string) => Promise<void>;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -141,9 +145,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return saved ? JSON.parse(saved) : [];
     });
 
-    // Orders
+    // Orders (Confirmed)
     const [orders, setOrders] = useState<Order[]>(() => {
         const saved = localStorage.getItem('savage_orders');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // Order Requests (Pending Confirmation)
+    const [orderRequests, setOrderRequests] = useState<Order[]>(() => {
+        const saved = localStorage.getItem('savage_order_requests');
         return saved ? JSON.parse(saved) : [];
     });
 
@@ -441,13 +451,70 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         }
 
-        // 4. SECONDARY DATA (Orders, Delivery Zones, Blog)
+        // 4. SECONDARY DATA (Orders & Requests)
         try {
             const { data: zones } = await supabase.from('delivery_zones').select('*');
             if (zones) setDeliveryZones(zones.map(z => ({ ...z, price: Number(z.price), points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points })));
 
-            const { data: orders } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
-            if (orders) setOrders(orders.map(o => ({ ...o, total_amount: Number(o.total_amount), delivery_cost: Number(o.delivery_cost) })));
+            // Fetch CONFIRMED ORDERS (Protected)
+            // Only fetch if user looks like admin? RLS will handle strictness, we just handle the error.
+            if (user) {
+                const { data: allOrders, error: ordersError } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+
+                if (ordersError) {
+                    // RLS or Permissions Error
+                    if (ordersError.code === '42501' || ordersError.code === 'PGRST301') {
+                        console.warn("User unauthorized to fetch orders (Normal for customers).");
+                    } else {
+                        console.error("Error fetching orders:", ordersError);
+                    }
+                } else if (allOrders) {
+                    const normalizedOrders = allOrders.map(o => {
+                        let parsedCustomerInfo = o.customer_info;
+                        if (typeof parsedCustomerInfo === 'string') {
+                            try {
+                                parsedCustomerInfo = JSON.parse(parsedCustomerInfo);
+                            } catch (e) {
+                                console.error("Error parsing customer_info for order", o.id, e);
+                                parsedCustomerInfo = {};
+                            }
+                        }
+                        return {
+                            ...o,
+                            total_amount: Number(o.total_amount),
+                            delivery_cost: Number(o.delivery_cost),
+                            customerInfo: parsedCustomerInfo || {}
+                        };
+                    });
+                    setOrders(normalizedOrders);
+                }
+            }
+
+            // Fetch ORDER REQUESTS (Pending)
+            const { data: requests } = await supabase.from('order_requests').select('*').order('created_at', { ascending: false });
+
+            if (requests) {
+                const normalizedRequests = requests.map(r => {
+                    let parsedCustomerInfo = r.customer_info;
+                    if (typeof parsedCustomerInfo === 'string') {
+                        try {
+                            parsedCustomerInfo = JSON.parse(parsedCustomerInfo);
+                        } catch (e) {
+                            console.error("Error parsing customer_info for request", r.id, e);
+                            parsedCustomerInfo = {};
+                        }
+                    }
+                    return {
+                        ...r,
+                        total_amount: Number(r.total_amount),
+                        delivery_cost: Number(r.delivery_cost),
+                        customerInfo: parsedCustomerInfo || {}
+                    };
+                });
+                setOrderRequests(normalizedRequests);
+            } else {
+                setOrderRequests([]);
+            }
 
             const { data: posts } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
             if (posts) setBlogPosts(posts);
@@ -468,411 +535,48 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    // --- ATTRIBUTE CRUD ---
-    const addAttribute = async (attribute: Omit<Attribute, 'id'>) => {
-        try {
-            const { data, error } = await supabase.from('attributes').insert([attribute]).select().single();
-            if (error) throw error;
-            if (data) setAttributes(prev => [...prev, data]);
-        } catch (e) {
-            console.error('Error adding attribute:', e);
-            alert('Error al añadir atributo');
-        }
-    };
+    // ... (rest of code) ...
 
-    const deleteAttribute = async (id: string) => {
-        try {
-            const { error } = await supabase.from('attributes').delete().eq('id', id);
-            if (error) throw error;
-            setAttributes(prev => prev.filter(a => a.id !== id));
-            setAttributeValues(prev => prev.filter(v => v.attribute_id !== id));
-        } catch (e) {
-            console.error('Error deleting attribute:', e);
-            alert('Error al eliminar atributo');
-        }
-    };
-
-    const addAttributeValue = async (value: Omit<AttributeValue, 'id'>) => {
-        try {
-            const { data, error } = await supabase.from('attribute_values').insert([value]).select().single();
-            if (error) throw error;
-            if (data) setAttributeValues(prev => [...prev, data]);
-        } catch (e) {
-            console.error('Error adding value:', e);
-            alert('Error al añadir valor');
-        }
-    };
-
-    const deleteAttributeValue = async (id: string) => {
-        try {
-            const { error } = await supabase.from('attribute_values').delete().eq('id', id);
-            if (error) throw error;
-            setAttributeValues(prev => prev.filter(v => v.id !== id));
-        } catch (e) {
-            console.error('Error deleting value:', e);
-            alert('Error al eliminar valor');
-        }
-    };
-
-    const updateAttributeValue = async (id: string, value: string) => {
-        try {
-            const { error } = await supabase.from('attribute_values').update({ value }).eq('id', id);
-            if (error) throw error;
-            setAttributeValues(prev => prev.map(v => v.id === id ? { ...v, value } : v));
-        } catch (e) {
-            console.error('Error updating value:', e);
-            alert('Error al actualizar valor');
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-
-        // Safety timeout to prevent infinite loading (Black Screen Fix)
-        const safetyTimer = setTimeout(() => {
-            setLoading(false);
-        }, 3000); // 3 seconds max loading time
-
-        return () => clearTimeout(safetyTimer);
-    }, []);
-
-    // --- END SUPABASE FETCH ---
-
-    // Persistence Effects (Legacy LocalStorage for non-critical stuff or backup)
-    useEffect(() => { localStorage.setItem('savage_cart', JSON.stringify(cart)); }, [cart]);
-    // useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
-    // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
-    // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
-    useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
-    // Dynamic Favicon Effect
-    useEffect(() => {
-        if (socialConfig.favicon) {
-            let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-            if (!link) {
-                link = document.createElement('link');
-                link.rel = 'icon';
-                document.head.appendChild(link);
-            }
-            link.href = socialConfig.favicon;
-        }
-    }, [socialConfig.favicon]);
-    // useEffect(() => { localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones)); }, [deliveryZones]);
-    // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
-    // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
-
-
-    // Cart Logic
-    const addToCart = (product: Product, size?: string) => {
-        const finalSize = size || (product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'One Size');
-
-        setCart(prev => {
-            const existing = prev.find(item => item.id === product.id && item.selectedSize === finalSize);
-            if (existing) {
-                return prev.map(item =>
-                    (item.id === product.id && item.selectedSize === finalSize) ? { ...item, quantity: item.quantity + 1 } : item
-                );
-            }
-            return [...prev, { ...product, quantity: 1, selectedSize: finalSize }];
-        });
-        setIsCartOpen(false); // Disabled auto-open
-    };
-
-    const removeFromCart = (productId: string, size: string) => {
-        setCart(prev => prev.filter(item => !(item.id === productId && item.selectedSize === size)));
-    };
-
-    const updateQuantity = (productId: string, size: string, delta: number) => {
-        setCart(prev => prev.map(item => {
-            if (item.id === productId && item.selectedSize === size) {
-                const newQty = Math.max(0, item.quantity + delta);
-                return { ...item, quantity: newQty };
-            }
-            return item;
-        }).filter(item => item.quantity > 0));
-    };
-
-    const updateCartItemSize = (productId: string, currentSize: string, newSize: string) => {
-        setCart(prev => {
-            // 1. Find the item to update
-            const itemToUpdate = prev.find(item => item.id === productId && item.selectedSize === currentSize);
-            if (!itemToUpdate) return prev;
-
-            // 2. Check if an item with the NEW size already exists
-            const targetItem = prev.find(item => item.id === productId && item.selectedSize === newSize);
-
-            if (targetItem) {
-                // MERGE: Remove the old one, update the target one
-                return prev.map(item => {
-                    if (item.id === productId && item.selectedSize === newSize) {
-                        return { ...item, quantity: item.quantity + itemToUpdate.quantity };
-                    }
-                    return item;
-                }).filter(item => !(item.id === productId && item.selectedSize === currentSize));
-            } else {
-                // JUST UPDATE: Change size
-                return prev.map(item =>
-                    (item.id === productId && item.selectedSize === currentSize)
-                        ? { ...item, selectedSize: newSize }
-                        : item
-                );
-            }
-        });
-    };
-
-    const toggleCart = () => setIsCartOpen(prev => !prev);
-    const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-
-    // Admin Logic - SUPABASE SYNCED
-    const saveInventory = async (productId: string, inventory: { size: string; quantity: number }[]) => {
-        if (!inventory || inventory.length === 0) return;
-        try {
-            // Delete old inventory for this product
-            await supabase.from('inventory').delete().eq('product_id', productId);
-
-            // Insert new inventory
-            const inserts = inventory.map(item => ({
-                product_id: productId,
-                size: item.size,
-                quantity: item.quantity
-            }));
-
-            const { error } = await supabase.from('inventory').insert(inserts);
-            if (error) console.error('Error saving inventory:', error);
-        } catch (e) {
-            console.error('Exception saving inventory:', e);
-        }
-    };
-
-    const addProduct = async (product: Product): Promise<string | null> => {
-        // Optimistic UI update (using the temporary ID passed from Admin)
-        setProducts(prev => [...prev, product]);
-
-        try {
-            // DB Mapping: OMIT 'id' so Supabase generates a UUID
-            const dbProduct = {
-                // id: product.id, <--- REMOVED to let DB generate UUID
-                savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
-                name: product.name,
-                price: parseFloat(product.price.toString()),
-                original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
-                category: product.category,
-                subcategory: product.subcategory,
-                type: product.type,
-                images: product.images,
-                sizes: product.sizes,
-                tags: product.tags,
-                fit: product.fit,
-                is_new: product.isNew,
-                is_featured: product.isFeatured,
-                is_category_featured: product.isCategoryFeatured,
-                description: product.description,
-                stock_quantity: product.stock || 0,
-                cost_price: product.costPrice || 0,
-                slug: product.slug,
-                image_alts: product.imageAlts,
-                is_imported: product.isImported,
-                visual_tag: product.visualTag,
-                section_id: product.section, // Map Level 3
-                is_active: product.isActive ?? true,
-                is_offer: product.isOffer ?? false
-            };
-
-            const { data, error } = await supabase
-                .from('products')
-                .insert([dbProduct])
-                .select()
-                .single();
-
-            if (error) {
-                console.error('Error adding product to Supabase:', error);
-
-                // Security policy error check
-                if (error.code === '42501') {
-                    alert('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
-                } else {
-                    alert(`Hubo un error guardando en la base de datos: ${error.message}`);
-                }
-
-                // Revert optimistic update on error
-                setProducts(prev => prev.filter(p => p.id !== product.id));
-                return null;
-            } else if (data) {
-                // Save Attributes
-                if (product.selectedAttributes) {
-                    const attrInserts = Object.values(product.selectedAttributes)
-                        .filter(valId => valId)
-                        .map(valId => ({
-                            product_id: data.id,
-                            attribute_value_id: valId
-                        }));
-                    if (attrInserts.length > 0) {
-                        await supabase.from('product_attribute_values').insert(attrInserts);
-                    }
-                }
-
-                // Save Inventory
-                if (product.inventory) {
-                    await saveInventory(data.id, product.inventory);
-                }
-
-                // Success! Update the local state with the REAL UUID from the DB
-                setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
-                return data.id;
-            }
-            return null;
-        } catch (err) {
-            console.error(err);
-            setProducts(prev => prev.filter(p => p.id !== product.id));
-            return null;
-        }
-    };
-
-    const updateProduct = async (updatedProduct: Product) => {
-        // Optimistic UI
-        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-
-        try {
-            const dbProduct = {
-                name: updatedProduct.name,
-                price: parseFloat(updatedProduct.price.toString()),
-                original_price: updatedProduct.originalPrice ? parseFloat(updatedProduct.originalPrice.toString()) : null,
-                category: updatedProduct.category,
-                subcategory: updatedProduct.subcategory,
-                type: updatedProduct.type,
-                images: updatedProduct.images,
-                sizes: updatedProduct.sizes,
-                tags: updatedProduct.tags,
-                fit: updatedProduct.fit,
-                is_new: updatedProduct.isNew,
-                is_featured: updatedProduct.isFeatured,
-                is_category_featured: updatedProduct.isCategoryFeatured,
-                description: updatedProduct.description,
-                stock_quantity: updatedProduct.stock || 0,
-                cost_price: updatedProduct.costPrice || 0,
-                slug: updatedProduct.slug,
-                image_alts: updatedProduct.imageAlts,
-                is_imported: updatedProduct.isImported,
-                visual_tag: updatedProduct.visualTag,
-                section_id: updatedProduct.section, // Map Level 3
-                is_active: updatedProduct.isActive,
-                is_offer: updatedProduct.isOffer
-            };
-
-            const { error } = await supabase
-                .from('products')
-                .update(dbProduct)
-                .eq('id', updatedProduct.id);
-
-            if (error) {
-                console.error('Error updating product in Supabase:', error);
-            } else {
-                // Save Attributes
-                if (updatedProduct.selectedAttributes) {
-                    // Delete existing first
-                    await supabase.from('product_attribute_values').delete().eq('product_id', updatedProduct.id);
-
-                    const attrInserts = Object.values(updatedProduct.selectedAttributes)
-                        .filter(valId => valId)
-                        .map(valId => ({
-                            product_id: updatedProduct.id,
-                            attribute_value_id: valId
-                        }));
-                    if (attrInserts.length > 0) {
-                        await supabase.from('product_attribute_values').insert(attrInserts);
-                    }
-                }
-
-                // Update Inventory
-                if (updatedProduct.inventory) {
-                    await saveInventory(updatedProduct.id, updatedProduct.inventory);
-                }
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const deleteProduct = async (productId: string) => {
-        // Optimistic UI
-        const previousProducts = [...products];
-        setProducts(prev => prev.filter(p => p.id !== productId));
-
-        try {
-            // 1. Manual Cascade: Delete dependencies first
-            // Supabase might have foreign key constraints that prevent deleting the product
-            // if we don't delete the children first (unless ON DELETE CASCADE is set in DB).
-            await supabase.from('inventory').delete().eq('product_id', productId);
-            await supabase.from('favorites').delete().eq('product_id', productId);
-
-            // 2. Delete the Product
-            const { error } = await supabase
-                .from('products')
-                .delete()
-                .eq('id', productId);
-
-            if (error) {
-                console.error('Error deleting product from Supabase:', error);
-                alert(`Error al eliminar de la base de datos: ${error.message}`);
-                setProducts(previousProducts); // Revert on specific error
-            }
-        } catch (err) {
-            console.error("Exception deleting product:", err);
-            setProducts(previousProducts); // Revert
-            alert("Ocurrió un error inesperado al eliminar el producto.");
-        }
-    };
-
-
-    const updateHeroSlides = async (slides: HeroSlide[]) => {
-        setHeroSlides(slides);
-        try {
-            const { error } = await supabase.from('store_config').upsert({
-                key: 'hero_slides',
-                value: slides,
-                updated_at: new Date().toISOString()
-            });
-            if (error) throw error;
-        } catch (e) {
-            console.error(e);
-            throw e;
-        }
-    };
-
-    // Order Logic
-    // Order Logic - SUPABASE SYNCED
     const createOrder = async (order: Order) => {
-        // Optimistic UI
-        setOrders(prev => [order, ...prev]);
-        setCart([]); // Clear cart immediately for better UX
-        localStorage.removeItem('savage_cart');
+        // 1. CLIENT-SIDE PRE-FLIGHT VALIDATION
+        if (order.total_amount <= 0) {
+            console.error("Critical: Attempted to create invalid order (Amount <= 0)", order);
+            toast.error("Error: El pedido no es válido (Monto incorrecto).");
+            return;
+        }
 
         try {
-            const dbOrder = {
-                // Let DB generate ID or use the one we created? Better to let DB generate UUID if possible,
-                // but we used crypto.randomUUID() which is valid UUID. 
-                // Let's use the generated ID to ensure consistency with the WhatsApp message.
+            // 2. PREPARE DB OBJECT
+            const dbOrderRequest = {
                 id: order.id,
                 display_id: order.display_id,
                 total_amount: order.total_amount,
                 delivery_cost: order.delivery_cost,
-                status: 'Pendiente', // Force Spanish standard
+                status: 'Pendiente',
                 items: order.items,
-                customer_info: order.customerInfo,
+                customer_info: order.customerInfo || {},
                 product_ids: order.product_ids || []
             };
 
+            // 3. INSERT INTO order_requests TABLE (Wait for confirmation)
             const { error } = await supabase
-                .from('orders')
-                .insert([dbOrder]);
+                .from('order_requests')
+                .insert([dbOrderRequest]);
 
             if (error) {
-                console.error('Error creating order in Supabase:', error);
-                alert('Hubo un error guardando tu pedido en el sistema, pero el enlace de WhatsApp se generó correctamente.');
-                // Don't revert optimistic UI here to avoid confusing user, 
-                // but admins won't see it until fixed or manually added.
+                console.error('Error creating order request in Supabase:', error);
+                toast.error('Hubo un error guardando tu solicitud. Por favor contacta soporte.');
+                return; // STOP EXECUTION
             }
+
+            // 4. SUCCESS: Update State & Clear Cart
+            setOrderRequests(prev => [order, ...prev]);
+            setCart([]); // Clear cart ONLY after successful DB insert
+            toast.success("¡Pedido registrado correctamente!");
+
         } catch (e) {
             console.error('Exception creating order:', e);
+            toast.error("Error inesperado al crear el pedido.");
         }
     };
 
@@ -880,12 +584,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // 1. Local State Optimistic Update (Order Status Only)
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
 
+        let confirmedStatus = status; // Initialize confirmedStatus
+
         try {
             // 2. DB Update (Order Status) with Retry Logic for Enum Casing
-            let confirmedStatus = status;
-            let dbSuccess = false;
-            let errorDetails = null;
-
             // Helper to attempt update
             const attemptUpdate = async (statusToUse: string) => {
                 const { error } = await supabase
@@ -1006,11 +708,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                         // 4. Register Sale in 'sales' table
                         try {
-
                             // Determinar precio unitario:
                             // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
                             // Si no, usar el precio actual del producto.
-                            // Nota: item.price podría no existir si items es un array simple. Asumimos que createOrder guarda precio.
                             const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
 
                             const saleRecord = {
@@ -1020,7 +720,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                                 unit_price: saleUnitPrice,
                                 cost_price: product.costPrice || 0,
                                 origin: 'web',
-                                created_at: new Date().toISOString() // Optional, DB usually handles it
+                                created_at: new Date().toISOString()
                             };
 
                             const { error: salesError } = await supabase
@@ -1029,8 +729,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                             if (salesError) {
                                 console.error('Error inserting into sales table:', salesError);
-                                // Non-blocking error alert
-                                // alert(`Atención: Stock descontado pero error al registrar venta en tabla 'sales': ${salesError.message}`);
                             } else {
                                 console.log('Sale registered successfully for', product.name);
                             }
@@ -1050,8 +748,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } else if (newStatusNormalized === 'pendiente' && currentOrder) {
                 // Restoration Logic (Re-opening order)
                 // Restore if coming from a deducted state
-                // We re-calculate because we are in a different block scope if I don't lift vars
-                // reusing 'currentOrder' and 'oldStatusNormalized' from outer scope
 
                 const wasDeducted = ['confirmado en mercado', 'en camino', 'entregado', 'finalizado'].includes(oldStatusNormalized);
 
@@ -1097,6 +793,479 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.error('Exception updating order status:', e);
         }
     };
+
+
+    const confirmOrder = async (requestId: string) => {
+        // Find the request
+        const request = orderRequests.find(r => r.id === requestId);
+        if (!request) return;
+
+        // Optimistic Updates
+        setOrderRequests(prev => prev.filter(r => r.id !== requestId));
+        const newOrder = { ...request, status: 'Pendiente' as const };
+        setOrders(prev => [newOrder, ...prev]);
+
+        try {
+            // 1. Insert into ORDERS table
+            const dbOrder = {
+                id: request.id,
+                display_id: request.display_id,
+                total_amount: request.total_amount,
+                delivery_cost: request.delivery_cost,
+                status: 'Pendiente',
+                items: request.items,
+                customer_info: request.customerInfo || {},
+                product_ids: request.product_ids || []
+            };
+
+            const { error: insertError } = await supabase.from('orders').insert([dbOrder]);
+            if (insertError) throw insertError;
+
+            // 2. Delete from ORDER_REQUESTS table
+            const { error: deleteError } = await supabase.from('order_requests').delete().eq('id', requestId);
+            if (deleteError) {
+                console.warn("Order confirmed but failed to delete from requests:", deleteError);
+            }
+
+        } catch (e) {
+            console.error("Error confirming order:", e);
+            alert("Error al confirmar el pedido. Revisa la consola.");
+            // Rollback optimistic update if desired, but for now simple alert
+        }
+    };
+
+    const deleteOrderRequest = async (id: string) => {
+        setOrderRequests(prev => prev.filter(r => r.id !== id));
+        try {
+            const { error } = await supabase.from('order_requests').delete().eq('id', id);
+            if (error) throw error;
+        } catch (e) {
+            console.error("Error deleting request:", e);
+        }
+    };
+
+    // --- ATTRIBUTE CRUD ---
+    const addAttribute = async (attribute: Omit<Attribute, 'id'>) => {
+        try {
+            const { data, error } = await supabase.from('attributes').insert([attribute]).select().single();
+            if (error) throw error;
+            if (data) setAttributes(prev => [...prev, data]);
+        } catch (e) {
+            console.error('Error adding attribute:', e);
+            alert('Error al añadir atributo');
+        }
+    };
+
+    const deleteAttribute = async (id: string) => {
+        try {
+            const { error } = await supabase.from('attributes').delete().eq('id', id);
+            if (error) throw error;
+            setAttributes(prev => prev.filter(a => a.id !== id));
+            setAttributeValues(prev => prev.filter(v => v.attribute_id !== id));
+        } catch (e) {
+            console.error('Error deleting attribute:', e);
+            alert('Error al eliminar atributo');
+        }
+    };
+
+    const addAttributeValue = async (value: Omit<AttributeValue, 'id'>) => {
+        try {
+            const { data, error } = await supabase.from('attribute_values').insert([value]).select().single();
+            if (error) throw error;
+            if (data) setAttributeValues(prev => [...prev, data]);
+        } catch (e) {
+            console.error('Error adding value:', e);
+            alert('Error al añadir valor');
+        }
+    };
+
+    const deleteAttributeValue = async (id: string) => {
+        try {
+            const { error } = await supabase.from('attribute_values').delete().eq('id', id);
+            if (error) throw error;
+            setAttributeValues(prev => prev.filter(v => v.id !== id));
+        } catch (e) {
+            console.error('Error deleting value:', e);
+            alert('Error al eliminar valor');
+        }
+    };
+
+    const updateAttributeValue = async (id: string, value: string) => {
+        try {
+            const { error } = await supabase.from('attribute_values').update({ value }).eq('id', id);
+            if (error) throw error;
+            setAttributeValues(prev => prev.map(v => v.id === id ? { ...v, value } : v));
+        } catch (e) {
+            console.error('Error updating value:', e);
+            alert('Error al actualizar valor');
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+
+        // Safety timeout to prevent infinite loading (Black Screen Fix)
+        const safetyTimer = setTimeout(() => {
+            setLoading(false);
+        }, 3000); // 3 seconds max loading time
+
+        return () => clearTimeout(safetyTimer);
+    }, []);
+
+    // --- END SUPABASE FETCH ---
+
+    // Persistence Effects (Legacy LocalStorage for non-critical stuff or backup)
+    useEffect(() => { localStorage.setItem('savage_cart', JSON.stringify(cart)); }, [cart]);
+    // useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
+    // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
+    // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
+    useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
+    // Dynamic Favicon Effect
+    useEffect(() => {
+        if (socialConfig.favicon) {
+            let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+            }
+            link.href = socialConfig.favicon;
+        }
+    }, [socialConfig.favicon]);
+    // useEffect(() => { localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones)); }, [deliveryZones]);
+    // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
+    // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
+
+
+    // Cart Logic
+    const addToCart = (product: Product, size?: string) => {
+        const finalSize = size || (product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'One Size');
+
+        // Optional: Close cart when adding (or keep open if desired, but user didn't specify)
+        setIsCartOpen(false);
+
+        setCart(prev => {
+            const existing = prev.find(item => item.id === product.id && item.selectedSize === finalSize);
+
+            if (existing) {
+                toast.success(`⚡ ¡Agregado! ${product.name} (x${existing.quantity + 1}) ya es tuyo.`);
+                return prev.map(item =>
+                    (item.id === product.id && item.selectedSize === finalSize) ? { ...item, quantity: item.quantity + 1 } : item
+                );
+            }
+
+            // GA4 Add to Cart Event
+            if (typeof window !== 'undefined' && (window as any).gtag) {
+                (window as any).gtag('event', 'add_to_cart', {
+                    currency: 'PYG',
+                    value: product.price,
+                    items: [{
+                        item_id: product.id,
+                        item_name: product.name,
+                        index: 0,
+                        item_category: product.category,
+                        item_category2: product.subcategory,
+                        item_variant: product.fit,
+                        price: product.price,
+                        quantity: 1
+                    }]
+                });
+            }
+
+            toast.success(`⚡ ¡Agregado! ${product.name} ya es tuyo.`);
+            return [...prev, { ...product, quantity: 1, selectedSize: finalSize }];
+        });
+    };
+
+    const removeFromCart = (productId: string, size: string) => {
+        // Find item first for toast message (need to access current state, not just prev)
+        // Since 'cart' state is available in scope, use it.
+        const itemToRemove = cart.find(item => item.id === productId && item.selectedSize === size);
+
+        if (itemToRemove) {
+            toast.info(`🛒 Eliminado: ${itemToRemove.name} fuera del carrito.`, {
+                icon: '🛒'
+            });
+        }
+
+        setCart(prev => prev.filter(item => !(item.id === productId && item.selectedSize === size)));
+    };
+
+    const updateQuantity = (productId: string, size: string, delta: number) => {
+        setCart(prev => prev.map(item => {
+            if (item.id === productId && item.selectedSize === size) {
+                const newQty = Math.max(0, item.quantity + delta);
+                return { ...item, quantity: newQty };
+            }
+            return item;
+        }).filter(item => item.quantity > 0));
+    };
+
+    const updateCartItemSize = (productId: string, currentSize: string, newSize: string) => {
+        setCart(prev => {
+            // 1. Find the item to update
+            const itemToUpdate = prev.find(item => item.id === productId && item.selectedSize === currentSize);
+            if (!itemToUpdate) return prev;
+
+            // 2. Check if an item with the NEW size already exists
+            const targetItem = prev.find(item => item.id === productId && item.selectedSize === newSize);
+
+            if (targetItem) {
+                // MERGE: Remove the old one, update the target one
+                return prev.map(item => {
+                    if (item.id === productId && item.selectedSize === newSize) {
+                        return { ...item, quantity: item.quantity + itemToUpdate.quantity };
+                    }
+                    return item;
+                }).filter(item => !(item.id === productId && item.selectedSize === currentSize));
+            } else {
+                // JUST UPDATE: Change size
+                return prev.map(item =>
+                    (item.id === productId && item.selectedSize === currentSize)
+                        ? { ...item, selectedSize: newSize }
+                        : item
+                );
+            }
+        });
+    };
+
+    const toggleCart = () => setIsCartOpen(prev => !prev);
+    const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+    // Admin Logic - SUPABASE SYNCED
+    const saveInventory = async (productId: string, inventory: { size: string; quantity: number }[]) => {
+        if (!inventory || inventory.length === 0) return;
+        try {
+            // Delete old inventory for this product
+            await supabase.from('inventory').delete().eq('product_id', productId);
+
+            // Insert new inventory
+            const inserts = inventory.map(item => ({
+                product_id: productId,
+                size: item.size,
+                quantity: item.quantity
+            }));
+
+            const { error } = await supabase.from('inventory').insert(inserts);
+            if (error) console.error('Error saving inventory:', error);
+        } catch (e) {
+            console.error('Exception saving inventory:', e);
+        }
+    };
+
+    const addProduct = async (product: Product): Promise<string | null> => {
+        // CLIENT-SIDE VALIDATION
+        if (product.price <= 0) {
+            alert("Error: El precio del producto debe ser mayor a 0.");
+            return null;
+        }
+
+        try {
+            // SANITIZATION
+            const safePrice = Math.max(0, parseFloat(product.price.toString()));
+            const safeOriginalPrice = product.originalPrice ? Math.max(0, parseFloat(product.originalPrice.toString())) : null;
+            const safeStock = Math.max(0, product.stock || 0);
+            const safeCost = Math.max(0, product.costPrice || 0);
+
+            // DB Mapping
+            const dbProduct = {
+                // id: product.id, <--- REMOVED to let DB generate UUID
+                savage_id: `SVG-${product.id}`,
+                name: product.name,
+                price: safePrice,
+                original_price: safeOriginalPrice,
+                category: product.category,
+                subcategory: product.subcategory,
+                type: product.type,
+                images: product.images,
+                sizes: product.sizes,
+                tags: product.tags,
+                fit: product.fit,
+                is_new: product.isNew,
+                is_featured: product.isFeatured,
+                is_category_featured: product.isCategoryFeatured,
+                description: product.description,
+                stock_quantity: safeStock,
+                cost_price: safeCost,
+                slug: product.slug,
+                image_alts: product.imageAlts,
+                is_imported: product.isImported,
+                visual_tag: product.visualTag,
+                section_id: product.section,
+                is_active: product.isActive ?? true,
+                is_offer: product.isOffer ?? false
+            };
+
+            const { data, error } = await supabase
+                .from('products')
+                .insert([dbProduct])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error adding product to Supabase:', error);
+                if (error.code === '42501') {
+                    alert('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
+                } else {
+                    alert(`Hubo un error guardando en la base de datos: ${error.message}`);
+                }
+                return null;
+            }
+
+            if (data) {
+                // 1. Save Attributes
+                if (product.selectedAttributes) {
+                    const attrInserts = Object.values(product.selectedAttributes)
+                        .filter(valId => valId)
+                        .map(valId => ({
+                            product_id: data.id,
+                            attribute_value_id: valId
+                        }));
+                    if (attrInserts.length > 0) {
+                        await supabase.from('product_attribute_values').insert(attrInserts);
+                    }
+                }
+
+                // 2. Save Inventory
+                if (product.inventory) {
+                    await saveInventory(data.id, product.inventory);
+                }
+
+                // 3. SUCCESS: Update State with real DB data
+                const newProduct = { ...product, id: data.id };
+                setProducts(prev => [...prev, newProduct]);
+
+                return data.id;
+            }
+            return null;
+        } catch (err) {
+            console.error(err);
+            return null;
+        }
+    };
+
+    const updateProduct = async (updatedProduct: Product) => {
+        try {
+            // SANITIZATION
+            const safePrice = Math.max(0, parseFloat(updatedProduct.price.toString()));
+            const safeOriginalPrice = updatedProduct.originalPrice ? Math.max(0, parseFloat(updatedProduct.originalPrice.toString())) : null;
+            const safeStock = Math.max(0, updatedProduct.stock || 0);
+            const safeCost = Math.max(0, updatedProduct.costPrice || 0);
+
+            const dbProduct = {
+                name: updatedProduct.name,
+                price: safePrice,
+                original_price: safeOriginalPrice,
+                category: updatedProduct.category,
+                subcategory: updatedProduct.subcategory,
+                type: updatedProduct.type,
+                images: updatedProduct.images,
+                sizes: updatedProduct.sizes,
+                tags: updatedProduct.tags,
+                fit: updatedProduct.fit,
+                is_new: updatedProduct.isNew,
+                is_featured: updatedProduct.isFeatured,
+                is_category_featured: updatedProduct.isCategoryFeatured,
+                description: updatedProduct.description,
+                stock_quantity: safeStock,
+                cost_price: safeCost,
+                slug: updatedProduct.slug,
+                image_alts: updatedProduct.imageAlts,
+                is_imported: updatedProduct.isImported,
+                visual_tag: updatedProduct.visualTag,
+                section_id: updatedProduct.section,
+                is_active: updatedProduct.isActive,
+                is_offer: updatedProduct.isOffer
+            };
+
+            const { error } = await supabase
+                .from('products')
+                .update(dbProduct)
+                .eq('id', updatedProduct.id);
+
+            if (error) {
+                console.error('Error updating product in Supabase:', error);
+                alert(`Error al actualizar producto: ${error.message}`);
+            } else {
+                // Save Attributes
+                if (updatedProduct.selectedAttributes) {
+                    // Delete existing first
+                    await supabase.from('product_attribute_values').delete().eq('product_id', updatedProduct.id);
+
+                    const attrInserts = Object.values(updatedProduct.selectedAttributes)
+                        .filter(valId => valId)
+                        .map(valId => ({
+                            product_id: updatedProduct.id,
+                            attribute_value_id: valId
+                        }));
+                    if (attrInserts.length > 0) {
+                        await supabase.from('product_attribute_values').insert(attrInserts);
+                    }
+                }
+
+                // Update Inventory
+                if (updatedProduct.inventory) {
+                    await saveInventory(updatedProduct.id, updatedProduct.inventory);
+                }
+
+                // SUCCESS: Update Local State
+                setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+                toast.success?.("Producto actualizado correctamente") || alert("Producto actualizado");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const deleteProduct = async (productId: string) => {
+        // Optimistic UI
+        const previousProducts = [...products];
+        setProducts(prev => prev.filter(p => p.id !== productId));
+
+        try {
+            // 1. Manual Cascade: Delete dependencies first
+            // Supabase might have foreign key constraints that prevent deleting the product
+            // if we don't delete the children first (unless ON DELETE CASCADE is set in DB).
+            await supabase.from('inventory').delete().eq('product_id', productId);
+            await supabase.from('favorites').delete().eq('product_id', productId);
+
+            // 2. Delete the Product
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+
+            if (error) {
+                console.error('Error deleting product from Supabase:', error);
+                alert(`Error al eliminar de la base de datos: ${error.message}`);
+                setProducts(previousProducts); // Revert on specific error
+            }
+        } catch (err) {
+            console.error("Exception deleting product:", err);
+            setProducts(previousProducts); // Revert
+            alert("Ocurrió un error inesperado al eliminar el producto.");
+        }
+    };
+
+
+    const updateHeroSlides = async (slides: HeroSlide[]) => {
+        setHeroSlides(slides);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'hero_slides',
+                value: slides,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
+    // Order Logic
+    // Order Logic - SUPABASE SYNCED
+    // Old duplicate implementations removed.
 
     const deleteOrder = async (orderId: string) => {
         const targetId = String(orderId);
@@ -1631,7 +1800,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             deleteAttribute,
             addAttributeValue,
             deleteAttributeValue,
-            updateAttributeValue
+            updateAttributeValue,
+            orderRequests,
+            deleteOrderRequest,
+            confirmOrder
 
         }}>
             {children}
