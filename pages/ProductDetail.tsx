@@ -139,7 +139,7 @@ const ProductDetail: React.FC = () => {
             <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[70vh]">
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"
+                    className="flex items-center gap-2 text-text-muted hover:text-primary mb-8 transition-colors"
                 >
                     <ArrowLeft size={20} /> Volver
                 </button>
@@ -223,7 +223,7 @@ const ProductDetail: React.FC = () => {
                         {!isAccessory && (
                             <div className="mb-10">
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
+                                    <span className="text-sm font-bold uppercase tracking-widest text-text">
                                         {product.isImported ? 'SELECCIONA TU TALLE' : (product.category?.toUpperCase() === 'CALZADOS' ? 'CALCE' : 'TALLE')}
                                     </span>
                                 </div>
@@ -286,8 +286,8 @@ const ProductDetail: React.FC = () => {
                         {/* Description */}
                         {product.description && (
                             <div className="mb-6">
-                                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción</h3>
-                                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line font-light">
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-text-muted mb-2">Descripción</h3>
+                                <p className="text-text text-sm leading-relaxed whitespace-pre-line font-light">
                                     {product.description}
                                 </p>
                             </div>
