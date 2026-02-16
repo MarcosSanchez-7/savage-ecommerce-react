@@ -2,7 +2,7 @@
 import React from 'react';
 import { Product } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 
 interface ProductCardProps {
@@ -142,7 +142,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mt-2">
         <div className="flex-1">
           <h3
-            className="text-white text-sm sm:text-base lg:text-lg font-bold leading-tight group-hover:text-primary transition-colors cursor-pointer line-clamp-2"
+            className="text-text text-sm sm:text-base lg:text-lg font-bold leading-tight group-hover:text-primary transition-colors cursor-pointer line-clamp-2"
             onClick={() => navigate(`/product/${product.slug || product.id}`)}
           >
             {product.name}
@@ -150,17 +150,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               <span className="hidden opacity-0 w-0 h-0"> - Camiseta de Fútbol Premium</span>
             )}
           </h3>
-          <p className="text-accent-gray text-[10px] md:text-xs uppercase tracking-wide mt-1 flex items-center gap-1">
+          <p className="text-text-muted text-[10px] md:text-xs uppercase tracking-wide mt-1 flex items-center gap-1">
             {product.subcategory || product.category}
             {product.isCategoryFeatured && <Star size={10} className="text-primary fill-primary" />}
           </p>
         </div>
         <div className="text-left sm:text-right flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
-          <p className={`font-bold text-sm md:text-base ${product.originalPrice && product.originalPrice > product.price ? 'text-primary' : 'text-white'}`}>
+          <p className={`font-bold text-sm md:text-base ${product.originalPrice && product.originalPrice > product.price ? 'text-primary' : 'text-text'}`}>
             Gs. {product.price.toLocaleString()}
           </p>
           {product.originalPrice && product.originalPrice > product.price && (
-            <p className="text-gray-500 line-through text-[10px] md:text-xs font-normal">Gs. {product.originalPrice.toLocaleString()}</p>
+            <p className="text-text-muted line-through text-[10px] md:text-xs font-normal">Gs. {product.originalPrice.toLocaleString()}</p>
           )}
         </div>
       </div>
