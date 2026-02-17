@@ -496,7 +496,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
       {/* MOBILE SEARCH OVERLAY (Same as before but refined) */}
       {isMobileSearchOpen && (
-        <div className="fixed inset-0 z-[200] bg-background/95 backdrop-blur-xl flex flex-col animate-in fade-in duration-200">
+        <div data-search-overlay className={`fixed inset-0 z-[200] flex flex-col animate-in fade-in duration-200 ${theme === 'light' ? 'bg-white' : 'bg-black'}`}>
           <div className="flex items-center gap-4 p-4 border-b border-border">
             <button onClick={() => setIsMobileSearchOpen(false)} className="text-text-muted hover:text-text">
               <ArrowLeft size={24} />

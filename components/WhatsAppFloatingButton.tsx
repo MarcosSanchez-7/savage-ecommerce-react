@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { MessageCircle } from 'lucide-react';
@@ -8,12 +8,24 @@ import { MessageCircle } from 'lucide-react';
  * WhatsAppFloatingButton Component
  * Designed for SAVAGE E-commerce to maximize Meta Ads conversions.
  * Minimalist version: Only the animated button without the floating tooltip.
- * Smart Hide: Disappears during cart/checkout flow to avoid UI conflicts.
+ * Smart Hide: Disappears during cart/checkout flow, admin panel, and search overlay.
  */
 const WhatsAppFloatingButton: React.FC = () => {
     const { products, socialConfig, isCartOpen } = useShop();
     const location = useLocation();
     const { slug } = useParams<{ slug: string }>();
+
+    // Detect mobile search overlay
+    const [isSearchOverlayOpen, setIsSearchOverlayOpen] = useState(false);
+
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            const searchOverlay = document.querySelector('[data-search-overlay]');
+            setIsSearchOverlayOpen(!!searchOverlay);
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        return () => observer.disconnect();
+    }, []);
 
     // Extract Product Name for Contextual Messaging
     const productName = useMemo(() => {
@@ -29,10 +41,10 @@ const WhatsAppFloatingButton: React.FC = () => {
     }, [location.pathname, slug, products]);
 
     /**
-     * Hide button on specific routes (e.g., /checkout)
+     * Hide button on specific routes (admin, checkout, profile)
      */
     const shouldHideOnRoute = useMemo(() => {
-        const hiddenRoutes = ['/checkout'];
+        const hiddenRoutes = ['/checkout', '/admin', '/profile'];
         return hiddenRoutes.some(route => location.pathname.startsWith(route));
     }, [location.pathname]);
 
@@ -41,11 +53,6 @@ const WhatsAppFloatingButton: React.FC = () => {
      */
     const trackConversionEvent = (context: string, label: string) => {
         console.log(`[SAVAGE ANALYTICS] WhatsApp Button Clicked: ${context} | Label: ${label}`);
-
-        // Example integration:
-        // if (typeof window.fbq === 'function') {
-        //   window.fbq('trackCustom', 'WhatsAppContact', { product: label });
-        // }
     };
 
     const handleWhatsAppRedirect = () => {
@@ -63,8 +70,8 @@ const WhatsAppFloatingButton: React.FC = () => {
         window.open(waUrl, '_blank', 'noopener,noreferrer');
     };
 
-    // Hide button when cart is open or on checkout routes
-    if (isCartOpen || shouldHideOnRoute) {
+    // Hide button when cart is open, search overlay is open, or on hidden routes
+    if (isCartOpen || shouldHideOnRoute || isSearchOverlayOpen) {
         return null;
     }
 
