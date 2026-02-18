@@ -984,7 +984,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (itemToRemove) {
             toast.info(`🛒 Eliminado: ${itemToRemove.name} fuera del carrito.`, {
-                icon: '🛒'
+                icon: '🛒',
+                style: { color: '#ffffff', fontWeight: 'bold' },
+                className: 'dark:text-white'
             });
         }
 
