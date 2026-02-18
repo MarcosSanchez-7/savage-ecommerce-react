@@ -983,10 +983,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const itemToRemove = cart.find(item => item.id === productId && item.selectedSize === size);
 
         if (itemToRemove) {
-            toast.info(`🛒 Eliminado: ${itemToRemove.name} fuera del carrito.`, {
+            toast(`🛒 Eliminado: ${itemToRemove.name} fuera del carrito.`, {
                 icon: '🛒',
-                style: { color: '#ffffff', fontWeight: 'bold' },
-                className: 'dark:text-white'
+                style: {
+                    backgroundColor: '#000000',
+                    color: '#ffffff',
+                    fontWeight: 600,
+                    border: '1px solid #333'
+                },
+                progressStyle: { background: '#ffffff' }
             });
         }
 
