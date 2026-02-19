@@ -297,30 +297,45 @@ const ProductDetail: React.FC = () => {
 
                         {/* Import Conditions */}
                         {product.isImported && (
-                            <div className="mb-6 bg-blue-500/5 border border-blue-500/20 rounded-xl p-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-700">
-                                <div className="flex items-center gap-2 text-blue-400 border-b border-blue-500/20 pb-3">
+                            <div className={`mb-6 rounded-xl p-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-700 ${theme === 'light'
+                                    ? 'bg-blue-50 border-2 border-blue-200 shadow-sm'
+                                    : 'bg-blue-500/5 border border-blue-500/20'
+                                }`}>
+                                <div className={`flex items-center gap-2 border-b pb-3 ${theme === 'light'
+                                        ? 'text-blue-600 border-blue-200'
+                                        : 'text-blue-400 border-blue-500/20'
+                                    }`}>
                                     <span className="material-symbols-outlined">globe</span>
                                     <h3 className="text-xs font-black uppercase tracking-[2px]">Condiciones de Compra y Envío</h3>
                                 </div>
-                                <div className="space-y-4 text-[13px] leading-relaxed text-gray-300 font-light">
+                                <div className={`space-y-4 text-[13px] leading-relaxed font-light ${theme === 'light' ? 'text-gray-900' : 'text-gray-300'
+                                    }`}>
                                     <p>Para garantizar la mejor gestión de tu pedido, operamos bajo los siguientes términos:</p>
 
                                     <div>
-                                        <p className="font-black text-blue-400 text-[10px] uppercase tracking-wider mb-1">Tiempo de Entrega</p>
-                                        <p>Al ser un producto importado, el tiempo estimado de espera es de <span className="text-white font-bold">25 a 30 días</span>.</p>
+                                        <p className={`font-black text-[10px] uppercase tracking-wider mb-1 ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                                            }`}>Tiempo de Entrega</p>
+                                        <p>Al ser un producto importado, el tiempo estimado de espera es de <span className={`font-bold ${theme === 'light' ? 'text-black' : 'text-white'
+                                            }`}>25 a 30 días</span>.</p>
                                     </div>
 
                                     <div>
-                                        <p className="font-black text-blue-400 text-[10px] uppercase tracking-wider mb-1">Reserva</p>
-                                        <p>Se requiere el pago de una <span className="text-white font-bold">seña del 50%</span> del valor total para procesar el pedido y asegurar el cupo de importación.</p>
+                                        <p className={`font-black text-[10px] uppercase tracking-wider mb-1 ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                                            }`}>Reserva</p>
+                                        <p>Se requiere el pago de una <span className={`font-bold ${theme === 'light' ? 'text-black' : 'text-white'
+                                            }`}>seña del 50%</span> del valor total para procesar el pedido y asegurar el cupo de importación.</p>
                                     </div>
 
                                     <div>
-                                        <p className="font-black text-blue-400 text-[10px] uppercase tracking-wider mb-1">Políticas de Pedido</p>
+                                        <p className={`font-black text-[10px] uppercase tracking-wider mb-1 ${theme === 'light' ? 'text-blue-600' : 'text-blue-400'
+                                            }`}>Políticas de Pedido</p>
                                         <p>Una vez abonada la seña, el pedido se considera definitivo. Debido a los costos logísticos y de gestión, no se realizan devoluciones de dinero ni del producto en caso de cancelaciones una vez efectuado el pago.</p>
                                     </div>
 
-                                    <div className="bg-black/40 p-3 rounded border border-white/5 italic text-[11px] text-gray-400">
+                                    <div className={`p-3 rounded border italic text-[11px] ${theme === 'light'
+                                            ? 'bg-blue-100 border-blue-300 text-gray-700'
+                                            : 'bg-black/40 border-white/5 text-gray-400'
+                                        }`}>
                                         Nota: Por favor, verifique todos los detalles (talle, color o modelo) antes de confirmar su seña.
                                     </div>
                                 </div>

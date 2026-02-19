@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
+import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
@@ -12,6 +13,7 @@ const CategoryPage: React.FC = () => {
     const { category, subcategory } = useParams<{ category: string; subcategory?: string }>();
     const navigate = useNavigate();
     const { products, categories, addToCart, cart, loading } = useShop();
+    const { theme } = useTheme();
 
     // The "Current" Category Node we are viewing.
     const [currentScopeId, setCurrentScopeId] = React.useState<string>('');
@@ -147,7 +149,8 @@ const CategoryPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
+        <div className={`min-h-screen selection:bg-primary selection:text-white ${theme === 'light' ? 'bg-background text-text' : 'bg-background-dark text-white'
+            }`}>
             <Navbar cartCount={cartCount} />
 
             <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[60vh]">
@@ -163,10 +166,11 @@ const CategoryPage: React.FC = () => {
                     )}
 
                     <div>
-                        <h1 className="text-4xl font-black uppercase tracking-tight flex items-center gap-2">
+                        <h1 className={`text-4xl font-black uppercase tracking-tight flex items-center gap-2 ${theme === 'light' ? 'text-black' : 'text-white'
+                            }`}>
                             {seoInfo.title}
                         </h1>
-                        <p className="text-accent-gray text-sm mt-1">{seoInfo.desc}</p>
+                        <p className="text-text-muted text-sm mt-1">{seoInfo.desc}</p>
                     </div>
                 </div>
 
@@ -179,9 +183,13 @@ const CategoryPage: React.FC = () => {
                                 <button
                                     key={sub.id}
                                     onClick={() => handleNavigation(sub.id)}
-                                    className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${isActive
-                                        ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)] transform scale-105'
-                                        : 'bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white hover:bg-white/5'
+                                    className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${theme === 'light'
+                                            ? isActive
+                                                ? 'bg-black text-white border-black shadow-md transform scale-105'
+                                                : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-black hover:text-black hover:shadow-sm'
+                                            : isActive
+                                                ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)] transform scale-105'
+                                                : 'bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white hover:bg-white/5'
                                         }`}
                                 >
                                     {sub.name}

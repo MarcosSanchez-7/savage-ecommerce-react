@@ -2,9 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
-import {
-  ArrowLeft, ArrowRight
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const Hero: React.FC = () => {
   const { heroSlides, heroCarouselConfig, loading } = useShop();
@@ -142,42 +141,66 @@ const Hero: React.FC = () => {
         </div>
       ))}
 
-      {/* Content */}
-      <div className="relative z-20 flex flex-col items-center text-center px-4 max-w-4xl mx-auto animate-fade-in-up w-full">
+      {/* Gradient Overlay for Better Contrast */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent z-10"></div>
+
+      {/* Content - Luxury Minimalist Design */}
+      <div className="relative z-20 flex flex-col items-center justify-center text-center px-6 max-w-4xl mx-auto w-full h-full">
         {loading ? (
           // SKELETON STATE
-          <div className="flex flex-col items-center w-full gap-4 animate-pulse">
-            {/* Title Skeleton */}
-            <div className="h-16 md:h-24 w-3/4 bg-zinc-800/50 rounded-lg backdrop-blur-sm mb-4"></div>
-            {/* Subtitle Skeleton */}
-            <div className="h-6 md:h-8 w-1/2 bg-zinc-800/30 rounded backdrop-blur-sm mb-8"></div>
-            {/* Button Skeleton */}
-            <div className="h-10 md:h-12 w-40 bg-zinc-800/80 rounded shadow-xl"></div>
+          <div className="flex flex-col items-center w-full gap-6 animate-pulse">
+            <div className="h-20 md:h-32 w-3/4 bg-white/10 backdrop-blur-sm mb-4"></div>
+            <div className="h-8 md:h-12 w-1/2 bg-white/5 backdrop-blur-sm mb-8"></div>
+            <div className="h-12 md:h-14 w-48 bg-white/20 backdrop-blur-sm"></div>
           </div>
         ) : (
-          // REAL CONTENT
-          <>
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-2 md:mb-4 uppercase z-10 transition-all duration-300">
-              {current ? (
-                <>
-                  {current.title?.split(' ').slice(0, 1)} <span className="text-stroke text-transparent" style={{ WebkitTextStroke: '1px white' }}>{current.title?.split(' ').slice(1).join(' ')}</span>
-                </>
-              ) : (
-                "SAVAGE"
-              )}
-            </h1>
-            <h2 className="text-gray-300 text-sm md:text-xl font-light tracking-widest mb-6 md:mb-8 uppercase z-10 transition-all duration-300">
+          // REAL CONTENT - Animated with Framer Motion
+          <div className="w-full space-y-6 md:space-y-8">
+            {/* Title - Bold & Elegant */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="text-4xl md:text-7xl lg:text-8xl font-extrabold leading-[0.95] tracking-tighter text-white max-w-3xl mx-auto"
+              style={{
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                textShadow: '0 4px 24px rgba(0,0,0,0.5)'
+              }}
+            >
+              {current?.title || "SAVAGE"}
+            </motion.h1>
+
+            {/* Subtitle - Light & Spaced */}
+            <motion.h2
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="text-sm md:text-xl font-light tracking-[0.25em] text-white/90 uppercase max-w-2xl mx-auto"
+              style={{
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                textShadow: '0 2px 12px rgba(0,0,0,0.4)'
+              }}
+            >
               {current?.subtitle}
-            </h2>
-            <div className="flex flex-wrap justify-center gap-4 z-20">
+            </motion.h2>
+
+            {/* CTA Button - Clean & Minimal */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="pt-4"
+            >
               <Link
                 to={current?.buttonLink || '/'}
-                className="bg-primary hover:opacity-90 text-white h-10 md:h-12 px-6 md:px-8 rounded font-bold text-xs md:text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-yellow-900/20 flex items-center justify-center"
+                className="group relative inline-flex items-center justify-center px-8 md:px-12 py-3.5 md:py-4 bg-white text-black font-semibold text-xs md:text-sm tracking-[0.15em] uppercase overflow-hidden transition-all duration-500 hover:bg-black hover:text-white border-2 border-white"
               >
-                {current?.buttonText || 'EXPLORAR AHORA'}
+                <span className="relative z-10">{current?.buttonText || 'EXPLORAR AHORA'}</span>
+                {/* Hover Effect Background */}
+                <span className="absolute inset-0 bg-black transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"></span>
               </Link>
-            </div>
-          </>
+            </motion.div>
+          </div>
         )}
       </div>
 

@@ -7,17 +7,21 @@ import CartDrawer from './components/CartDrawer';
 import { ShopProvider, useShop } from './context/ShopContext';
 import { AuthProvider } from './context/AuthContext';
 import SEO from './components/SEO';
-import LoadingScreen from './components/LoadingScreen';
+import HomePageSkeleton from './components/skeletons/HomePageSkeleton';
 import ScrollToTop from './components/ScrollToTop';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 import WhatsAppFloatingButton from './components/WhatsAppFloatingButton';
+import { ThemeProvider } from './context/ThemeContext';
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
   // Check if we are in "Admin/Stock Mode" via env var or just default to Web Store
   const isStockApp = import.meta.env.VITE_APP_MODE === 'admin';
+
+  if (loading) {
+    return <HomePageSkeleton />;
+  }
 
   return (
     <BrowserRouter>
@@ -37,8 +41,6 @@ const MainContent: React.FC = () => {
     </BrowserRouter>
   );
 };
-
-import { ThemeProvider } from './context/ThemeContext';
 
 const App: React.FC = () => {
   return (
