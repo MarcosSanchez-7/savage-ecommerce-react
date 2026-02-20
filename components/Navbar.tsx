@@ -100,7 +100,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   return (
     <>
       <AnnouncementBar />
-      <nav className={`sticky top-0 z-50 w-full border-b border-border backdrop-blur-md transition-all duration-300 ${theme === 'light' ? 'bg-background/95 shadow-md' : 'bg-background/80'}`}>
+      <nav className={`sticky top-0 z-50 w-full border-b border-border transition-all duration-300 ${theme === 'light' ? 'bg-white shadow-md' : 'bg-black'}`}>
         <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between relative">
 
           {/* LEFT: Logo */}
