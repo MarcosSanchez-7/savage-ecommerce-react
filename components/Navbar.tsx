@@ -29,6 +29,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const [expandedMobileCategories, setExpandedMobileCategories] = useState<Record<string, boolean>>({});
   const [expandedDesktopCategories, setExpandedDesktopCategories] = useState<Record<string, boolean>>({});
+  const [isMobileSectionsOpen, setIsMobileSectionsOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -222,6 +223,30 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 </div>
               </div>
 
+              {/* SECTIONS Dropdown */}
+              <div className="relative group h-full flex items-center">
+                <button className="h-full flex items-center px-2 gap-1 text-sm font-bold text-text group-hover:text-primary uppercase tracking-widest transition-colors relative">
+                  SECCIONES <ChevronDown size={14} className="group-hover:rotate-180 transition-transform" />
+                </button>
+
+                <div className="absolute top-[calc(100%-1rem)] -left-10 pt-6 hidden group-hover:block z-50">
+                  <div className={`border border-border rounded-xl p-6 shadow-[0_20px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-4 w-[280px] ${theme === 'light' ? 'bg-white shadow-2xl' : 'bg-black/95'}`}>
+                    <Link to="/category/recien-llegados" className="group/item flex items-center gap-3 text-sm font-bold text-text hover:text-primary uppercase tracking-wider transition-colors">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover/item:bg-primary transition-colors"></span>
+                      RECIÉN LLEGADOS
+                    </Link>
+                    <Link to="/ofertas" className="group/item flex items-center gap-3 text-sm font-bold text-text hover:text-primary uppercase tracking-wider transition-colors">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover/item:bg-primary transition-colors"></span>
+                      OFERTAS
+                    </Link>
+                    <Link to="/destacados" className="group/item flex items-center gap-3 text-sm font-bold text-text hover:text-primary uppercase tracking-wider transition-colors">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover/item:bg-primary transition-colors"></span>
+                      PRODUCTOS DESTACADOS
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
               <Link to="/nosotros" className="h-full flex items-center px-2 text-sm font-bold text-text hover:text-primary uppercase tracking-widest transition-colors relative group">
                 NOSOTROS
                 <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
@@ -335,10 +360,11 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
           </div>
         </div>
-      </nav>
+      </nav >
 
       {/* MOBILE MENU FULLSCREEN */}
-      <div className={`fixed inset-0 bg-background z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col`}>
+      < div className={`fixed inset-0 bg-background z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden flex flex-col`
+      }>
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="size-8">
@@ -355,6 +381,29 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-text uppercase tracking-widest hover:text-primary transition-colors">
             INICIO
           </Link>
+
+          {/* Mobile Sections Accordion */}
+          <div>
+            <button
+              onClick={() => setIsMobileSectionsOpen(!isMobileSectionsOpen)}
+              className="w-full flex items-center justify-between text-2xl font-black text-text uppercase tracking-widest hover:text-primary transition-colors"
+            >
+              SECCIONES
+              {isMobileSectionsOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+            </button>
+
+            <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-4 pl-4 border-l-2 border-primary/20 ml-1 ${isMobileSectionsOpen ? 'max-h-[300px] mt-4 opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>
+              <Link to="/category/recien-llegados" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
+                RECIÉN LLEGADOS
+              </Link>
+              <Link to="/ofertas" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
+                OFERTAS
+              </Link>
+              <Link to="/destacados" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
+                DESTACADOS
+              </Link>
+            </div>
+          </div>
 
           {/* Mobile Categories Accordion */}
           <div>
@@ -492,56 +541,58 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
           </div>
         </div>
-      </div>
+      </div >
 
       {/* MOBILE SEARCH OVERLAY (Same as before but refined) */}
-      {isMobileSearchOpen && (
-        <div data-search-overlay className={`fixed inset-0 z-[200] flex flex-col animate-in fade-in duration-200 ${theme === 'light' ? 'bg-white' : 'bg-black'}`}>
-          <div className="flex items-center gap-4 p-4 border-b border-border">
-            <button onClick={() => setIsMobileSearchOpen(false)} className="text-text-muted hover:text-text">
-              <ArrowLeft size={24} />
-            </button>
-            <div className="flex-1 bg-surface rounded-full px-4 py-3 flex items-center gap-2">
-              <Search size={18} className="text-text-muted" />
-              <input
-                autoFocus
-                className="flex-1 bg-transparent border-none outline-none text-text text-sm font-medium placeholder-text-muted"
-                placeholder="Buscar productos..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="text-text-muted hover:text-text">
-                  <X size={16} />
-                </button>
+      {
+        isMobileSearchOpen && (
+          <div data-search-overlay className={`fixed inset-0 z-[200] flex flex-col animate-in fade-in duration-200 ${theme === 'light' ? 'bg-white' : 'bg-black'}`}>
+            <div className="flex items-center gap-4 p-4 border-b border-border">
+              <button onClick={() => setIsMobileSearchOpen(false)} className="text-text-muted hover:text-text">
+                <ArrowLeft size={24} />
+              </button>
+              <div className="flex-1 bg-surface rounded-full px-4 py-3 flex items-center gap-2">
+                <Search size={18} className="text-text-muted" />
+                <input
+                  autoFocus
+                  className="flex-1 bg-transparent border-none outline-none text-text text-sm font-medium placeholder-text-muted"
+                  placeholder="Buscar productos..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="text-text-muted hover:text-text">
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {/* Results Logic same as desktop */}
+              {searchQuery.length > 1 && (
+                <div className="flex flex-col gap-4">
+                  {searchResults.length > 0 ? (
+                    searchResults.map(p => (
+                      <button key={p.id} onClick={() => handleProductClick(p.id)} className="flex gap-4 items-center group">
+                        <div className="w-16 h-20 bg-surface rounded-md overflow-hidden">
+                          <img src={p.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-text font-bold text-sm uppercase line-clamp-2 group-hover:text-primary transition-colors">{p.name}</p>
+                          <p className="text-primary font-bold text-sm mt-1">Gs. {p.price.toLocaleString()}</p>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-center text-text-muted text-sm mt-10">No se encontraron resultados</p>
+                  )}
+                </div>
               )}
             </div>
           </div>
-
-          <div className="flex-1 overflow-y-auto p-4">
-            {/* Results Logic same as desktop */}
-            {searchQuery.length > 1 && (
-              <div className="flex flex-col gap-4">
-                {searchResults.length > 0 ? (
-                  searchResults.map(p => (
-                    <button key={p.id} onClick={() => handleProductClick(p.id)} className="flex gap-4 items-center group">
-                      <div className="w-16 h-20 bg-surface rounded-md overflow-hidden">
-                        <img src={p.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-text font-bold text-sm uppercase line-clamp-2 group-hover:text-primary transition-colors">{p.name}</p>
-                        <p className="text-primary font-bold text-sm mt-1">Gs. {p.price.toLocaleString()}</p>
-                      </div>
-                    </button>
-                  ))
-                ) : (
-                  <p className="text-center text-text-muted text-sm mt-10">No se encontraron resultados</p>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        )
+      }
 
     </>
   );
