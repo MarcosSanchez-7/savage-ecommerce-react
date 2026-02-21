@@ -7,6 +7,7 @@ import BlogPage from '../../pages/BlogPage';
 import SeasonPage from '../../pages/SeasonPage';
 import OffersPage from '../../pages/OffersPage';
 import FeaturedPage from '../../pages/FeaturedPage';
+import NewArrivalsPage from '../../pages/NewArrivalsPage';
 
 import ShippingPolicy from '../../pages/ShippingPolicy';
 import ExchangePolicy from '../../pages/ExchangePolicy';
@@ -37,6 +38,7 @@ const WebRoutes: React.FC = () => {
             <Route path="/category/:category/:subcategory" element={<CategoryPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/season" element={<SeasonPage />} />
+            <Route path="/recien-llegados" element={<NewArrivalsPage />} />
             <Route path="/ofertas" element={<OffersPage />} />
             <Route path="/destacados" element={<FeaturedPage />} />
             <Route path="/shipping-policy" element={<ShippingPolicy />} />

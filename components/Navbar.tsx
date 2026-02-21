@@ -231,7 +231,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
                 <div className="absolute top-[calc(100%-1rem)] -left-10 pt-6 hidden group-hover:block z-50">
                   <div className={`border border-border rounded-xl p-6 shadow-[0_20px_40px_rgba(0,0,0,0.5)] backdrop-blur-xl animate-in fade-in zoom-in-95 slide-in-from-top-4 flex flex-col gap-4 w-[280px] ${theme === 'light' ? 'bg-white shadow-2xl' : 'bg-black/95'}`}>
-                    <Link to="/category/recien-llegados" className="group/item flex items-center gap-3 text-sm font-bold text-text hover:text-primary uppercase tracking-wider transition-colors">
+                    <Link to="/recien-llegados" className="group/item flex items-center gap-3 text-sm font-bold text-text hover:text-primary uppercase tracking-wider transition-colors">
                       <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover/item:bg-primary transition-colors"></span>
                       RECIÉN LLEGADOS
                     </Link>
@@ -393,7 +393,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
 
             <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-4 pl-4 border-l-2 border-primary/20 ml-1 ${isMobileSectionsOpen ? 'max-h-[300px] mt-4 opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>
-              <Link to="/category/recien-llegados" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
+              <Link to="/recien-llegados" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
                 RECIÉN LLEGADOS
               </Link>
               <Link to="/ofertas" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
