@@ -20,7 +20,7 @@ const NewArrivalsCarousel: React.FC<NewArrivalsCarouselProps> = ({ products, onA
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const itemsPerView = isMobile ? 8 : 4;
+    const itemsPerView = isMobile ? 2 : 4;
     const interval = isMobile ? 3000 : 5000;
     const totalPages = Math.ceil(products.length / itemsPerView);
 
@@ -41,7 +41,7 @@ const NewArrivalsCarousel: React.FC<NewArrivalsCarouselProps> = ({ products, onA
 
     return (
         <div className="relative">
-            <div className="overflow-hidden min-h-[500px]">
+            <div className={`overflow-hidden ${isMobile ? 'min-h-[320px]' : 'min-h-[500px]'}`}>
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentIndex}
