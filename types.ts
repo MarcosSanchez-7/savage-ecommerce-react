@@ -224,4 +224,18 @@ export interface SeasonConfig {
   productIds: string[];
 }
 
+// ============================================================
+// CHATBOT TYPES
+// ============================================================
 
+export type BotState = 'welcome' | 'category_browse' | 'human';
+
+export interface BotSession {
+  id: string;
+  phone_number: string;
+  state: BotState;
+  current_category_id: string | null;
+  last_message_at: string;
+  created_at: string;
+  updated_at: string;
+}
