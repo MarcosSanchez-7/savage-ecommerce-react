@@ -990,8 +990,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     color: '#ffffff',
                     fontWeight: 600,
                     border: '1px solid #333'
-                },
-                progressStyle: { background: '#ffffff' }
+                }
             });
         }
 

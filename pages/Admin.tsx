@@ -244,11 +244,10 @@ const AdminDashboard: React.FC = () => {
     }, [lifestyleConfig]);
 
     // Web Design Form State
-    const [navForm, setNavForm] = useState<NavbarLink[]>(navbarLinks || []);
     const [bentoForm, setBentoForm] = useState<BannerBento[]>(bannerBento || []);
     const [footerForm, setFooterForm] = useState<FooterColumn[]>(footerColumns || []);
 
-    React.useEffect(() => { if (navbarLinks) setNavForm(navbarLinks); }, [navbarLinks]);
+
     React.useEffect(() => { if (bannerBento) setBentoForm(bannerBento); }, [bannerBento]);
     React.useEffect(() => { if (footerColumns) setFooterForm(footerColumns); }, [footerColumns]);
 
@@ -684,31 +683,7 @@ const AdminDashboard: React.FC = () => {
 
 
 
-    // --- Web Design Handlers ---
-    const handleNavSave = async () => {
-        try {
-            await updateNavbarLinks(navForm);
-            alert('Añadido correctamente a la base de datos');
-        } catch (error) {
-            console.error(error);
-            alert('Hubo un error guardando en la base de datos.');
-        }
-    };
 
-    const addNavLink = () => {
-        const newId = 'nav' + Date.now();
-        setNavForm([...navForm, { id: newId, label: 'NUEVO LINK', path: '/' }]);
-    };
-
-    const removeNavLink = (id: string) => {
-        if (window.confirm('¿ELIMINAR ESTE ENLACE DE NAVEGACIÓN?')) {
-            setNavForm(navForm.filter(l => l.id !== id));
-        }
-    };
-
-    const updateNavLink = (id: string, field: keyof NavbarLink, value: any) => {
-        setNavForm(navForm.map(l => l.id === id ? { ...l, [field]: value } : l));
-    };
 
     const addBentoItem = () => {
         const newId = `bento-${Date.now()}`;
@@ -2464,67 +2439,8 @@ const AdminDashboard: React.FC = () => {
                         <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <header className="border-b border-gray-800 pb-6">
                                 <h2 className="text-3xl font-bold mb-2">Diseño Web y Atajos</h2>
-                                <p className="text-gray-400">Personaliza la barra de navegación y los banners de categoría.</p>
+                                <p className="text-gray-400">Personaliza los banners de categoría y shortcuts visuales.</p>
                             </header>
-
-                            {/* NAVBAR SECTION */}
-                            <div className="space-y-6">
-                                <div className="flex justify-between items-end">
-                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                        <Layers size={20} /> BARRA DE NAVEGACIÓN (Navbar)
-                                    </h3>
-                                    <button onClick={handleNavSave} className="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
-                                        <Save size={16} /> Guardar Menú
-                                    </button>
-                                </div>
-
-                                <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6">
-                                    <div className="space-y-4">
-                                        {navForm.map((link, idx) => (
-                                            <div key={link.id} className="flex gap-4 items-center bg-black/50 p-4 rounded-lg border border-gray-800">
-                                                <span className="text-gray-500 font-mono text-xs">#{idx + 1}</span>
-                                                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                                    <div>
-                                                        <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Texto (Label)</label>
-                                                        <input
-                                                            type="text"
-                                                            value={link.label}
-                                                            onChange={(e) => updateNavLink(link.id, 'label', e.target.value)}
-                                                            className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-white focus:border-primary focus:outline-none"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Ruta (Path)</label>
-                                                        <input
-                                                            type="text"
-                                                            value={link.path}
-                                                            onChange={(e) => updateNavLink(link.id, 'path', e.target.value)}
-                                                            className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-gray-300 font-mono focus:border-primary focus:outline-none"
-                                                            placeholder="/category/..."
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Subcategorías</label>
-                                                        <input
-                                                            type="text"
-                                                            value={link.subcategories ? link.subcategories.join(', ') : ''}
-                                                            onChange={(e) => updateNavLink(link.id, 'subcategories' as any, e.target.value ? e.target.value.split(',').map(s => s.trim()) : [])}
-                                                            className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-gray-300 font-mono focus:border-primary focus:outline-none"
-                                                            placeholder="Ej. River, Boca, Selección..."
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <button onClick={() => removeNavLink(link.id)} className="text-gray-600 hover:text-red-500 p-2">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        <button onClick={addNavLink} className="w-full py-4 border border-dashed border-gray-800 text-gray-500 hover:text-white hover:border-gray-600 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
-                                            <Plus size={16} /> Agregar Item al Menú
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
 
                             {/* BENTO BANNERS SECTION */}
                             <div className="space-y-6 pt-6 border-t border-gray-800">
