@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronRight } from 'lucide-react';
 
 import FeaturedCarousel from '../components/FeaturedCarousel';
+import NewArrivalsCarousel from '../components/NewArrivalsCarousel';
 import SeasonSection from '../components/SeasonSection';
 
 import ProductSkeleton from '../components/ProductSkeleton'; // Import Skeleton
@@ -25,7 +26,7 @@ const Home: React.FC = () => {
     const newArrivals = products
         .filter(p => p.isActive !== false)
         .filter(p => p.isNew)
-        .slice(0, 8); // Max 4-8 products
+        .slice(0, 24); // More items for the carousel
 
     return (
         <div className="min-h-screen bg-background text-text selection:bg-primary selection:text-white overflow-x-hidden transition-colors duration-300">
@@ -39,9 +40,13 @@ const Home: React.FC = () => {
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
                     <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                         <div>
-                            <h2 className="text-3xl font-black uppercase tracking-tight text-text">RECIEN LLEGADOS</h2>
+                            <h2 className="text-3xl font-black uppercase tracking-tight text-text">RECIÉN LLEGADOS</h2>
                             <p className="text-text-muted mt-1 text-sm font-bold uppercase tracking-widest">Artículos limitados</p>
                         </div>
+                        <Link to="/recien-llegados" className="flex bg-text text-background hover:opacity-80 px-4 md:px-6 py-2 rounded-none skew-x-[-12deg] hover:skew-x-0 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] items-center gap-2 transition-all group">
+                            <span className="skew-x-[12deg] group-hover:skew-x-0 block whitespace-nowrap">VER MÁS</span>
+                            <ChevronRight size={14} className="skew-x-[12deg] group-hover:skew-x-0" />
+                        </Link>
                     </div>
 
                     {loading ? (
@@ -49,15 +54,10 @@ const Home: React.FC = () => {
                             {[...Array(4)].map((_, i) => <ProductSkeleton key={i} />)}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                            {newArrivals.map(product => (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                    onAddToCart={() => addToCart(product)}
-                                />
-                            ))}
-                        </div>
+                        <NewArrivalsCarousel
+                            products={newArrivals}
+                            onAddToCart={(product) => addToCart(product)}
+                        />
                     )}
                 </section>
 
