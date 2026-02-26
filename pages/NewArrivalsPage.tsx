@@ -1,7 +1,6 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useShop } from '../context/ShopContext';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
@@ -14,46 +13,12 @@ const NewArrivalsPage: React.FC = () => {
     const { theme } = useTheme();
     const navigate = useNavigate();
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
     // Filter products marked as "New"
     const newArrivals = useMemo(() => {
         return (products || []).filter(p => p.isNew && p.isActive !== false);
     }, [products]);
 
-    // Update screen size state
-    useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    // Carousel settings
-    const itemsPerView = isMobile ? 8 : 4;
-    const interval = isMobile ? 3000 : 5000;
-    const totalPages = Math.ceil(newArrivals.length / itemsPerView);
-
-    // Auto-play timer
-    useEffect(() => {
-        if (totalPages <= 1) return;
-
-        const timer = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % totalPages);
-        }, interval);
-
-        return () => clearInterval(timer);
-    }, [totalPages, interval]);
-
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-
-    const nextPage = () => setCurrentIndex((prev) => (prev + 1) % totalPages);
-    const prevPage = () => setCurrentIndex((prev) => (prev - 1 + totalPages) % totalPages);
-
-    const visibleProducts = useMemo(() => {
-        const start = currentIndex * itemsPerView;
-        return newArrivals.slice(start, start + itemsPerView);
-    }, [newArrivals, currentIndex, itemsPerView]);
 
     return (
         <div className={`min-h-screen flex flex-col ${theme === 'light' ? 'bg-white' : 'bg-black'} transition-colors duration-300`}>
@@ -75,55 +40,22 @@ const NewArrivalsPage: React.FC = () => {
                         <p className="text-text-muted mt-2 font-medium tracking-wide">ARTÍCULOS LIMITADOS</p>
                     </div>
 
-                    {/* Pagination Indicators */}
-                    {totalPages > 1 && (
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={prevPage}
-                                className={`p-3 rounded-full border border-border hover:bg-primary hover:text-white transition-all ${theme === 'light' ? 'bg-zinc-100' : 'bg-zinc-900'}`}
-                            >
-                                <ChevronLeft size={20} />
-                            </button>
-                            <div className="flex gap-2">
-                                {[...Array(totalPages)].map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className={`h-1.5 transition-all duration-300 rounded-full ${i === currentIndex ? 'w-8 bg-primary' : 'w-2 bg-border'}`}
-                                    />
-                                ))}
-                            </div>
-                            <button
-                                onClick={nextPage}
-                                className={`p-3 rounded-full border border-border hover:bg-primary hover:text-white transition-all ${theme === 'light' ? 'bg-zinc-100' : 'bg-zinc-900'}`}
-                            >
-                                <ChevronRight size={20} />
-                            </button>
-                        </div>
-                    )}
+
                 </div>
 
-                {/* Carousel / Grid Area */}
-                <div className="relative overflow-hidden min-h-[600px]">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={currentIndex}
-                            initial={{ x: 100, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: -100, opacity: 0 }}
-                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                            className={`grid gap-6 ${isMobile ? 'grid-cols-2 grid-rows-4' : 'grid-cols-4'}`}
-                        >
-                            {visibleProducts.length > 0 ? (
-                                visibleProducts.map((product) => (
-                                    <ProductCard key={product.id} product={product} />
-                                ))
-                            ) : (
-                                <div className="col-span-full py-20 text-center">
-                                    <p className="text-text-muted text-lg">No hay productos nuevos en este momento.</p>
-                                </div>
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
+                {/* Grid Area */}
+                <div className="min-h-[600px]">
+                    <div className="grid gap-6 grid-cols-2 md:grid-cols-4">
+                        {newArrivals.length > 0 ? (
+                            newArrivals.map((product) => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 text-center">
+                                <p className="text-text-muted text-lg">No hay productos nuevos en este momento.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Footer Link / VER MAS */}

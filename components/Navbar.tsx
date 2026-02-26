@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, X, ArrowLeft, Heart, User, ShoppingCart, Menu, ChevronDown, ChevronUp, ChevronRight, Moon, Sun } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
 import { useTheme } from '../context/ThemeContext';
+import { toast } from 'react-toastify';
 
 interface NavbarProps {
   cartCount: number;
@@ -97,6 +98,46 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
       document.body.style.overflow = 'unset';
     }
   }, [isMobileMenuOpen]);
+
+  const handleThemeClick = () => {
+    const isDark = theme === 'dark';
+    const message = isDark
+      ? '¿Cambiar al tema Claro?'
+      : '¿Cambiar al tema Oscuro?';
+
+    toast(
+      ({ closeToast }) => (
+        <div className="flex items-center justify-between gap-4 p-0.5">
+          <p className="font-bold text-xs tracking-wide m-0">{message}</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                toggleTheme();
+                if (closeToast) closeToast();
+              }}
+              className="bg-primary text-black font-black px-3 py-1.5 rounded-md text-[10px] uppercase hover:scale-105 active:scale-95 transition-all"
+            >
+              Sí
+            </button>
+            <button
+              onClick={() => { if (closeToast) closeToast(); }}
+              className={`border font-bold px-3 py-1.5 rounded-md text-[10px] uppercase hover:scale-105 active:scale-95 transition-all ${theme === 'light' ? 'border-gray-300 text-gray-700 bg-gray-100' : 'border-gray-700 text-gray-300 bg-gray-800'}`}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        draggable: false,
+        closeButton: false,
+        position: "bottom-center",
+        className: theme === 'light' ? '!bg-white !text-black border border-gray-200 !min-h-0 !py-2 !px-4' : '!bg-zinc-900 !text-white border border-zinc-800 !min-h-0 !py-2 !px-4'
+      }
+    );
+  };
 
   return (
     <>
@@ -262,68 +303,65 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           {/* RIGHT: Icons */}
           <div className="flex items-center gap-2 md:gap-5 z-50">
 
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 hover:border-primary/50 text-[10px] font-black tracking-[0.2em] text-text hover:text-primary transition-all group"
-              title={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
-            >
-              <div className={`w-2 h-2 rounded-full ${theme === 'dark' ? 'bg-primary shadow-[0_0_8px_rgba(212,175,55,0.8)]' : 'bg-gray-400'} group-hover:scale-110 transition-transform`}></div>
-              TEMAS
-            </button>
-
             {/* Desktop Search Trigger */}
             <div ref={searchRef} className="relative hidden md:block">
-              <div className={`flex items-center transition-all duration-300 ${isSearchOpen ? 'w-64 bg-white/5 border-gray-700 px-3' : 'w-10 border-transparent justify-center'} border rounded-full overflow-hidden h-10`}>
-                <button
-                  onClick={() => {
-                    setIsSearchOpen(!isSearchOpen);
-                    if (!isSearchOpen) setTimeout(() => document.getElementById('navbar-search-input')?.focus(), 100);
-                  }}
-                  className={`text-text hover:text-primary transition-colors ${isSearchOpen ? 'mr-2' : ''}`}
-                >
-                  <Search size={20} />
-                </button>
-                <input
-                  id="navbar-search-input"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`bg-transparent border-none outline-none text-xs font-bold text-text placeholder-text-muted w-full ${isSearchOpen ? 'block' : 'hidden'}`}
-                />
-                {isSearchOpen && searchQuery && (
-                  <button onClick={() => { setSearchQuery(''); document.getElementById('navbar-search-input')?.focus(); }} className="text-text-muted hover:text-text ml-2">
-                    <X size={14} />
-                  </button>
-                )}
-              </div>
+              <button
+                onClick={() => {
+                  setIsSearchOpen(!isSearchOpen);
+                  if (!isSearchOpen) setTimeout(() => document.getElementById('navbar-search-input')?.focus(), 100);
+                }}
+                className={`flex items-center justify-center w-10 h-10 rounded-full text-text hover:text-primary transition-colors ${isSearchOpen ? (theme === 'light' ? 'bg-zinc-100' : 'bg-white/5') : ''}`}
+              >
+                <Search size={20} />
+              </button>
 
-              {/* Desktop Search Results */}
-              {isSearchOpen && searchQuery.length > 1 && (
-                <div className="absolute top-12 right-0 w-80 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
-                  {searchResults.length > 0 ? (
-                    <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
-                      <div className="p-3 bg-surface border-b border-border text-[10px] font-bold text-text-muted uppercase tracking-wider sticky top-0 backdrop-blur-md">
-                        Resultados ({searchResults.length})
+              {/* Desktop Search Dropdown */}
+              {isSearchOpen && (
+                <div className="absolute top-14 right-0 w-80 md:w-96 bg-surface border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 z-50">
+                  <div className="flex items-center border-b border-border px-4 py-3 bg-background/50 backdrop-blur-md">
+                    <Search size={16} className="text-text-muted mr-3" />
+                    <input
+                      id="navbar-search-input"
+                      type="text"
+                      placeholder="Buscar productos..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-transparent border-none outline-none text-sm font-bold text-text placeholder-text-muted w-full"
+                    />
+                    {searchQuery && (
+                      <button onClick={() => { setSearchQuery(''); document.getElementById('navbar-search-input')?.focus(); }} className="text-text-muted hover:text-text ml-2">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+
+                  {searchQuery.length > 1 ? (
+                    searchResults.length > 0 ? (
+                      <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+                        <div className="p-3 bg-surface border-b border-border text-[10px] font-bold text-text-muted uppercase tracking-wider sticky top-0 backdrop-blur-md">
+                          Resultados ({searchResults.length})
+                        </div>
+                        {searchResults.map(product => (
+                          <button
+                            key={product.id}
+                            onClick={() => handleProductClick(product.id)}
+                            className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-border/50 last:border-0 text-left group"
+                          >
+                            <div className="w-12 h-16 overflow-hidden rounded bg-gray-900 flex-shrink-0">
+                              <img src={product.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                            </div>
+                            <div>
+                              <div className="font-bold text-sm text-text uppercase tracking-wide group-hover:text-primary transition-colors line-clamp-1">{product.name}</div>
+                              <div className="text-xs text-text-muted font-mono mt-1">Gs. {product.price.toLocaleString()}</div>
+                            </div>
+                          </button>
+                        ))}
                       </div>
-                      {searchResults.map(product => (
-                        <button
-                          key={product.id}
-                          onClick={() => handleProductClick(product.id)}
-                          className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-border/50 last:border-0 text-left group"
-                        >
-                          <div className="w-10 h-12 overflow-hidden rounded bg-gray-900 flex-shrink-0">
-                            <img src={product.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                          </div>
-                          <div>
-                            <div className="font-bold text-xs text-text uppercase tracking-wide group-hover:text-primary transition-colors line-clamp-1">{product.name}</div>
-                            <div className="text-[10px] text-text-muted font-mono">Gs. {product.price.toLocaleString()}</div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                    ) : (
+                      <div className="p-8 text-center text-text-muted text-xs uppercase tracking-widest">Sin resultados</div>
+                    )
                   ) : (
-                    <div className="p-6 text-center text-text-muted text-xs uppercase tracking-widest">Sin resultados</div>
+                    <div className="p-8 text-center text-text-muted text-[10px] uppercase tracking-widest">Escribe al menos 2 letras...</div>
                   )}
                 </div>
               )}
@@ -349,6 +387,16 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                   {cartCount}
                 </span>
               )}
+            </button>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={handleThemeClick}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 hover:border-primary/50 text-[10px] font-black tracking-[0.2em] text-text hover:text-primary transition-all group"
+              title={`Cambiar a modo ${theme === 'dark' ? 'claro' : 'oscuro'}`}
+            >
+              <div className={`w-2 h-2 rounded-full ${theme === 'dark' ? 'bg-primary shadow-[0_0_8px_rgba(212,175,55,0.8)]' : 'bg-gray-400'} group-hover:scale-110 transition-transform`}></div>
+              TEMAS
             </button>
 
             {/* Mobile Menu Toggle */}
@@ -526,7 +574,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           <div className="mt-8 border-t border-border pt-8 flex flex-col gap-4 mb-10">
             {/* Mobile Theme Toggle (Moved to Bottom) */}
             <button
-              onClick={() => { toggleTheme(); }}
+              onClick={() => { handleThemeClick(); }}
               className="flex items-center justify-between w-full px-5 py-4 rounded-2xl bg-surface border border-border text-text group active:scale-[0.98] transition-all"
             >
               <div className="flex items-center gap-3">
