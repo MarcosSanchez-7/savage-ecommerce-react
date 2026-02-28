@@ -43,21 +43,6 @@ export interface Category {
   description_template?: string; // New field for automatic descriptions
 }
 
-export interface Attribute {
-  id: string;
-  name: string; // e.g., 'Liga', 'Equipo', 'Marca'
-}
-
-export interface AttributeValue {
-  id: string;
-  attribute_id: string;
-  value: string; // e.g., 'Premier League', 'Real Madrid', 'Nike'
-}
-
-export interface ProductAttributeValue {
-  product_id: string;
-  attribute_value_id: string;
-}
 
 export interface HeroSlide {
   id: string;
@@ -222,6 +207,23 @@ export interface SeasonConfig {
   subtitle: string;
   backgroundImage: string;
   productIds: string[];
+}
+
+export interface Attribute {
+  id: string;
+  name: string;
+}
+
+export interface AttributeValue {
+  id: string;
+  attribute_id: string;
+  value: string;
+}
+
+export interface ProductAttributeValue {
+  id: string;
+  product_id: string;
+  attribute_value_id: string;
 }
 
 

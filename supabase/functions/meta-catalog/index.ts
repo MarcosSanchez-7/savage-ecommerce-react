@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
 
         const { data: products, error } = await supabase
             .from('products')
-            .select('id, savage_id, name, description, price, images, stock_quantity, slug, is_active, is_imported')
+            .select('id, savage_id, name, description, price, images, stock_quantity, slug, is_active, is_imported, category')
             .eq('is_active', true);
 
         if (error) {
@@ -46,6 +46,7 @@ Deno.serve(async (req) => {
                 const description = product.description || product.name || 'Sin descripción';
                 const title = product.name;
                 const finalId = product.savage_id || product.id; // Fallback to UUID
+                const productType = product.category || 'General';
 
                 // Escape special XML chars (basic)
                 const escape = (str: string | number) => String(str || '')
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
       <g:condition>${escape(condition)}</g:condition>
       <g:availability>${escape(availability)}</g:availability>
       <g:price>${escape(price)}</g:price>
+      <g:product_type>${escape(productType)}</g:product_type>
       <g:item_group_id>${escape(finalId)}</g:item_group_id>
       <g:google_product_category>Apparel &amp; Accessories &gt; Clothing</g:google_product_category>
     </item>`;

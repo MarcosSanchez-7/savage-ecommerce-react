@@ -112,6 +112,7 @@ const Home: React.FC = () => {
 
                     </section>
                 )}
+                <CategoryBento />
 
                 {/* Dynamic Category Sections (Root Categories Only) */}
                 {categories
@@ -189,8 +190,6 @@ const Home: React.FC = () => {
                             </section>
                         );
                     })}
-
-                <CategoryBento />
 
 
 

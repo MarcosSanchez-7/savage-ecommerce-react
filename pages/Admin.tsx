@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Trash2, Plus, Edit, X, Save, UploadCloud, Search, Eye, Filter, MoreVertical, Layout, Type, Image as ImageIcon, MessageSquare, Briefcase, Map, Menu, Layers, Box, FileText, Activity, Settings, Globe, LogOut, Loader2, Star, Zap, CornerDownRight, Percent, Sparkles, Tag, ArrowLeft, ArrowRight, Check, Calendar, Folder, FolderOpen, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, Package, AlertCircle, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
-import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Attribute, AttributeValue, Product, SeasonConfig } from '../types';
+import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Product, SeasonConfig } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import MasterInventoryManager from '../components/MasterInventoryManager';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
