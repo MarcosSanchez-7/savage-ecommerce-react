@@ -73,6 +73,8 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-600 text-xs">© 2026 SAVAGE BRAND. Todos los derechos reservados.</p>
           <div className="flex gap-6 text-xs text-gray-600">
+            <Link className="hover:text-gray-400" to="/nosotros">Nosotros</Link>
+            <Link className="hover:text-gray-400" to="/ayuda">Ayuda</Link>
             <Link className="hover:text-gray-400" to="/privacy-policy">Política de Privacidad</Link>
             <Link className="hover:text-gray-400" to="/terms-of-use">Términos de Uso</Link>
             <Link className="hover:text-gray-400" to="/care-guide">Cuidados de la Camiseta</Link>

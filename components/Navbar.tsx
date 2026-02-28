@@ -288,15 +288,6 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 </div>
               </div>
 
-              <Link to="/nosotros" className="h-full flex items-center px-2 text-sm font-bold text-text hover:text-primary uppercase tracking-widest transition-colors relative group">
-                NOSOTROS
-                <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-              </Link>
-
-              <Link to="/ayuda" className="h-full flex items-center px-2 text-sm font-bold text-text hover:text-primary uppercase tracking-widest transition-colors relative group">
-                AYUDA
-                <span className="absolute bottom-6 left-0 w-full h-[2px] bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-              </Link>
             </div>
           </div>
 
@@ -563,13 +554,6 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </div>
           </div>
 
-          <Link to="/nosotros" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-text uppercase tracking-widest hover:text-primary transition-colors">
-            NOSOTROS
-          </Link>
-
-          <Link to="/ayuda" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-text uppercase tracking-widest hover:text-primary transition-colors">
-            AYUDA
-          </Link>
 
           <div className="mt-8 border-t border-border pt-8 flex flex-col gap-4 mb-10">
             {/* Mobile Theme Toggle (Moved to Bottom) */}

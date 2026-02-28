@@ -58,17 +58,8 @@ const NewArrivalsPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Footer Link / VER MAS */}
-                <div className="mt-16 flex justify-center">
-                    <button
-                        onClick={() => navigate('/category/all')} // Or any general category
-                        className="group relative px-10 py-4 bg-primary text-white font-black tracking-[0.3em] uppercase overflow-hidden transition-all hover:pr-14"
-                    >
-                        <span className="relative z-10 text-sm">VER TODO EL CATÁLOGO</span>
-                        <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all" size={20} />
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
-                    </button>
-                </div>
+
+
             </main>
 
             <Footer />
