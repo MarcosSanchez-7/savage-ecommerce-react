@@ -9,10 +9,6 @@ const CareGuide: React.FC = () => {
     const { cart } = useShop();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
-
     return (
         <div className="min-h-screen bg-background-dark text-white font-sans">
             <Navbar cartCount={cartCount} />

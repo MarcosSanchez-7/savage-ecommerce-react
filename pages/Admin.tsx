@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Trash2, Plus, Edit, X, Save, UploadCloud, Search, Eye, Filter, MoreVertical, Layout, Type, Image as ImageIcon, MessageSquare, Briefcase, Map, Menu, Layers, Box, FileText, Activity, Settings, Globe, LogOut, Loader2, Star, Zap, CornerDownRight, Percent, Sparkles, Tag, ArrowLeft, ArrowRight, Check, Calendar, Folder, FolderOpen, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, Package, AlertCircle, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminAnalytics from '../components/AdminAnalytics';
-import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Product, SeasonConfig } from '../types';
+import { HeroSlide, BlogPost, Category, NavbarLink, BannerBento, FooterColumn, Product, SeasonConfig, QuickLink } from '../types';
 import DeliveryZoneMap from '../components/DeliveryZoneMap';
 import MasterInventoryManager from '../components/MasterInventoryManager';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
@@ -126,6 +126,7 @@ const AdminDashboard: React.FC = () => {
         categories, addCategory, deleteCategory, updateCategory,
         navbarLinks, updateNavbarLinks,
         bannerBento, updateBannerBento,
+        quickLinks, updateQuickLinks,
         lifestyleConfig, updateLifestyleConfig,
         heroCarouselConfig,
         updateHeroCarouselConfig,
@@ -250,6 +251,41 @@ const AdminDashboard: React.FC = () => {
 
     React.useEffect(() => { if (bannerBento) setBentoForm(bannerBento); }, [bannerBento]);
     React.useEffect(() => { if (footerColumns) setFooterForm(footerColumns); }, [footerColumns]);
+
+    const [quickLinksForm, setQuickLinksForm] = useState<QuickLink[]>(quickLinks || []);
+    React.useEffect(() => { if (quickLinks) setQuickLinksForm(quickLinks); }, [quickLinks]);
+
+    const addQuickLink = () => {
+        const newId = `ql-${Date.now()}`;
+        setQuickLinksForm(prev => [...prev, {
+            id: newId,
+            title: 'NUEVO ENLACE',
+            image: '',
+            link: '/'
+        }]);
+    };
+
+    const removeQuickLink = (id: string) => {
+        if (window.confirm('¿ELIMINAR ESTE ENLACE RÁPIDO?')) {
+            setQuickLinksForm(prev => prev.filter(b => b.id !== id));
+        }
+    };
+
+    const updateQuickLink = (id: string, field: keyof QuickLink, value: string) => {
+        setQuickLinksForm(prev => prev.map(b => b.id === id ? { ...b, [field]: value } : b));
+    };
+
+    const handleQuickLinksSave = async () => {
+        try {
+            if (updateQuickLinks) {
+                await updateQuickLinks(quickLinksForm);
+                alert('Atajos guardados correctamente.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un error guardando los atajos.');
+        }
+    };
 
     // Season Config Form
     const [seasonForm, setSeasonForm] = useState<SeasonConfig>(seasonConfig || {
@@ -2536,6 +2572,78 @@ const AdminDashboard: React.FC = () => {
                                     ))}
                                     <button onClick={addBentoItem} className="w-full py-4 border border-dashed border-gray-800 text-gray-500 hover:text-white hover:border-gray-600 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
                                         <Plus size={16} /> Agregar Nuevo Banner
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* QUICKLINKS SECTION */}
+                            <div className="space-y-6 pt-6 border-t border-gray-800">
+                                <div className="flex justify-between items-end">
+                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                        <Layers size={20} /> ATAJOS RÁPIDOS (QUICKLINKS)
+                                    </h3>
+                                    <button onClick={handleQuickLinksSave} className="bg-primary hover:bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                                        <Save size={16} /> Guardar Atajos
+                                    </button>
+                                </div>
+                                <p className="text-gray-400 text-xs mt-1">Iconos visuales debajo del Hero. Optimizado para SVG o PNG circulares.</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {quickLinksForm.map((ql, idx) => (
+                                        <div key={ql.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 flex flex-col gap-4 relative group hover:border-gray-700 transition-colors">
+                                            <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex justify-between w-[calc(100%-1.5rem)]">
+                                                <span className="text-[10px] text-gray-600 font-mono bg-black px-1.5 py-0.5 rounded">#{idx + 1}</span>
+                                                <button onClick={() => removeQuickLink(ql.id)} className="text-gray-600 hover:text-red-500 p-1" title="Eliminar Atajo">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+
+                                            <div className="flex gap-4 items-center">
+                                                <div className="w-16 h-16 rounded-full bg-black border border-gray-800 flex items-center justify-center overflow-hidden shrink-0 mt-2">
+                                                    {ql.image ? (
+                                                        <img src={ql.image} alt={ql.title} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <ImageIcon className="text-gray-600" size={24} />
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 space-y-2 mt-4">
+                                                    <div>
+                                                        <input
+                                                            type="text"
+                                                            value={ql.title}
+                                                            onChange={(e) => updateQuickLink(ql.id, 'title', e.target.value)}
+                                                            className="w-full bg-transparent border-b border-gray-700 text-sm font-black text-white focus:border-primary focus:outline-none pb-1 uppercase tracking-wider"
+                                                            placeholder="Título..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2 bg-black border border-gray-800 rounded p-2">
+                                                    <ImageIcon size={14} className="text-gray-500 shrink-0" />
+                                                    <input
+                                                        type="text"
+                                                        value={ql.image}
+                                                        onChange={(e) => updateQuickLink(ql.id, 'image', e.target.value)}
+                                                        className="w-full bg-transparent text-xs text-gray-400 focus:text-white focus:outline-none placeholder-gray-700"
+                                                        placeholder="URL de Icono/Imagen..."
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-2 bg-black border border-gray-800 rounded p-2">
+                                                    <Link size={14} className="text-gray-500 shrink-0" />
+                                                    <input
+                                                        type="text"
+                                                        value={ql.link}
+                                                        onChange={(e) => updateQuickLink(ql.id, 'link', e.target.value)}
+                                                        className="w-full bg-transparent text-xs text-gray-400 focus:text-white focus:outline-none placeholder-gray-700 font-mono"
+                                                        placeholder="/category/..."
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <button onClick={addQuickLink} className="h-[200px] border border-dashed border-gray-800 text-gray-500 hover:text-white hover:border-gray-600 rounded-xl flex flex-col items-center justify-center gap-2 font-bold text-xs uppercase transition-colors">
+                                        <Plus size={24} /> Agregar Atajo
                                     </button>
                                 </div>
                             </div>

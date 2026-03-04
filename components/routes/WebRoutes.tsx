@@ -28,11 +28,13 @@ import AdminGuard from '../AdminGuard'; // New explicit guard
 import ProfilePage from '../../pages/ProfilePage';
 import OrdersPage from '../../pages/OrdersPage';
 
+import SearchResultsPage from '../../pages/SearchResultsPage';
 
 const WebRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/search" element={<SearchResultsPage />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/category/:category/:subcategory" element={<CategoryPage />} />

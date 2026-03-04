@@ -226,4 +226,9 @@ export interface ProductAttributeValue {
   attribute_value_id: string;
 }
 
-
+export interface QuickLink {
+  id: string;
+  title: string;
+  image: string;
+  link: string;
+}

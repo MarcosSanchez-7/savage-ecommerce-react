@@ -9,11 +9,6 @@ import { Link } from 'react-router-dom';
 const BlogPage: React.FC = () => {
     const { blogPosts, cart, loading } = useShop();
 
-    // Scroll to top on mount
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
-
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     // Get strictly the latest 10 posts/comments

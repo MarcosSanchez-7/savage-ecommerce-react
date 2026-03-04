@@ -17,7 +17,6 @@ const OffersPage: React.FC = () => {
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     React.useEffect(() => {
-        window.scrollTo(0, 0);
         document.title = 'Ofertas Imperdibles - Savage Store';
     }, []);
 

@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue, SeasonConfig } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue, SeasonConfig, QuickLink } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../supabase/client';
 import { useAuth } from './AuthContext';
@@ -63,6 +63,8 @@ interface ShopContextType {
     updateNavbarLinks: (links: NavbarLink[]) => void;
     bannerBento: BannerBento[];
     updateBannerBento: (banners: BannerBento[]) => void;
+    quickLinks: QuickLink[];
+    updateQuickLinks: (links: QuickLink[]) => void;
     lifestyleConfig: LifestyleConfig;
     updateLifestyleConfig: (config: LifestyleConfig) => void;
     heroCarouselConfig: HeroCarouselConfig;
@@ -214,6 +216,27 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     // Hero Carousel Config
     const [heroCarouselConfig, setHeroCarouselConfig] = useState<HeroCarouselConfig>({ interval: 5000 });
+
+    // QuickLinks
+    const [quickLinks, setQuickLinks] = useState<QuickLink[]>(() => {
+        const saved = localStorage.getItem('savage_quick_links');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const updateQuickLinks = async (links: QuickLink[]) => {
+        setQuickLinks(links);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'quick_links',
+                value: links,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
 
     // Drops Config
     const [dropsConfig, setDropsConfig] = useState<DropsConfig>(() => {
@@ -414,6 +437,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         if (conf.key === 'social_config') setSocialConfig(conf.value);
                         if (conf.key === 'navbar_links') setNavbarLinks(conf.value);
                         if (conf.key === 'banner_bento') setBannerBento(conf.value);
+                        if (conf.key === 'quick_links') setQuickLinks(conf.value);
                         if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
                         if (conf.key === 'hero_slides') setHeroSlides(conf.value);
                         if (conf.key === 'footer_columns') setFooterColumns(conf.value);
@@ -941,18 +965,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const addToCart = (product: Product, size?: string) => {
         const finalSize = size || (product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'One Size');
 
-        // Optional: Close cart when adding (or keep open if desired, but user didn't specify)
-        setIsCartOpen(false);
+        // Don't open cart — let user continue browsing. Toast + badge animation provide feedback.
+        // setIsCartOpen unchanged
 
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id && item.selectedSize === finalSize);
-
-            if (existing) {
-                toast.success(`⚡ ¡Agregado! ${product.name} (x${existing.quantity + 1}) ya es tuyo.`);
-                return prev.map(item =>
-                    (item.id === product.id && item.selectedSize === finalSize) ? { ...item, quantity: item.quantity + 1 } : item
-                );
-            }
 
             // GA4 Add to Cart Event
             if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -970,6 +987,24 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         quantity: 1
                     }]
                 });
+            }
+
+            // Meta Pixel Add to Cart Event
+            if (typeof window !== 'undefined' && (window as any).fbq) {
+                (window as any).fbq('track', 'AddToCart', {
+                    content_name: product.name,
+                    content_ids: [(product as any).savage_id || product.id],
+                    content_type: 'product',
+                    value: product.price,
+                    currency: 'PYG'
+                });
+            }
+
+            if (existing) {
+                toast.success(`⚡ ¡Agregado! ${product.name} (x${existing.quantity + 1}) ya es tuyo.`);
+                return prev.map(item =>
+                    (item.id === product.id && item.selectedSize === finalSize) ? { ...item, quantity: item.quantity + 1 } : item
+                );
             }
 
             toast.success(`⚡ ¡Agregado! ${product.name} ya es tuyo.`);
@@ -1788,6 +1823,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateNavbarLinks,
             bannerBento,
             updateBannerBento,
+            quickLinks,
+            updateQuickLinks,
 
             lifestyleConfig,
             updateLifestyleConfig,

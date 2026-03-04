@@ -10,8 +10,8 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-    title = 'SAVAGE STORE | Camisetas de Fútbol Premium & Streetwear en Paraguay',
-    description = 'Las mejores camisetas de fútbol en Paraguay: Retro, internacionales y ediciones especiales. Además de calzado urbano, relojes y accesorios exclusivos. Calidad premium en SAVAGE.',
+    title = 'SAVAGE STORE | Tienda de Ropa Urbana, Camisetas de Fútbol y Accesorios en Paraguay',
+    description = 'Descubre en SAVAGE STORE las mejores remeras urbanas, camisetas de fútbol, zapatillas sneakers, relojes y accesorios exclusivos. Tu estilo al siguiente nivel.',
     image = 'https://www.savageeepy.com/crown.png',
     product = false
 }) => {

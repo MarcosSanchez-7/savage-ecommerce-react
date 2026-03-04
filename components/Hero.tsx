@@ -128,14 +128,20 @@ const Hero: React.FC = () => {
       {heroSlides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 bg-cover bg-no-repeat transition-opacity duration-1000 ease-in-out ${index === currentSlide && !loading ? 'opacity-100 z-0' : 'opacity-0 -z-10'}`}
-          style={{
-            backgroundImage: `url('${slide.image}')`,
-            backgroundPosition: isMobile
-              ? (slide.mobilePosition || 'center')
-              : (slide.desktopPosition || 'center')
-          }}
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out overflow-hidden ${index === currentSlide && !loading ? 'opacity-100 z-0' : 'opacity-0 -z-10'}`}
         >
+          <img
+            src={slide.image}
+            alt={slide.title || 'Savage Banner'}
+            className="w-full h-full object-cover"
+            style={{
+              objectPosition: isMobile
+                ? (slide.mobilePosition || 'center')
+                : (slide.desktopPosition || 'center')
+            }}
+            fetchPriority={index === 0 ? 'high' : 'auto'}
+            loading={index === 0 ? 'eager' : 'lazy'}
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/30 to-transparent"></div>
           <div className="absolute inset-0 bg-black/40"></div>
         </div>

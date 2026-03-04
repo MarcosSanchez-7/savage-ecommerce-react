@@ -1,7 +1,7 @@
-
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
+import QuickLinks from '../components/QuickLinks';
 import ProductCard from '../components/ProductCard';
 import CategoryBento from '../components/CategoryBento';
 import LifestyleSection from '../components/LifestyleSection';
@@ -22,11 +22,21 @@ const Home: React.FC = () => {
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+    const [isMobileHome, setIsMobileHome] = React.useState(false);
+    React.useEffect(() => {
+        const handleResize = () => setIsMobileHome(window.innerWidth < 768);
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const maxItems = isMobileHome ? 8 : 12;
+
     // Filter New Arrivals logic...
     const newArrivals = products
         .filter(p => p.isActive !== false)
         .filter(p => p.isNew)
-        .slice(0, 24); // More items for the carousel
+        .slice(0, maxItems);
 
     return (
         <div className="min-h-screen bg-background text-text selection:bg-primary selection:text-white overflow-x-hidden transition-colors duration-300">
@@ -34,6 +44,7 @@ const Home: React.FC = () => {
 
             <main>
                 <Hero />
+                <QuickLinks />
                 <SeasonSection />
 
                 {/* NUEVOS INGRESOS Section */}
@@ -74,14 +85,14 @@ const Home: React.FC = () => {
                         </Link>
                     </div>
 
-                    {/* Featured Carousel */}
                     <FeaturedCarousel
                         products={products
                             .filter(p => p.isActive !== false)
                             .filter(p => p.isFeatured)
                             // Sort: Featured First (implicitly filtered), then by ID descending (newest first assumption) or specific date if available
                             // Using ID string comparison for rough "newest" approximation if UUIDs/TimeIDs
-                            .sort((a, b) => b.id.localeCompare(a.id))}
+                            .sort((a, b) => b.id.localeCompare(a.id))
+                            .slice(0, maxItems)}
                         onAddToCart={addToCart}
                     />
 
@@ -101,12 +112,12 @@ const Home: React.FC = () => {
                             </Link>
                         </div>
 
-                        {/* Reuse FeaturedCarousel for the same sliding effect */}
                         <FeaturedCarousel
                             products={products
                                 .filter(p => p.isActive !== false)
                                 .filter(p => p.isOffer)
-                                .sort((a, b) => b.id.localeCompare(a.id))}
+                                .sort((a, b) => b.id.localeCompare(a.id))
+                                .slice(0, maxItems)}
                             onAddToCart={addToCart}
                         />
 

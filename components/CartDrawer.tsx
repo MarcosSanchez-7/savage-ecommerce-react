@@ -164,6 +164,17 @@ const CartDrawer: React.FC = () => {
             });
         }
 
+        // Meta Pixel Purchase Event
+        if (typeof window !== 'undefined' && (window as any).fbq) {
+            (window as any).fbq('track', 'Purchase', {
+                value: finalTotal,
+                currency: 'PYG',
+                content_type: 'product',
+                content_ids: cart.map(item => (item as any).savage_id || item.id),
+                num_items: cart.length
+            });
+        }
+
         const url = `https://wa.me/${shopNumber}?text=${encodeURIComponent(message)}`;
         window.open(url, '_blank');
     };
@@ -407,8 +418,8 @@ const CartDrawer: React.FC = () => {
                                 onClick={handleCheckout}
                                 disabled={isCheckoutDisabled}
                                 className={`w-full py-3 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2 text-sm font-black ${isCheckoutDisabled
-                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                        : 'bg-primary hover:bg-primary/90 text-black'
+                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                    : 'bg-primary hover:bg-primary/90 text-black'
                                     }`}
                             >
                                 CONFIRMAR PEDIDO
