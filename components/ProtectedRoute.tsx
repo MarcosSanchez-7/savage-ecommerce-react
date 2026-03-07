@@ -18,13 +18,8 @@ const ProtectedRoute: React.FC = () => {
         return <Navigate to="/login" replace />;
     }
 
-    // 2. Verificar Rol ADMIN (Solicitado en Blindaje)
-    // NOTA: Si esta ruta protege perfiles de usuario estandar, deben usar otro Guard.
-    // Pero siguiendo la instrucción explicita "Debe verificar obligatoriamente que isAdmin sea true":
-    if (!isAdmin) {
-        console.warn("Acceso Denegado: Usuario no es Admin.");
-        return <Navigate to="/" replace />;
-    }
+    // 2. Verificar Rol ADMIN removido (Ahora se usa AdminGuard para rutas de admin)
+    // ProtectedRoute ahora es solo para verificar que haya una sesión activa.
 
     return <Outlet />;
 };
