@@ -136,7 +136,31 @@ const ProductDetail: React.FC = () => {
                 product={true}
                 url={window.location.href}
             />
-            {/* ... Schema Script ... */}
+            {/* Schema Script - JSON-LD for rich snippets */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                    __html: JSON.stringify({
+                        "@context": "https://schema.org/",
+                        "@type": "Product",
+                        "name": product.name,
+                        "image": product.images,
+                        "description": product.description || `Comprá ${product.name} en Savage Store Paraguay. Calidad Premium garantizada.`,
+                        "brand": {
+                            "@type": "Brand",
+                            "name": "Savage Store"
+                        },
+                        "offers": {
+                            "@type": "Offer",
+                            "url": window.location.href,
+                            "priceCurrency": "PYG",
+                            "price": product.price,
+                            "availability": isTotallyOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+                            "itemCondition": "https://schema.org/NewCondition"
+                        }
+                    })
+                }}
+            />
 
             <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[70vh]">
                 <button
@@ -298,12 +322,12 @@ const ProductDetail: React.FC = () => {
                         {/* Import Conditions */}
                         {product.isImported && (
                             <div className={`mb-6 rounded-xl p-5 space-y-4 animate-in fade-in slide-in-from-top-2 duration-700 ${theme === 'light'
-                                    ? 'bg-blue-50 border-2 border-blue-200 shadow-sm'
-                                    : 'bg-blue-500/5 border border-blue-500/20'
+                                ? 'bg-blue-50 border-2 border-blue-200 shadow-sm'
+                                : 'bg-blue-500/5 border border-blue-500/20'
                                 }`}>
                                 <div className={`flex items-center gap-2 border-b pb-3 ${theme === 'light'
-                                        ? 'text-blue-600 border-blue-200'
-                                        : 'text-blue-400 border-blue-500/20'
+                                    ? 'text-blue-600 border-blue-200'
+                                    : 'text-blue-400 border-blue-500/20'
                                     }`}>
                                     <span className="material-symbols-outlined">globe</span>
                                     <h3 className="text-xs font-black uppercase tracking-[2px]">Condiciones de Compra y Envío</h3>
@@ -333,8 +357,8 @@ const ProductDetail: React.FC = () => {
                                     </div>
 
                                     <div className={`p-3 rounded border italic text-[11px] ${theme === 'light'
-                                            ? 'bg-blue-100 border-blue-300 text-gray-700'
-                                            : 'bg-black/40 border-white/5 text-gray-400'
+                                        ? 'bg-blue-100 border-blue-300 text-gray-700'
+                                        : 'bg-black/40 border-white/5 text-gray-400'
                                         }`}>
                                         Nota: Por favor, verifique todos los detalles (talle, color o modelo) antes de confirmar su seña.
                                     </div>

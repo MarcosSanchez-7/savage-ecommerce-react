@@ -8,6 +8,7 @@ import ProductCard from '../components/ProductCard';
 import { ArrowLeft } from 'lucide-react';
 
 import ProductSkeleton from '../components/ProductSkeleton';
+import SEO from '../components/SEO';
 
 const CategoryPage: React.FC = () => {
     const { category, subcategory } = useParams<{ category: string; subcategory?: string }>();
@@ -108,7 +109,7 @@ const CategoryPage: React.FC = () => {
         };
     };
     const seoInfo = getSEOInfo(currentCategoryInfo);
-    React.useEffect(() => { document.title = seoInfo.docTitle; }, [seoInfo]);
+    // Removed document.title mutation here to let <SEO /> handle it correctly.
 
     // 5. Dynamic Pills: Children of current scope OR Siblings if current scope is a leaf
     const navigationPills = React.useMemo(() => {
@@ -151,6 +152,7 @@ const CategoryPage: React.FC = () => {
     return (
         <div className={`min-h-screen selection:bg-primary selection:text-white ${theme === 'light' ? 'bg-background text-text' : 'bg-background-dark text-white'
             }`}>
+            <SEO title={seoInfo.docTitle} description={seoInfo.desc} />
             <Navbar cartCount={cartCount} />
 
             <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[60vh]">
@@ -184,12 +186,12 @@ const CategoryPage: React.FC = () => {
                                     key={sub.id}
                                     onClick={() => handleNavigation(sub.id)}
                                     className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] border transition-all ${theme === 'light'
-                                            ? isActive
-                                                ? 'bg-black text-white border-black shadow-md transform scale-105'
-                                                : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-black hover:text-black hover:shadow-sm'
-                                            : isActive
-                                                ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)] transform scale-105'
-                                                : 'bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white hover:bg-white/5'
+                                        ? isActive
+                                            ? 'bg-black text-white border-black shadow-md transform scale-105'
+                                            : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-black hover:text-black hover:shadow-sm'
+                                        : isActive
+                                            ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)] transform scale-105'
+                                            : 'bg-transparent border-white/10 text-gray-500 hover:border-white/20 hover:text-white hover:bg-white/5'
                                         }`}
                                 >
                                     {sub.name}

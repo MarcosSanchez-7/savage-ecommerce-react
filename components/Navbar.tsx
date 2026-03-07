@@ -297,7 +297,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
       )}
 
       {/* UNIFIED SIDEBAR DRAWER */}
-      <div className={`fixed inset-y-0 left-0 w-[85%] sm:w-[400px] bg-background z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col border-r border-border shadow-2xl`}>
+      <div className={`fixed inset-y-0 right-0 md:left-0 md:right-auto w-[85%] sm:w-[400px] bg-background z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:-translate-x-full'} flex flex-col border-l md:border-l-0 md:border-r border-border shadow-2xl`}>
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="size-8">

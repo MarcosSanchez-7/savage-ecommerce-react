@@ -65,19 +65,27 @@ const Footer: React.FC = () => {
                     <a className="hover:text-primary transition-colors" href={link.url}>{link.label}</a>
                   </li>
                 ))}
+                {col.title.toUpperCase() === 'AYUDA' && (
+                  <li>
+                    <Link className="hover:text-primary transition-colors" to="/nosotros">Nosotros</Link>
+                  </li>
+                )}
               </ul>
             </div>
           ))}
         </div>
 
-        <div className="border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-600 text-xs">© 2026 SAVAGE BRAND. Todos los derechos reservados.</p>
-          <div className="flex gap-6 text-xs text-gray-600">
-            <Link className="hover:text-gray-400" to="/nosotros">Nosotros</Link>
-            <Link className="hover:text-gray-400" to="/ayuda">Ayuda</Link>
-            <Link className="hover:text-gray-400" to="/privacy-policy">Política de Privacidad</Link>
-            <Link className="hover:text-gray-400" to="/terms-of-use">Términos de Uso</Link>
-            <Link className="hover:text-gray-400" to="/care-guide">Cuidados de la Camiseta</Link>
+        <div className="border-t border-gray-900 pt-8 flex flex-col items-center gap-4 text-center">
+          <p className="text-gray-600 text-xs font-bold uppercase tracking-widest">
+            © 2026 SAVAGE BRAND. TODOS LOS DERECHOS RESERVADOS.
+          </p>
+          <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">
+            DESARROLLADO POR <span className="text-white">HORIZON</span>
+          </p>
+          <div className="flex flex-wrap justify-center gap-6 text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest mt-2">
+            <Link className="hover:text-white transition-colors" to="/privacy-policy">Privacidad</Link>
+            <Link className="hover:text-white transition-colors" to="/terms-of-use">Términos</Link>
+            <Link className="hover:text-white transition-colors" to="/care-guide">Cuidados</Link>
           </div>
         </div>
       </div>

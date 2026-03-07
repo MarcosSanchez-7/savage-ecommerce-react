@@ -10,6 +10,7 @@ import Footer from '../components/Footer';
 import { useShop } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { ArrowRight, ChevronRight } from 'lucide-react';
+import SEO from '../components/SEO';
 
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import NewArrivalsCarousel from '../components/NewArrivalsCarousel';
@@ -40,6 +41,7 @@ const Home: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-background text-text selection:bg-primary selection:text-white overflow-x-hidden transition-colors duration-300">
+            <SEO />
             <Navbar cartCount={cartCount} />
 
             <main>
