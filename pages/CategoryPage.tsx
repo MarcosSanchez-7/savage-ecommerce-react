@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, Navigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
@@ -111,6 +111,11 @@ const CategoryPage: React.FC = () => {
     const seoInfo = getSEOInfo(currentCategoryInfo);
     // Removed document.title mutation here to let <SEO /> handle it correctly.
 
+    // NEW: Redirect to home if category doesn't exist after loading
+    if (!loading && categories.length > 0 && !currentCategoryInfo) {
+        return <Navigate to="/" replace />;
+    }
+
     // 5. Dynamic Pills: Children of current scope OR Siblings if current scope is a leaf
     const navigationPills = React.useMemo(() => {
         if (!currentCategoryInfo) return [];
@@ -149,10 +154,12 @@ const CategoryPage: React.FC = () => {
         }
     };
 
+    const isCategoryEmpty = !loading && categoryProducts.length === 0;
+
     return (
         <div className={`min-h-screen selection:bg-primary selection:text-white ${theme === 'light' ? 'bg-background text-text' : 'bg-background-dark text-white'
             }`}>
-            <SEO title={seoInfo.docTitle} description={seoInfo.desc} />
+            <SEO title={seoInfo.docTitle} description={seoInfo.desc} noindex={isCategoryEmpty} />
             <Navbar cartCount={cartCount} />
 
             <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10 min-h-[60vh]">

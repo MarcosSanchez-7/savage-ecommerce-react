@@ -95,6 +95,12 @@ const generateSitemap = async () => {
   if (categories && categories.length > 0) {
     xml += `\n  <!-- Categories -->\n`;
     for (const cat of categories) {
+      const catName = (cat.name || '').toLowerCase();
+      // Exclude specific inactive or empty categories from indexing
+      if (['relojes', 'season'].includes(catName)) {
+        continue;
+      }
+
       xml += `  <url>
     <loc>${domain}/category/${encodeURIComponent(cat.id)}</loc>
     <lastmod>${now}</lastmod>

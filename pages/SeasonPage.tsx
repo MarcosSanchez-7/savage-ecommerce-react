@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
+import SEO from '../components/SEO';
 
 const SeasonPage: React.FC = () => {
     const { seasonConfig, products, addToCart, cart, loading } = useShop();
@@ -63,6 +64,7 @@ const SeasonPage: React.FC = () => {
     if (!seasonConfig?.isEnabled) {
         return (
             <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center gap-4">
+                <SEO title="Colección no disponible - Savage Store" noindex={true} />
                 <Navbar cartCount={cartCount} />
                 <h1 className="text-2xl font-bold uppercase tracking-widest text-gray-500">Colección no disponible</h1>
             </div>
@@ -71,6 +73,7 @@ const SeasonPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#050505] text-white selection:bg-primary selection:text-white">
+            <SEO title={`${seasonConfig.title || 'Colección Temporada'} - Savage Store`} description={seasonConfig.subtitle} noindex={seasonProducts.length === 0} />
             <Navbar cartCount={cartCount} />
 
             {/* Hero Header */}

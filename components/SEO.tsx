@@ -7,13 +7,15 @@ interface SEOProps {
     description?: string;
     image?: string;
     product?: boolean; // Type for OG
+    noindex?: boolean; // Added for SEO cleaning
 }
 
 const SEO: React.FC<SEOProps> = ({
     title = 'SAVAGE STORE | Tienda de Ropa Urbana, Camisetas de Fútbol y Accesorios en Paraguay',
     description = 'Descubre en SAVAGE STORE las mejores remeras urbanas, camisetas de fútbol, zapatillas sneakers, relojes y accesorios exclusivos. Tu estilo al siguiente nivel.',
     image = 'https://www.savageeepy.com/crown.png',
-    product = false
+    product = false,
+    noindex = false
 }) => {
     const location = useLocation();
     const url = `https://www.savageeepy.com${location.pathname}`;
@@ -24,6 +26,7 @@ const SEO: React.FC<SEOProps> = ({
             <title>{title}</title>
             <meta name="description" content={description} />
             <link rel="canonical" href={url} />
+            {noindex && <meta name="robots" content="noindex, follow" />}
 
             {/* Open Graph */}
             <meta property="og:url" content={url} />

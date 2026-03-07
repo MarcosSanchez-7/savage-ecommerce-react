@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /season
+Disallow: /category/season
+Disallow: /category/relojes
 Sitemap: https://www.savageeepy.com/sitemap.xml
