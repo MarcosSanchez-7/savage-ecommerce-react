@@ -228,7 +228,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                       {searchResults.slice(0, 5).map(product => (
                         <div
                           key={product.id}
-                          onClick={() => handleProductClick(product.id)}
+                          onClick={() => handleProductClick(product.slug || product.id)}
                           className="w-full flex items-center gap-4 p-4 hover:bg-white/5 transition-colors border-b border-border/50 last:border-0 text-left group cursor-pointer"
                         >
                           <div className="w-14 h-14 overflow-hidden rounded-md bg-background flex-shrink-0">
@@ -501,7 +501,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                   {searchResults.map(product => (
                     <div
                       key={product.id}
-                      onClick={() => handleProductClick(product.id)}
+                      onClick={() => handleProductClick(product.slug || product.id)}
                       className="flex items-center gap-4 p-2 rounded-xl hover:bg-surface transition-colors text-left group cursor-pointer"
                     >
                       <div className="w-16 h-16 rounded-lg overflow-hidden bg-surface flex-shrink-0">
