@@ -22,19 +22,26 @@ const CategoryPage: React.FC = () => {
 
         if (subcategory) {
             // Try to find subcategory by ID or Name
-            const subObj = categories.find(c => String(c.id).toLowerCase() === subcategory.toLowerCase() || c.name.toLowerCase() === subcategory.toLowerCase());
+            const subObj = categories.find(c =>
+                String(c.id).toLowerCase() === subcategory.toLowerCase() ||
+                (c.name && c.name.toLowerCase() === subcategory.toLowerCase())
+            );
             if (subObj) foundId = String(subObj.id);
-            else foundId = subcategory; // Fallback to param if not found (though less likely to match)
+            else foundId = subcategory; // Fallback to param if not found
         } else if (category) {
             // Find the category object to resolve ID (validation)
-            const catObj = categories.find(c => String(c.id).toLowerCase() === category.toLowerCase() || c.name.toLowerCase() === category.toLowerCase());
+            const catObj = categories.find(c =>
+                String(c.id).toLowerCase() === category.toLowerCase() ||
+                (c.name && c.name.toLowerCase() === category.toLowerCase())
+            );
             if (catObj) foundId = String(catObj.id);
+            else foundId = category; // Fallback
         }
 
         return foundId;
     }, [category, subcategory, categories]);
 
-    const currentCategoryInfo = categories.find(c => String(c.id) === currentScopeId);
+    const currentCategoryInfo = categories.find(c => String(c.id).toLowerCase() === currentScopeId.toLowerCase());
 
     // Find parent for "Back" navigation
     const parentCategory = currentCategoryInfo?.parent_id
@@ -108,12 +115,10 @@ const CategoryPage: React.FC = () => {
     const seoInfo = getSEOInfo(currentCategoryInfo);
     // Removed document.title mutation here to let <SEO /> handle it correctly.
 
-    // NEW: Redirect to home if category doesn't exist after loading
-    if (!loading && categories.length > 0 && !currentCategoryInfo) {
-        return <Navigate to="/" replace />;
-    }
+    const isCategoryEmpty = !loading && categoryProducts.length === 0;
 
-    // 5. Dynamic Pills: Children of current scope OR Siblings if current scope is a leaf
+    // Remove aggressive Navigate redirect that causes false positives.
+    // We rely purely on the 'noindex' SEO tag to handle 'empty/missing' categories for search engines.
     const navigationPills = React.useMemo(() => {
         if (!currentCategoryInfo) return [];
 
@@ -150,8 +155,6 @@ const CategoryPage: React.FC = () => {
             navigate(`/category/${category}/${targetId}`);
         }
     };
-
-    const isCategoryEmpty = !loading && categoryProducts.length === 0;
 
     return (
         <div className={`min-h-screen selection:bg-primary selection:text-white ${theme === 'light' ? 'bg-background text-text' : 'bg-background-dark text-white'
