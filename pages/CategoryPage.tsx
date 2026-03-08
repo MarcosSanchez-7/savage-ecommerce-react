@@ -16,11 +16,8 @@ const CategoryPage: React.FC = () => {
     const { products, categories, addToCart, cart, loading } = useShop();
     const { theme } = useTheme();
 
-    // The "Current" Category Node we are viewing.
-    const [currentScopeId, setCurrentScopeId] = React.useState<string>('');
-
-    // 1. Resolve Scope safely handling Numeric/String IDs
-    React.useEffect(() => {
+    // 1. Resolve Scope safely handling Numeric/String IDs synchronously
+    const currentScopeId = React.useMemo(() => {
         let foundId = '';
 
         if (subcategory) {
@@ -34,7 +31,7 @@ const CategoryPage: React.FC = () => {
             if (catObj) foundId = String(catObj.id);
         }
 
-        setCurrentScopeId(foundId);
+        return foundId;
     }, [category, subcategory, categories]);
 
     const currentCategoryInfo = categories.find(c => String(c.id) === currentScopeId);
