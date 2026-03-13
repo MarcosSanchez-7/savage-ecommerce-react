@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useShop } from '../context/ShopContext';
 
 interface FeaturedCarouselProps {
     products: Product[];
@@ -10,105 +9,58 @@ interface FeaturedCarouselProps {
 }
 
 const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCart }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [itemsPerPage, setItemsPerPage] = useState(4);
-    const [isHovered, setIsHovered] = useState(false);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+    const [showRightArrow, setShowRightArrow] = useState(false);
 
-    // Responsive items per page
-    useEffect(() => {
-        const handleResize = () => {
-            if (window.innerWidth < 640) {
-                setItemsPerPage(1);
-            } else if (window.innerWidth < 1024) {
-                setItemsPerPage(2);
-            } else {
-                setItemsPerPage(4);
-            }
-        };
-
-        handleResize(); // Initial check
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const nextSlide = () => {
-        setCurrentIndex(prevIndex =>
-            prevIndex + itemsPerPage >= products.length ? 0 : prevIndex + itemsPerPage
-        );
+    const checkArrows = () => {
+        if (!scrollContainerRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+        setShowLeftArrow(scrollLeft > 0);
+        setShowRightArrow(Math.ceil(scrollLeft) < scrollWidth - clientWidth);
     };
 
-    const prevSlide = () => {
-        setCurrentIndex(prevIndex =>
-            prevIndex - itemsPerPage < 0
-                ? Math.max(0, products.length - itemsPerPage)
-                : prevIndex - itemsPerPage
-        );
-    };
-
-    // Auto-scroll
     useEffect(() => {
-        if (isHovered) return; // Pause on hover
+        checkArrows();
+        // Give it a tiny delay on mount to ensure sizing is calculated
+        setTimeout(checkArrows, 100);
+        window.addEventListener('resize', checkArrows);
+        return () => window.removeEventListener('resize', checkArrows);
+    }, [products]);
 
-        // 3 sec for mobile (itemsPerPage < 4 typically implies mobile/tablet but checking width is safer/consistent with resize logic)
-        // actually itemsPerPage is already responsive.
-        // itemsPerPage: 1 (mobile), 2 (tablet), 4 (desktop)
-        const duration = itemsPerPage === 1 ? 3000 : 5000;
-
-        const interval = setInterval(() => {
-            nextSlide();
-        }, duration);
-
-        return () => clearInterval(interval);
-    }, [currentIndex, itemsPerPage, products.length, isHovered]);
-
-    // Handle touch/swipe could be added here, but simple buttons requested.
-
-    // Calculate visible products
-    // We want to slice the array. If wrapping needed, we might need complex logic, 
-    // but simplified paging "0-3, 4-7" is what was requested ("apareceran otros 4").
-    // If we are at the end and have fewer than 4, we just show them.
-
-    // To implement "infinite" feel or smooth wrapping, we can use an animation, 
-    // but for now, React state update is sufficient for "appearing".
-    const visibleProducts = products.slice(currentIndex, currentIndex + itemsPerPage);
+    const scroll = (direction: 'left' | 'right') => {
+        if (!scrollContainerRef.current) return;
+        const container = scrollContainerRef.current;
+        const itemWidth = container.querySelector('.snap-start')?.clientWidth || container.clientWidth;
+        
+        // Scroll one full visible area worth of items minus one item for context, or at least one item
+        const scrollAmount = Math.max(container.clientWidth - itemWidth, itemWidth);
+        
+        container.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
+    };
 
     if (products.length === 0) return null;
 
     return (
-        <div
-            className="relative group/carousel"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-        >
-            {/* Controls - Only show if enough items to scroll */}
-            {products.length > itemsPerPage && (
-                <>
-                    <button
-                        onClick={prevSlide}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
-                        disabled={products.length <= itemsPerPage}
-                    >
-                        <ChevronLeft size={24} />
-                    </button>
-                    <button
-                        onClick={nextSlide}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
-                        disabled={products.length <= itemsPerPage}
-                    >
-                        <ChevronRight size={24} />
-                    </button>
-                </>
-            )}
-
-            {/* Grid */}
-            <div
-                className={`grid gap-3 sm:gap-6 ${itemsPerPage === 1 ? 'grid-cols-1' :
-                    itemsPerPage === 2 ? 'grid-cols-2' :
-                        'lg:grid-cols-4'
-                    }`}
+        <div className="relative group/carousel">
+            <button
+                onClick={() => scroll('left')}
+                className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-5 z-10 bg-black/80 hover:bg-black text-white p-2 md:p-3 rounded-full backdrop-blur-sm transition-all shadow-xl hidden sm:flex items-center justify-center ${showLeftArrow ? 'opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100' : 'opacity-0 pointer-events-none'}`}
+                aria-label="Scroll left"
             >
-                {visibleProducts.map(product => (
-                    <div key={`${product.id}-${currentIndex}`} className="animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-both">
+                <ChevronLeft size={24} />
+            </button>
+            
+            <div 
+                ref={scrollContainerRef}
+                onScroll={checkArrows}
+                className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            >
+                {products.map(product => (
+                    <div 
+                        key={product.id} 
+                        className="flex-none w-[80vw] sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] snap-start"
+                    >
                         <ProductCard
                             product={product}
                             onAddToCart={() => onAddToCart(product)}
@@ -118,20 +70,13 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
                 ))}
             </div>
 
-            {/* Indicators / Progress Bar optional */}
-            <div className="flex justify-center gap-2 mt-6">
-                {Array.from({ length: Math.ceil(products.length / itemsPerPage) }).map((_, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => setCurrentIndex(idx * itemsPerPage)}
-                        className={`transition-all duration-300 rounded-full ${Math.floor(currentIndex / itemsPerPage) === idx
-                            ? 'w-8 h-1 bg-primary'
-                            : 'w-2 h-1 bg-gray-800 hover:bg-gray-600'
-                            }`}
-                        aria-label={`Go to page ${idx + 1}`}
-                    />
-                ))}
-            </div>
+            <button
+                onClick={() => scroll('right')}
+                className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-5 z-10 bg-black/80 hover:bg-black text-white p-2 md:p-3 rounded-full backdrop-blur-sm transition-all shadow-xl hidden sm:flex items-center justify-center ${showRightArrow ? 'opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100' : 'opacity-0 pointer-events-none'}`}
+                aria-label="Scroll right"
+            >
+                <ChevronRight size={24} />
+            </button>
         </div>
     );
 };

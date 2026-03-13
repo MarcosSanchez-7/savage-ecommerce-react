@@ -19,7 +19,7 @@ import SeasonSection from '../components/SeasonSection';
 import ProductSkeleton from '../components/ProductSkeleton'; // Import Skeleton
 
 const Home: React.FC = () => {
-    const { products, addToCart, cart, categories, loading } = useShop(); // Add loading
+    const { products, addToCart, cart, categories, loading, homeSectionsConfig } = useShop(); // Add loading
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -46,10 +46,10 @@ const Home: React.FC = () => {
 
             <main>
                 <Hero />
-                <QuickLinks />
                 <SeasonSection />
 
                 {/* NUEVOS INGRESOS Section */}
+                {homeSectionsConfig?.showNewArrivals && (
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
                     <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                         <div>
@@ -73,8 +73,10 @@ const Home: React.FC = () => {
                         />
                     )}
                 </section>
+                )}
 
                 {/* Featured Products Section (Max 8) */}
+                {homeSectionsConfig?.showFeatured && (
                 <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
                     <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
                         <div>
@@ -99,9 +101,10 @@ const Home: React.FC = () => {
                     />
 
                 </section>
+                )}
 
                 {/* OFFER Products Section (Dynamic Carousel) */}
-                {products.filter(p => p.isActive !== false && p.isOffer).length > 0 && (
+                {homeSectionsConfig?.showOffers && products.filter(p => p.isActive !== false && p.isOffer).length > 0 && (
                     <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900 bg-gradient-to-b from-red-900/5 to-transparent">
                         <div className="flex items-end justify-between mb-10 pb-4 border-b border-red-900/30">
                             <div>
@@ -125,8 +128,9 @@ const Home: React.FC = () => {
 
                     </section>
                 )}
-                <CategoryBento />
-
+                
+                <QuickLinks />
+                
                 {/* Dynamic Category Sections (Root Categories Only) */}
                 {categories
                     .filter(c => !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase()))
@@ -152,9 +156,9 @@ const Home: React.FC = () => {
                                 }
                                 return b.id.localeCompare(a.id); // Newest first
                             })
-                            .slice(0, 8);
+                            .slice(0, 12); // Give it some room to scroll natively
 
-                        const hasMore = categoryProducts.length > 8;
+                        const hasMore = categoryProducts.length > 4;
 
                         return (
                             <section
@@ -175,20 +179,16 @@ const Home: React.FC = () => {
                                             to={`/category/${category}`}
                                             className="hidden md:flex items-center text-[10px] font-black tracking-[0.2em] text-primary hover:text-white transition-all gap-2 group whitespace-nowrap"
                                         >
-                                            VER TODO <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                            VER MÁS <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                                         </Link>
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                                    {displayProducts.map(product => (
-                                        <ProductCard
-                                            key={product.id}
-                                            product={product}
-                                            onAddToCart={() => addToCart(product)}
-                                        />
-                                    ))}
-                                </div>
+                                {/* Custom FeaturedCarousel for categories so they follow the new slider UI */}
+                                <FeaturedCarousel 
+                                    products={displayProducts}
+                                    onAddToCart={addToCart}
+                                />
 
                                 {hasMore && (
                                     <div className="mt-12 text-center md:hidden">
@@ -196,7 +196,7 @@ const Home: React.FC = () => {
                                             to={`/category/${category}`}
                                             className="inline-flex items-center text-xs font-black tracking-[0.2em] text-primary hover:text-white transition-colors gap-2 border border-primary/20 px-8 py-4 rounded-full"
                                         >
-                                            VER TODO {categoryObj.name} <ArrowRight size={14} />
+                                            VER MÁS {categoryObj.name} <ArrowRight size={14} />
                                         </Link>
                                     </div>
                                 )}

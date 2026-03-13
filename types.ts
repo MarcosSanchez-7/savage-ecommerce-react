@@ -232,3 +232,10 @@ export interface QuickLink {
   image: string;
   link: string;
 }
+
+export interface HomeSectionsConfig {
+  showNewArrivals: boolean;
+  showOffers: boolean;
+  showFeatured: boolean;
+}
+

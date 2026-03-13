@@ -161,26 +161,23 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
     <>
       <AnnouncementBar />
       <nav className={`sticky top-0 z-50 w-full border-b border-border transition-all duration-300 ${theme === 'light' ? 'bg-white shadow-md' : 'bg-black'}`}>
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between relative">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between relative gap-4">
 
-          {/* LEFT SECTION: Logo and Menu (Desktop) / Just Logo (Mobile) */}
-          <div className="flex items-center gap-2 md:gap-4 z-50">
-            {/* Menu Toggle (Desktop: Left of logo) */}
+          {/* LEFT SECTION: Hamburger (Mobile) / Logo (Desktop) */}
+          <div className="flex items-center gap-2 md:gap-4 z-[60] flex-1 justify-start">
+            {/* Mobile Menu Icon */}
             <button
-              className="hidden md:block text-text hover:text-primary transition-colors p-1"
+              className="md:hidden text-text hover:text-primary transition-colors p-1"
               onClick={() => setIsMobileMenuOpen(true)}
             >
-              <Menu size={28} />
+              <Menu size={26} />
             </button>
 
-            {/* Logo */}
+            {/* Logo (Desktop) */}
             <Link
               to="/"
-              className="flex items-center gap-2 group"
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                setIsMobileMenuOpen(false);
-              }}
+              className="hidden md:flex items-center gap-2 group"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               <div className="size-8 md:size-10 flex items-center justify-center transition-transform group-hover:scale-110">
                 <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.6)] filter brightness-110" />
@@ -191,9 +188,28 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </Link>
           </div>
 
+          {/* MOBILE LOGO (Centered) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden z-50">
+            <Link
+              to="/"
+              className="flex items-center gap-2"
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              <div className="size-8 flex items-center justify-center">
+                <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain" />
+              </div>
+              <h2 className="text-text text-lg font-black tracking-widest uppercase pt-1">
+                SAVAGE
+              </h2>
+            </Link>
+          </div>
+
           {/* CENTER: Search Bar (Hidden on Mobile, Centered on Desktop) */}
-          <div className="hidden md:flex flex-1 justify-center px-8 relative" ref={searchRef}>
-            <div className="w-full max-w-xl relative">
+          <div className="hidden md:flex flex-[3] w-full max-w-3xl justify-center relative z-50" ref={searchRef}>
+            <div className="w-full relative">
               <form onSubmit={handleSearchSubmit} className={`flex items-center w-full h-11 rounded-full border border-border group ${theme === 'light' ? 'bg-zinc-100 hover:bg-zinc-200' : 'bg-surface hover:bg-white/5'} transition-colors overflow-hidden focus-within:!border-primary focus-within:!bg-background`}>
                 <input
                   id="navbar-search-input"
@@ -201,8 +217,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                   placeholder="¿Qué estás buscando? Escribí aquí..."
                   value={searchQuery}
                   onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setIsSearchOpen(true);
+                     setSearchQuery(e.target.value);
+                     setIsSearchOpen(true);
                   }}
                   onFocus={() => setIsSearchOpen(true)}
                   className="flex-1 bg-transparent border-none outline-none px-6 text-sm font-medium text-text placeholder-text-muted h-full"
@@ -212,7 +228,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                     <X size={16} />
                   </button>
                 )}
-                <button type="submit" className="h-full px-5 bg-primary text-black font-bold uppercase text-xs tracking-wider hover:bg-primary/80 transition-colors flex items-center justify-center gap-2 border-l border-primary/20">
+                <button type="submit" className="h-full px-5 md:px-8 bg-primary text-black font-black uppercase text-xs md:text-sm tracking-wider hover:bg-primary/80 transition-colors flex items-center justify-center gap-2 border-l border-primary/20">
+                  <span className="hidden md:block">BUSCAR</span>
                   <Search size={18} />
                 </button>
               </form>
@@ -258,7 +275,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           </div>
 
           {/* RIGHT SECTION: Icons (Desktop: Theme/Cart, Mobile: Search/Cart/Menu) */}
-          <div className="flex items-center gap-1 md:gap-4 z-50">
+          <div className="flex items-center justify-end gap-1 md:gap-4 z-[60] flex-1">
             {/* Mobile Search Icon */}
             <button
               className="md:hidden text-text hover:text-primary transition-colors p-2"
@@ -279,195 +296,11 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 </span>
               )}
             </button>
-
-            {/* Mobile Menu Icon (Right side as per Imagen 2) */}
-            <button
-              className="md:hidden text-text hover:text-primary transition-colors p-2"
-              onClick={() => setIsMobileMenuOpen(true)}
-            >
-              <Menu size={24} />
-            </button>
           </div>
         </div>
       </nav>
 
-      {/* SIDEBAR OVERLAY BLACKOUT */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-black/60 z-[90] backdrop-blur-sm transition-opacity" onClick={() => setIsMobileMenuOpen(false)} />
-      )}
 
-      {/* UNIFIED SIDEBAR DRAWER */}
-      <div className={`fixed inset-y-0 right-0 md:left-0 md:right-auto w-[85%] sm:w-[400px] bg-background z-[100] transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:-translate-x-full'} flex flex-col border-l md:border-l-0 md:border-r border-border shadow-2xl`}>
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="size-8">
-              <img src="/crown.png" alt="" className="w-full h-full object-contain brightness-110" />
-            </div>
-            <span className="text-xl font-black text-text tracking-widest">SAVAGE</span>
-          </div>
-          <button onClick={() => setIsMobileMenuOpen(false)} className="text-text-muted hover:text-text p-2">
-            <X size={28} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-          <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black text-text uppercase tracking-widest hover:text-primary transition-colors">
-            INICIO
-          </Link>
-
-          {/* Mobile Sections Accordion */}
-          <div>
-            <button
-              onClick={() => setIsMobileSectionsOpen(!isMobileSectionsOpen)}
-              className="w-full flex items-center justify-between text-2xl font-black text-text uppercase tracking-widest hover:text-primary transition-colors"
-            >
-              SECCIONES
-              {isMobileSectionsOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-            </button>
-
-            <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-4 pl-4 border-l-2 border-primary/20 ml-1 ${isMobileSectionsOpen ? 'max-h-[300px] mt-4 opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>
-              <Link to="/recien-llegados" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
-                RECIÉN LLEGADOS
-              </Link>
-              <Link to="/ofertas" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
-                OFERTAS
-              </Link>
-              <Link to="/destacados" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-bold text-text hover:text-primary uppercase tracking-widest block">
-                DESTACADOS
-              </Link>
-            </div>
-          </div>
-
-          {/* Mobile Categories Accordion */}
-          <div>
-            <button
-              onClick={() => setIsMobileCategoriesOpen(!isMobileCategoriesOpen)}
-              className="w-full flex items-center justify-between text-2xl font-black text-text uppercase tracking-widest hover:text-primary transition-colors"
-            >
-              CATEGORÍAS
-              {isMobileCategoriesOpen ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-            </button>
-
-            <div className={`overflow-hidden transition-all duration-300 flex flex-col gap-6 pl-2 ${isMobileCategoriesOpen ? 'max-h-[800px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
-              {(Array.isArray(categories) ? categories : []).filter(c => c && !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes((c.name || '').toUpperCase())).map(parent => {
-                const children = categories.filter(c => c && String(c.parent_id) === String(parent.id));
-                const isExpanded = expandedMobileCategories[String(parent.id)];
-
-                return (
-                  <div key={parent.id} className="flex flex-col border-b border-border/30 last:border-0">
-                    <div className="flex items-center justify-between py-1">
-                      <Link
-                        to={`/category/${parent.id}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-lg font-black text-text hover:text-primary uppercase tracking-widest py-2"
-                      >
-                        {parent.name}
-                      </Link>
-
-                      {children.length > 0 && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setExpandedMobileCategories(prev => ({
-                              ...prev,
-                              [String(parent.id)]: !prev[String(parent.id)]
-                            }));
-                          }}
-                          className="p-3 -mr-3 text-text-muted hover:text-text active:scale-90 transition-all"
-                        >
-                          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Subcategories with smooth transition */}
-                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[1000px] opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
-                      <div className="flex flex-col gap-3 pl-4 border-l-2 border-primary/20 ml-1">
-                        {children.map(child => {
-                          if (!child) return null;
-                          const grandChildren = categories.filter(gc => gc && String(gc.parent_id) === String(child.id));
-                          const isChildExpanded = expandedMobileCategories[String(child.id)];
-
-                          return (
-                            <div key={child.id} className="flex flex-col">
-                              <div className="flex items-center justify-between">
-                                <Link
-                                  to={`/category/${parent.id}/${child.id}`}
-                                  onClick={() => setIsMobileMenuOpen(false)}
-                                  className="text-sm font-bold text-text-muted hover:text-text uppercase tracking-wider py-1 block"
-                                >
-                                  {child.name}
-                                </Link>
-                                {grandChildren.length > 0 && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setExpandedMobileCategories(prev => ({
-                                        ...prev,
-                                        [String(child.id)]: !prev[String(child.id)]
-                                      }));
-                                    }}
-                                    className="p-2 -mr-2 text-text-muted hover:text-text"
-                                  >
-                                    {isChildExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                  </button>
-                                )}
-                              </div>
-
-                              {/* L3 Grandchildren */}
-                              {grandChildren.length > 0 && (
-                                <div className={`overflow-hidden transition-all duration-300 pl-4 border-l border-border/10 mt-1 flex flex-col gap-2 ${isChildExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                                  {grandChildren.map(grand => (
-                                    grand ? (
-                                      <Link
-                                        key={grand.id}
-                                        // Navigate to Parent/Child (Context) but we really want filtering by GrandChild
-                                        // CategoryPage now handles drilled down filtering if we pass subcategory=grand.id
-                                        // We rely on CategoryPage resolving the scope by ID.
-                                        // So we pass: /category/ROOT_ID/GRAND_ID
-                                        to={`/category/${parent.id}/${grand.id}`}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className="text-xs font-bold text-text-muted hover:text-primary uppercase tracking-wider py-1 block"
-                                      >
-                                        {grand.name}
-                                      </Link>
-                                    ) : null
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-
-          <div className="mt-8 border-t border-border pt-8 flex flex-col gap-4 mb-10">
-            {/* Mobile Theme Toggle (Moved to Bottom) */}
-            <button
-              onClick={() => { handleThemeClick(); }}
-              className="flex items-center justify-between w-full px-5 py-4 rounded-2xl bg-surface border border-border text-text group active:scale-[0.98] transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-primary/20 text-primary' : 'bg-zinc-200 text-zinc-600'}`}>
-                  {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                </div>
-                <span className="text-sm font-black tracking-[0.2em] uppercase">CAMBIAR TEMA</span>
-              </div>
-              <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest bg-background px-3 py-1 rounded-full">
-                {theme === 'dark' ? 'MODO OSCURO' : 'MODO CLARO'}
-              </span>
-            </button>
-          </div>
-        </div>
-      </div >
 
       {/* MOBILE SEARCH OVERLAY (Full Screen) */}
       {isMobileSearchOpen && (
@@ -538,6 +371,74 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* MOBILE MENU DRAWER */}
+      {isMobileMenuOpen && (
+        <div className={`fixed inset-0 z-[200] flex flex-col pt-16 animate-in slide-in-from-left duration-300 ${theme === 'light' ? 'bg-white' : 'bg-black'}`}>
+          <div className="overflow-y-auto w-full custom-scrollbar pb-20">
+             <div className="flex w-full shrink-0 bg-background border-t border-gray-800 flex-col shadow-xl z-50 relative mt-4">
+               <div className="bg-primary text-black font-black uppercase tracking-wider px-4 py-4 flex items-center gap-2 rounded-t-lg mx-4 mt-4">
+                 <span>CATEGORÍAS</span>
+               </div>
+               <nav className="flex-col py-2 relative px-4">
+                 {categories?.filter(c => !c.parent_id && !['HUÉRFANOS', 'HUERFANOS'].includes(c.name.toUpperCase())).map(category => {
+                    const subcategories = categories?.filter(c => c.parent_id === category.id) || [];
+                    const hasSubcategories = subcategories.length > 0;
+                    const isExpanded = expandedMobileCategories[category.id];
+
+                    return (
+                      <div key={category.id} className="border-b border-gray-800/30 last:border-0 relative">
+                        <div 
+                          className="flex flex-1 items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                          onClick={() => {
+                            if (hasSubcategories) {
+                              setExpandedMobileCategories(prev => ({ ...prev, [category.id]: !prev[category.id] }));
+                            } else {
+                              navigate(`/category/${category.id}`);
+                              setIsMobileMenuOpen(false);
+                            }
+                          }}
+                        >
+                          <span className="text-sm font-black uppercase text-gray-300 transition-colors tracking-widest">{category.name}</span>
+                          <span className={`${hasSubcategories ? 'text-primary' : 'text-gray-600'} transition-colors`}>
+                            {hasSubcategories ? (isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />) : <ChevronRight size={18} />}
+                          </span>
+                        </div>
+                        {hasSubcategories && isExpanded && (
+                          <div className="flex flex-col bg-black/50 py-2">
+                             <Link 
+                               to={`/category/${category.id}`} 
+                               className="px-8 py-3 text-xs font-bold uppercase text-primary hover:text-white transition-colors"
+                               onClick={() => setIsMobileMenuOpen(false)}
+                             >
+                               Ver Todo en {category.name}
+                             </Link>
+                             {subcategories.map(sub => (
+                               <Link
+                                 key={sub.id}
+                                 to={`/category/${sub.id}`}
+                                 className="px-8 py-3 text-[11px] font-bold uppercase text-gray-400 hover:text-white transition-colors"
+                                 onClick={() => setIsMobileMenuOpen(false)}
+                               >
+                                 {sub.name}
+                               </Link>
+                             ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                 })}
+               </nav>
+             </div>
+          </div>
+          <button 
+             onClick={() => setIsMobileMenuOpen(false)} 
+             className="absolute top-4 right-4 text-text p-2 bg-gray-900 rounded-full"
+          >
+             <X size={24} />
+          </button>
         </div>
       )}
 

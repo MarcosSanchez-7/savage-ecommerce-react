@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue, SeasonConfig, QuickLink } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, Attribute, AttributeValue, ProductAttributeValue, SeasonConfig, QuickLink, HomeSectionsConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../supabase/client';
 import { useAuth } from './AuthContext';
@@ -71,6 +71,8 @@ interface ShopContextType {
     updateHeroCarouselConfig: (config: HeroCarouselConfig) => void;
     footerColumns: FooterColumn[];
     updateFooterColumns: (columns: FooterColumn[]) => void;
+    homeSectionsConfig: HomeSectionsConfig;
+    updateHomeSectionsConfig: (config: HomeSectionsConfig) => void;
     updateCategoryOrder: (orderedIds: string[]) => void;
     saveAllData: () => void;
     loading: boolean;
@@ -229,6 +231,31 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const { error } = await supabase.from('store_config').upsert({
                 key: 'quick_links',
                 value: links,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
+    // Home Sections Config
+    const [homeSectionsConfig, setHomeSectionsConfig] = useState<HomeSectionsConfig>(() => {
+        const saved = localStorage.getItem('savage_home_sections_config');
+        return saved ? JSON.parse(saved) : {
+            showNewArrivals: true,
+            showOffers: true,
+            showFeatured: true
+        };
+    });
+
+    const updateHomeSectionsConfig = async (config: HomeSectionsConfig) => {
+        setHomeSectionsConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'home_sections_config',
+                value: config,
                 updated_at: new Date().toISOString()
             });
             if (error) throw error;
@@ -442,6 +469,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         if (conf.key === 'hero_slides') setHeroSlides(conf.value);
                         if (conf.key === 'footer_columns') setFooterColumns(conf.value);
                         if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
+                        if (conf.key === 'home_sections_config') setHomeSectionsConfig(conf.value);
                         if (conf.key === 'drops_config') setDropsConfig(conf.value);
                         if (conf.key === 'season_config') setSeasonConfig(conf.value);
                         if (conf.key === 'category_sort_order') {
@@ -1830,6 +1858,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateLifestyleConfig,
             footerColumns,
             updateFooterColumns,
+            homeSectionsConfig,
+            updateHomeSectionsConfig,
             heroCarouselConfig,
             updateHeroCarouselConfig,
             saveAllData,

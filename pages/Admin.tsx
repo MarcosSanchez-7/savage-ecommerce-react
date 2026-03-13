@@ -137,7 +137,9 @@ const AdminDashboard: React.FC = () => {
         seasonConfig, updateSeasonConfig,
         confirmOrder,
         orderRequests,
-        deleteOrderRequest
+        deleteOrderRequest,
+        homeSectionsConfig,
+        updateHomeSectionsConfig
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
@@ -243,6 +245,18 @@ const AdminDashboard: React.FC = () => {
             setLifestyleForm(lifestyleConfig);
         }
     }, [lifestyleConfig]);
+
+    const [homeSectionsForm, setHomeSectionsForm] = useState(homeSectionsConfig || {
+        showNewArrivals: true,
+        showOffers: true,
+        showFeatured: true
+    });
+
+    React.useEffect(() => {
+        if (homeSectionsConfig) {
+            setHomeSectionsForm(homeSectionsConfig);
+        }
+    }, [homeSectionsConfig]);
 
     // Web Design Form State
     const [bentoForm, setBentoForm] = useState<BannerBento[]>(bannerBento || []);
@@ -671,7 +685,8 @@ const AdminDashboard: React.FC = () => {
         try {
             await Promise.all([
                 updateSocialConfig(configForm),
-                updateLifestyleConfig(lifestyleForm)
+                updateLifestyleConfig(lifestyleForm),
+                updateHomeSectionsConfig(homeSectionsForm)
             ]);
             alert('Añadido correctamente a la base de datos.');
         } catch (error) {
@@ -2223,6 +2238,37 @@ const AdminDashboard: React.FC = () => {
                                     <input type="text" value={configForm.topHeaderText || ''} onChange={e => setConfigForm({ ...configForm, topHeaderText: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" placeholder="Ej. ENVÍOS GRATIS..." />
                                 </div>
 
+                                <hr className="border-gray-800 my-4" />
+                                <h3 className="text-lg font-bold text-white mb-2">Visibilidad de Secciones (Home)</h3>
+                                <div className="space-y-4 bg-[#0a0a0a] p-5 rounded-xl border border-gray-800 mb-6">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={homeSectionsForm.showNewArrivals} 
+                                            onChange={(e) => setHomeSectionsForm({...homeSectionsForm, showNewArrivals: e.target.checked})}
+                                            className="w-5 h-5 rounded border-gray-600 text-primary focus:ring-primary focus:ring-offset-gray-900 bg-black cursor-pointer"
+                                        />
+                                        <span className="text-sm font-bold text-gray-300 group-hover:text-white uppercase tracking-wider transition-colors">Mostrar Sección: Recién Llegados</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={homeSectionsForm.showFeatured} 
+                                            onChange={(e) => setHomeSectionsForm({...homeSectionsForm, showFeatured: e.target.checked})}
+                                            className="w-5 h-5 rounded border-gray-600 text-primary focus:ring-primary focus:ring-offset-gray-900 bg-black cursor-pointer"
+                                        />
+                                        <span className="text-sm font-bold text-gray-300 group-hover:text-white uppercase tracking-wider transition-colors">Mostrar Sección: Destacados</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={homeSectionsForm.showOffers} 
+                                            onChange={(e) => setHomeSectionsForm({...homeSectionsForm, showOffers: e.target.checked})}
+                                            className="w-5 h-5 rounded border-gray-600 text-primary focus:ring-primary focus:ring-offset-gray-900 bg-black cursor-pointer"
+                                        />
+                                        <span className="text-sm font-bold text-gray-300 group-hover:text-white uppercase tracking-wider transition-colors">Mostrar Sección: Ofertas Imperdibles</span>
+                                    </label>
+                                </div>
                                 <hr className="border-gray-800 my-4" />
                                 <h3 className="text-lg font-bold text-white mb-2">Sección Lifestyle / Blog (Home)</h3>
                                 <div className="space-y-2">
