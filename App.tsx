@@ -13,6 +13,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import WhatsAppFloatingButton from './components/WhatsAppFloatingButton';
 import { ThemeProvider } from './context/ThemeContext';
+import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from '@vercel/analytics/react';
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
@@ -63,6 +65,8 @@ const App: React.FC = () => {
             toastClassName="savage-toast"
           />
           <MainContent />
+          <SpeedInsights />
+          <Analytics />
         </ShopProvider>
       </ThemeProvider>
     </AuthProvider>
