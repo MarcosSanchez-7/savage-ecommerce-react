@@ -71,7 +71,7 @@ const ProductDetail: React.FC = () => {
             if ((window as any).fbq) {
                 (window as any).fbq('track', 'ViewContent', {
                     content_name: product.name,
-                    content_ids: [product.savage_id || product.id], // Must match Catalog <g:id>
+                    content_ids: [(product as any).savage_id || product.id], // Must match Catalog <g:id>
                     content_type: 'product',
                     value: product.price,
                     currency: 'PYG'
@@ -134,7 +134,6 @@ const ProductDetail: React.FC = () => {
                 description={product.description || `Comprá ${product.name} en Savage Store. Calidad Premium.`}
                 image={product.images[0]}
                 product={true}
-                url={window.location.href}
             />
             {/* Schema Script - JSON-LD for rich snippets */}
             <script

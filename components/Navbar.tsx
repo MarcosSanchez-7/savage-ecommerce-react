@@ -160,11 +160,11 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   return (
     <>
       <AnnouncementBar />
-      <nav className={`sticky top-0 z-50 w-full border-b border-border transition-all duration-300 ${theme === 'light' ? 'bg-white shadow-md' : 'bg-black'}`}>
+      <nav className={`sticky top-0 z-[100] w-full border-b border-border transition-all duration-300 ${theme === 'light' ? 'bg-white shadow-md' : '!bg-black !bg-opacity-100 !backdrop-blur-none backdrop-filter-none'}`}>
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-16 md:h-20 flex items-center justify-between relative gap-4">
 
           {/* LEFT SECTION: Hamburger (Mobile) / Logo (Desktop) */}
-          <div className="flex items-center gap-2 md:gap-4 z-[60] flex-1 justify-start">
+          <div className="flex items-center gap-2 md:gap-4 z-[60] md:w-[25%] shrink-0 justify-start">
             {/* Mobile Menu Icon */}
             <button
               className="md:hidden text-text hover:text-primary transition-colors p-1"
@@ -188,8 +188,8 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </Link>
           </div>
 
-          {/* MOBILE LOGO (Centered) */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden z-50">
+          {/* MOBILE LOGO (Centered and visually balanced) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -ml-6 md:hidden z-50">
             <Link
               to="/"
               className="flex items-center gap-2"
@@ -208,7 +208,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           </div>
 
           {/* CENTER: Search Bar (Hidden on Mobile, Centered on Desktop) */}
-          <div className="hidden md:flex flex-[3] w-full max-w-3xl justify-center relative z-50" ref={searchRef}>
+          <div className="hidden md:flex md:w-[50%] px-4 justify-center relative z-50 shrink" ref={searchRef}>
             <div className="w-full relative">
               <form onSubmit={handleSearchSubmit} className={`flex items-center w-full h-11 rounded-full border border-border group ${theme === 'light' ? 'bg-zinc-100 hover:bg-zinc-200' : 'bg-surface hover:bg-white/5'} transition-colors overflow-hidden focus-within:!border-primary focus-within:!bg-background`}>
                 <input
@@ -275,7 +275,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           </div>
 
           {/* RIGHT SECTION: Icons (Desktop: Theme/Cart, Mobile: Search/Cart/Menu) */}
-          <div className="flex items-center justify-end gap-1 md:gap-4 z-[60] flex-1">
+          <div className="flex items-center justify-end gap-1 md:gap-4 z-[60] md:w-[25%] shrink-0 ml-auto">
             {/* Mobile Search Icon */}
             <button
               className="md:hidden text-text hover:text-primary transition-colors p-2"
@@ -289,7 +289,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
               onClick={toggleCart}
               className={`relative flex items-center justify-center p-2 text-text hover:text-primary transition-all duration-300 ${animateCart ? 'text-primary scale-125' : ''}`}
             >
-              <ShoppingCart size={22} md:size={24} />
+              <ShoppingCart size={22} />
               {cartCount > 0 && (
                 <span className={`absolute top-0 right-0 bg-primary text-black text-[9px] md:text-[10px] font-bold px-1.5 rounded-full min-w-[14px] md:min-w-[16px] h-[14px] md:h-[16px] flex items-center justify-center border border-black transform translate-x-1 -translate-y-1 transition-transform duration-300 ${animateCart ? 'scale-150 animate-bounce' : 'scale-100'}`}>
                   {cartCount}

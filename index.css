@@ -40,7 +40,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--surface);
+  background: #3f3f46;
   border-radius: 4px;
 }
 

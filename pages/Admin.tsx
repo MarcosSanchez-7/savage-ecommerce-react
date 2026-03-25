@@ -144,10 +144,11 @@ const AdminDashboard: React.FC = () => {
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
-    const [activeTab, setActiveTab] = useState<'hero' | 'orders' | 'blog' | 'config' | 'inventory_master' | 'delivery' | 'webDesign' | 'stock' | 'season'>('stock');
+    const [activeTab, setActiveTab] = useState<'hero' | 'orders' | 'blog' | 'config' | 'inventory_master' | 'delivery' | 'webDesign' | 'stock' | 'season' | 'analytics'>('stock');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [adminSearchTerm, setAdminSearchTerm] = useState('');
 
     const faviconFileInputRef = React.useRef<HTMLInputElement>(null);
     const [isFaviconUploading, setIsFaviconUploading] = useState(false);
@@ -353,6 +354,8 @@ const AdminDashboard: React.FC = () => {
         isCategoryFeatured: false,
         isImported: false,
         isNew: false,
+        isOffer: false,
+        isSeason: false,
         selectedAttributes: {} as Record<string, string>,
         visualTag: { text: '', color: '#000000' }
     });
@@ -456,7 +459,7 @@ const AdminDashboard: React.FC = () => {
                 alert('Producto actualizado!');
             } else {
                 // @ts-ignore
-                const newUuid = await addProduct(productData);
+                const newUuid: any = await addProduct(productData);
                 if (newUuid) productId = newUuid; // Update productId with real UUID
                 alert('Producto creado con éxito!');
             }
@@ -703,7 +706,7 @@ const AdminDashboard: React.FC = () => {
         const id = newCategoryName.toLowerCase().replace(/\s+/g, '-');
         const subcategories = newCategorySubcats.split(',').map(s => s.trim()).filter(s => s !== '');
 
-        addCategory({ id, name: newCategoryName, subcategories });
+        addCategory({ id, name: newCategoryName, subcategories } as any);
         setNewCategoryName('');
         setNewCategorySubcats('');
         alert('Categoría agregada');
@@ -719,10 +722,10 @@ const AdminDashboard: React.FC = () => {
         if (!cat) return;
 
         if (updateCategory) {
-            updateCategory({ ...cat, subcategories, opacity });
+            updateCategory({ ...cat, subcategories, opacity } as any);
         } else {
             deleteCategory(catId);
-            addCategory({ ...cat, subcategories, opacity });
+            addCategory({ ...cat, subcategories, opacity } as any);
         }
 
         setCategoryToEdit(null);
@@ -846,10 +849,10 @@ const AdminDashboard: React.FC = () => {
 
             {/* Sidebar */}
             <aside className={`
-                fixed inset-y-0 left-0 z-50 w-72 bg-[#050505] border-r border-gray-800 p-6 flex flex-col h-screen
+                fixed inset-y-0 right-0 md:left-0 z-50 w-72 bg-[#050505] border-l md:border-l-0 md:border-r border-gray-800 p-6 flex flex-col h-screen
                 transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
                 md:translate-x-0 md:static md:w-64 md:sticky md:top-0
-                ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+                ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0
             `}>
                 <div className="flex justify-between items-center mb-10">
                     <h1 className="text-2xl font-black tracking-tighter text-primary">SAVAGE<span className="text-white">ADMIN</span></h1>
@@ -922,31 +925,50 @@ const AdminDashboard: React.FC = () => {
                                 </h1>
                                 <p className="text-gray-400 text-sm mt-1 uppercase tracking-widest font-bold opacity-60">Gestión de inventario en tiempo real</p>
                             </div>
-                            <button
-                                onClick={() => {
-                                    setEditingProductId(null);
-                                    setNewProduct({
-                                        name: '',
-                                        description: '',
-                                        price: '',
-                                        originalPrice: '',
-                                        category: '',
-                                        subcategory: '',
-                                        slug: '',
-                                        images: [''],
-                                        tags: [],
-                                        isFeatured: false,
-                                        isCategoryFeatured: false,
-                                        isImported: false,
-                                        isOffer: false
-                                    });
-                                    setStockMatrix({});
-                                    setShowProductForm(true);
-                                }}
-                                className="bg-primary hover:bg-yellow-500 text-black font-black px-8 py-4 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 uppercase tracking-tighter"
-                            >
-                                <Plus size={20} /> NUEVO PRODUCTO
-                            </button>
+                            
+                            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                                <div className="relative flex-1 sm:w-72">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Buscar producto..."
+                                        value={adminSearchTerm}
+                                        onChange={(e) => setAdminSearchTerm(e.target.value)}
+                                        className="w-full h-[54px] bg-[#0c0c0c] border border-gray-800 rounded-xl pl-10 pr-4 text-sm text-white focus:border-primary focus:outline-none transition-colors"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setEditingProductId(null);
+                                        setNewProduct({
+                                            name: '',
+                                            description: '',
+                                            price: '',
+                                            originalPrice: '',
+                                            category: '',
+                                            subcategory: '',
+                                            section: '',
+                                            slug: '',
+                                            seoAlt: '',
+                                            images: [''],
+                                            tags: [],
+                                            isFeatured: false,
+                                            isCategoryFeatured: false,
+                                            isImported: false,
+                                            isNew: false,
+                                            isOffer: false,
+                                            isSeason: false,
+                                            selectedAttributes: {},
+                                            visualTag: { text: '', color: '#000000' }
+                                        });
+                                        setStockMatrix({});
+                                        setShowProductForm(true);
+                                    }}
+                                    className="h-[54px] bg-primary hover:bg-yellow-500 text-black font-black px-8 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 uppercase tracking-tighter whitespace-nowrap"
+                                >
+                                    <Plus size={20} /> NUEVO PRODUCTO
+                                </button>
+                            </div>
                         </header>
 
                         {showProductForm && (
@@ -962,231 +984,8 @@ const AdminDashboard: React.FC = () => {
                                     </div>
 
                                     <form onSubmit={handleAddProduct} className="p-8 space-y-10">
-                                        {/* Row 1: Basic Info */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-bold">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-500">Nombre del Producto</label>
-                                                <input
-                                                    type="text"
-                                                    value={newProduct.name}
-                                                    onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 shadow-inner"
-                                                    placeholder="Ej: Camiseta Retro 90s"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-gray-500">Slug Automático</label>
-                                                <div className="flex items-center gap-2 bg-black/40 border border-gray-800 rounded-xl px-4 py-3 opacity-60">
-                                                    <Globe size={14} className="text-gray-600" />
-                                                    <span className="text-xs text-gray-400 font-mono truncate">{newProduct.slug || '...'}</span>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] uppercase tracking-widest text-green-500">ALT SEO Automático</label>
-                                                <div className="flex items-center gap-2 bg-black/40 border border-gray-800 rounded-xl px-4 py-3 opacity-60">
-                                                    <FileText size={14} className="text-green-600" />
-                                                    <span className="text-xs text-gray-400 italic truncate">{newProduct.seoAlt || '...'}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Descripción del Producto</label>
-                                            <textarea
-                                                value={newProduct.description}
-                                                onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
-                                                className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all h-32 resize-none placeholder:text-gray-800 shadow-inner font-bold"
-                                                placeholder="Detalles sobre el material, calce y estilo..."
-                                            />
-                                        </div>
-
-                                        {/* Categories and Price */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-bold">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-widest text-primary font-black">Categoría Principal</label>
-                                                    <select
-                                                        value={newProduct.category}
-                                                        onChange={e => {
-                                                            const newCatId = e.target.value;
-                                                            const currentCat = categories.find(c => c.id === newProduct.category);
-                                                            const newCat = categories.find(c => c.id === newCatId);
-
-                                                            // Only reset matrix if the size set changed
-                                                            const currentSizes = getSizesForCategory(currentCat?.name || '');
-                                                            const newSizes = getSizesForCategory(newCat?.name || '');
-
-                                                            // --- AUTO-DESCRIPTION LOGIC ---
-                                                            let autoDescription = newProduct.description;
-
-                                                            // Check if current description is auto-generated (matches any existing template)
-                                                            const isAutoGenerated = !autoDescription || categories.some(c => c.description_template === autoDescription);
-
-                                                            // If auto-generated, verify if new category has template. If yes, apply. If no, CLEAR it.
-                                                            if (isAutoGenerated) {
-                                                                autoDescription = newCat?.description_template || '';
-                                                            }
-
-                                                            setNewProduct({
-                                                                ...newProduct,
-                                                                category: newCatId,
-                                                                subcategory: '',
-                                                                selectedAttributes: {},
-                                                                description: autoDescription
-                                                            });
-
-                                                            if (JSON.stringify(currentSizes) !== JSON.stringify(newSizes)) {
-                                                                const initialMatrix: Record<string, number> = {};
-                                                                newSizes.forEach(s => initialMatrix[s] = 0);
-                                                                setStockMatrix(initialMatrix);
-                                                            }
-                                                        }}
-                                                        className="w-full bg-black border border-primary/30 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
-                                                        required
-                                                    >
-                                                        <option value="">Seleccionar...</option>
-                                                        {categories.filter(c => !c.parent_id).map(cat => (
-                                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black">Rama / Subcat.</label>
-                                                    <select
-                                                        value={newProduct.subcategory}
-                                                        onChange={e => {
-                                                            const newSubId = e.target.value;
-
-                                                            // Helper to resolve effective sizes with inheritance (mirrors rendering logic)
-                                                            const resolveEffectiveSizes = (catId: string, subId: string) => {
-                                                                const cat = categories.find(c => c.id === catId);
-                                                                const sub = categories.find(c => c.id === subId);
-                                                                const pSizes = getSizesForCategory(cat?.name || '');
-                                                                // Treat 'Ninguna' or empty as no subcategory
-                                                                const sSizes = (sub && sub.name !== 'Ninguna') ? getSizesForCategory(sub.name) : null;
-
-                                                                if (sSizes) {
-                                                                    // Inheritance check
-                                                                    if (sSizes.length === 1 && sSizes[0] === 'UNICO' && (pSizes.length > 1 || pSizes[0] !== 'UNICO')) {
-                                                                        return pSizes;
-                                                                    }
-                                                                    return sSizes;
-                                                                }
-                                                                return pSizes;
-                                                            };
-
-                                                            const currentSizes = resolveEffectiveSizes(newProduct.category, newProduct.subcategory);
-                                                            const newSizes = resolveEffectiveSizes(newProduct.category, newSubId);
-
-                                                            // --- AUTO-DESCRIPTION LOGIC (SUBCATEGORY) ---
-                                                            const newSub = categories.find(c => c.id === newSubId);
-                                                            let autoDescription = newProduct.description;
-
-                                                            // Check if current description is auto-generated
-                                                            const isAutoGenerated = !autoDescription || categories.some(c => c.description_template === autoDescription);
-
-                                                            if (isAutoGenerated) {
-                                                                autoDescription = newSub?.description_template || '';
-                                                            }
-
-                                                            setNewProduct({
-                                                                ...newProduct,
-                                                                subcategory: newSubId,
-                                                                description: autoDescription
-                                                            });
-                                                            if (JSON.stringify(currentSizes) !== JSON.stringify(newSizes)) {
-                                                                const initialMatrix: Record<string, number> = {};
-                                                                newSizes.forEach(s => initialMatrix[s] = 0);
-                                                                setStockMatrix(initialMatrix);
-                                                            }
-                                                        }}
-                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30 font-bold"
-                                                        disabled={!newProduct.category}
-                                                    >
-                                                        <option value="">Ninguna</option>
-                                                        {categories.filter(c => c.parent_id === newProduct.category).map(sub => (
-                                                            <option key={sub.id} value={sub.id}>{sub.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-
-                                                {/* Level 3: Brazo Selector */}
-                                                {(newProduct.subcategory && categories.some(c => c.parent_id === newProduct.subcategory)) && (
-                                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 pt-2 col-span-2 md:col-span-1">
-                                                        <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Brazo (Nivel 3)</label>
-                                                        <select
-                                                            value={newProduct.section || ''}
-                                                            onChange={e => setNewProduct({ ...newProduct, section: e.target.value })}
-                                                            className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
-                                                        >
-                                                            <option value="">Ninguna</option>
-                                                            {categories.filter(c => c.parent_id === newProduct.subcategory).map(sec => (
-                                                                <option key={sec.id} value={sec.id}>{sec.name}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-widest text-primary font-black">Precio Regular (Gs.)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newProduct.originalPrice}
-                                                        onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                                                        className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all shadow-inner font-bold"
-                                                        placeholder="Ej: 280000"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Precio Oferta (Gs.)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newProduct.price}
-                                                        onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold"
-                                                        placeholder="Ej: 250000"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Attribute Funnel Section */}
-                                        {(categories.find(c => c.id === newProduct.category)?.name.match(/Camisetas|Jerseys|Relojes/i) || categories.find(c => c.id === newProduct.subcategory)?.name.match(/Camisetas|Jerseys|Relojes/i)) && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-gray-800/30 animate-in fade-in slide-in-from-top-4 duration-500">
-                                                {attributes
-                                                    .filter(attr => {
-                                                        const catName = categories.find(c => c.id === newProduct.category)?.name || '';
-                                                        const subName = categories.find(c => c.id === newProduct.subcategory)?.name || '';
-                                                        if (catName.includes('Camisetas') || subName.includes('Camisetas')) return ['Liga', 'Equipo'].includes(attr.name);
-                                                        if (catName.includes('Relojes') || subName.includes('Relojes')) return ['Marca'].includes(attr.name);
-                                                        return false;
-                                                    })
-                                                    .map(attr => (
-                                                        <div key={attr.id} className="space-y-2">
-                                                            <label className="text-[10px] uppercase tracking-widest text-blue-400 font-black">{attr.name}</label>
-                                                            <select
-                                                                value={newProduct.selectedAttributes[attr.id] || ''}
-                                                                onChange={e => setNewProduct({
-                                                                    ...newProduct,
-                                                                    selectedAttributes: { ...newProduct.selectedAttributes, [attr.id]: e.target.value }
-                                                                })}
-                                                                className="w-full bg-black border border-blue-900/30 rounded-xl p-4 text-white focus:border-blue-500 focus:outline-none transition-all font-bold"
-                                                            >
-                                                                <option value="">Seleccionar {attr.name}...</option>
-                                                                {attributeValues.filter(v => v.attribute_id === attr.id).map(val => (
-                                                                    <option key={val.id} value={val.id}>{val.value}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    ))}
-                                            </div>
-                                        )}
-
-                                        {/* Image Upload System */}
-                                        <div className="space-y-6 pt-6 border-t border-gray-800/50">
+                                        {/* Image Upload System - NOW FIRST */}
+                                        <div className="space-y-6 pb-8 border-b border-gray-800/50">
                                             <div className="flex justify-between items-center">
                                                 <div className="flex items-center gap-4">
                                                     <label className="text-sm font-black italic uppercase tracking-tighter text-white">Galería de Imágenes</label>
@@ -1329,180 +1128,302 @@ const AdminDashboard: React.FC = () => {
                                             )}
                                         </div>
 
-                                        {/* Status & Featured Options */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-gray-800/50">
-                                            <div
-                                                onClick={() => setNewProduct(prev => ({ ...prev, isFeatured: !prev.isFeatured }))}
-                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isFeatured ? 'bg-primary/5 border-primary shadow-[0_0_20px_rgba(255,215,0,0.05)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isFeatured ? 'bg-primary text-black' : 'bg-gray-900 text-gray-500'}`}>
-                                                        <Star size={24} fill={newProduct.isFeatured ? "currentColor" : "none"} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">DESTACADO HOME</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en sección "Destacados" principal</p>
-                                                    </div>
-                                                </div>
-                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isFeatured ? 'bg-primary' : 'bg-gray-800'}`}>
-                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isFeatured ? 'left-7' : 'left-1'}`} />
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Nombre del Producto</label>
+                                                <input
+                                                    type="text"
+                                                    value={newProduct.name}
+                                                    onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                                                    className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all placeholder:text-gray-800 shadow-inner font-bold"
+                                                    placeholder="Ej: Camiseta Retro 90s"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Slug Automático</label>
+                                                <div className="flex items-center gap-2 bg-black/40 border border-gray-800 rounded-xl px-4 py-3 opacity-60">
+                                                    <Globe size={14} className="text-gray-600" />
+                                                    <span className="text-xs text-gray-400 font-mono truncate">{newProduct.slug || '...'}</span>
                                                 </div>
                                             </div>
-
-                                            <div
-                                                onClick={() => setNewProduct(prev => ({ ...prev, isCategoryFeatured: !prev.isCategoryFeatured }))}
-                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isCategoryFeatured ? 'bg-white/5 border-white shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isCategoryFeatured ? 'bg-white text-black' : 'bg-gray-900 text-gray-500'}`}>
-                                                        <Layers size={24} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">DESTACADO CATEGORÍA</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Top 8 principales de su categoría</p>
-                                                    </div>
-                                                </div>
-                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isCategoryFeatured ? 'bg-white' : 'bg-gray-800'}`}>
-                                                    <div className={`absolute top-1 w-4 h-4 bg-black rounded-full transition-all duration-300 ${newProduct.isCategoryFeatured ? 'left-7' : 'left-1'}`} />
-                                                </div>
-                                            </div>
-                                            <div
-                                                onClick={() => setNewProduct(prev => ({ ...prev, isImported: !prev.isImported }))}
-                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isImported ? 'bg-blue-500/10 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isImported ? 'bg-blue-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
-                                                        <Globe size={24} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">PRODUCTO IMPORTADO</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Bajo pedido (Sin stock local / 25-30 días)</p>
-                                                    </div>
-                                                </div>
-                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isImported ? 'bg-blue-500' : 'bg-gray-800'}`}>
-                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isImported ? 'left-7' : 'left-1'}`} />
-                                                </div>
-                                            </div>
-                                            <div
-                                                onClick={() => setNewProduct(prev => ({ ...prev, isNew: !prev.isNew }))}
-                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isNew ? 'bg-purple-500/10 border-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isNew ? 'bg-purple-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
-                                                        <Sparkles size={24} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">NUEVO PRODUCTO</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecerá en "RECIEN LLEGADOS"</p>
-                                                    </div>
-                                                </div>
-                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isNew ? 'bg-purple-500' : 'bg-gray-800'}`}>
-                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isNew ? 'left-7' : 'left-1'}`} />
-                                                </div>
-                                            </div>
-
-                                            <div
-                                                onClick={() => setNewProduct(prev => ({ ...prev, isOffer: !prev.isOffer }))}
-                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isOffer ? 'bg-red-500/10 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-xl transition-all ${newProduct.isOffer ? 'bg-red-600 text-white' : 'bg-gray-900 text-gray-500'}`}>
-                                                        <Percent size={24} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">SECCIÓN OFERTAS</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en carrusel de Ofertas</p>
-                                                    </div>
-                                                </div>
-                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isOffer ? 'bg-red-600' : 'bg-gray-800'}`}>
-                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isOffer ? 'left-7' : 'left-1'}`} />
-                                                </div>
-                                            </div>
-
-                                            {/* Season Toggle */}
-                                            <div
-                                                onClick={() => setNewProduct(prev => ({ ...prev, isSeason: !(prev as any).isSeason }))}
-                                                className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${(newProduct as any).isSeason ? 'bg-pink-500/10 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-xl transition-all ${(newProduct as any).isSeason ? 'bg-pink-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
-                                                        <Calendar size={24} />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-white italic uppercase tracking-tighter">TEMPORADA / SEASON</p>
-                                                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en sección "Temporada"</p>
-                                                    </div>
-                                                </div>
-                                                <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${(newProduct as any).isSeason ? 'bg-pink-500' : 'bg-gray-800'}`}>
-                                                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${(newProduct as any).isSeason ? 'left-7' : 'left-1'}`} />
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] uppercase tracking-widest text-green-500 font-bold">ALT SEO Automático</label>
+                                                <div className="flex items-center gap-2 bg-black/40 border border-gray-800 rounded-xl px-4 py-3 opacity-60">
+                                                    <FileText size={14} className="text-green-600" />
+                                                    <span className="text-xs text-gray-400 italic truncate">{newProduct.seoAlt || '...'}</span>
                                                 </div>
                                             </div>
                                         </div>
 
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Descripción del Producto</label>
+                                            <textarea
+                                                value={newProduct.description}
+                                                onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
+                                                className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all h-32 resize-none placeholder:text-gray-800 shadow-inner font-bold"
+                                                placeholder="Detalles sobre el material, calce y estilo..."
+                                            />
+                                        </div>
 
-                                        {/* Visual Tag Section */}
-                                        <div className="space-y-4 pt-6 border-t border-gray-800/50">
-                                            <div className="flex items-center gap-3">
-                                                <Tag size={24} className="text-primary" />
-                                                <label className="text-sm font-black italic uppercase tracking-tighter text-white">Etiqueta Visual (Badge)</label>
-                                            </div>
-
-                                            <div className="space-y-4 pt-4 border-t border-gray-800/50">
-                                                <div className="flex items-center justify-between">
-                                                    <label className="text-sm font-black italic uppercase tracking-tighter text-white">Etiqueta Visual</label>
-                                                    {newProduct.visualTag?.text && (
-                                                        <div
-                                                            className="text-[10px] font-black px-2 py-1 uppercase tracking-wider rounded-sm shadow-md"
-                                                            style={{ backgroundColor: newProduct.visualTag.color, color: '#fff' }}
-                                                        >
-                                                            {newProduct.visualTag.text}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Etiqueta Rápida Buttons */}
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, visualTag: { text: 'NUEVO', color: '#0000FF' } })}
-                                                        className="px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-500 transition-all border border-blue-400/30 shadow-lg shadow-blue-900/20"
-                                                    >
-                                                        NUEVO
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, visualTag: { text: 'LIMITADO', color: '#D4AF37' } })}
-                                                        className="px-4 py-2 bg-[#D4AF37] text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-[#C5A028] transition-all border border-yellow-400/30 shadow-lg shadow-yellow-900/20"
-                                                    >
-                                                        LIMITADO
-                                                    </button>
-                                                </div>
-
-                                                <div className="grid grid-cols-[1fr_auto] gap-4">
-                                                    <input
-                                                        type="text"
-                                                        value={newProduct.visualTag?.text || ''}
-                                                        onChange={e => setNewProduct({
-                                                            ...newProduct,
-                                                            visualTag: { ...newProduct.visualTag!, text: e.target.value }
-                                                        })}
-                                                        className="bg-black border border-gray-800 rounded-xl p-3 text-white focus:border-primary focus:outline-none font-bold placeholder:text-gray-800 text-sm uppercase"
-                                                        placeholder="TEXTO (EJ: PRE-VENTA)"
-                                                    />
-                                                    <div className="flex items-center gap-2 bg-black border border-gray-800 rounded-xl px-2">
-                                                        <input
-                                                            type="color"
-                                                            value={newProduct.visualTag?.color || '#000000'}
-                                                            onChange={e => setNewProduct({
+                                        {/* Categories and Price */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-primary font-black">Categoría Principal</label>
+                                                    <select
+                                                        value={newProduct.category}
+                                                        onChange={e => {
+                                                            const newCatId = e.target.value;
+                                                            const currentCat = categories.find(c => c.id === newProduct.category);
+                                                            const newCat = categories.find(c => c.id === newCatId);
+                                                            const currentSizes = getSizesForCategory(currentCat?.name || '');
+                                                            const newSizes = getSizesForCategory(newCat?.name || '');
+                                                            let autoDescription = newProduct.description;
+                                                            const isAutoGenerated = !autoDescription || categories.some(c => c.description_template === autoDescription);
+                                                            if (isAutoGenerated) {
+                                                                autoDescription = newCat?.description_template || '';
+                                                            }
+                                                            setNewProduct({
                                                                 ...newProduct,
-                                                                visualTag: { ...newProduct.visualTag!, color: e.target.value }
-                                                            })}
-                                                            className="w-8 h-8 rounded cursor-pointer bg-transparent"
-                                                        />
-                                                    </div>
+                                                                category: newCatId,
+                                                                subcategory: '',
+                                                                selectedAttributes: {},
+                                                                description: autoDescription
+                                                            });
+                                                            if (JSON.stringify(currentSizes) !== JSON.stringify(newSizes)) {
+                                                                const initialMatrix: Record<string, number> = {};
+                                                                newSizes.forEach(s => initialMatrix[s] = 0);
+                                                                setStockMatrix(initialMatrix);
+                                                            }
+                                                        }}
+                                                        className="w-full bg-black border border-primary/30 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none font-bold"
+                                                        required
+                                                    >
+                                                        <option value="">Seleccionar...</option>
+                                                        {categories.filter(c => !c.parent_id).map(cat => (
+                                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-gray-400 font-black">Rama / Subcat.</label>
+                                                    <select
+                                                        value={newProduct.subcategory}
+                                                        onChange={e => {
+                                                            const newSubId = e.target.value;
+                                                            const resolveEffectiveSizes = (catId: string, subId: string) => {
+                                                                const cat = categories.find(c => c.id === catId);
+                                                                const sub = categories.find(c => c.id === subId);
+                                                                const pSizes = getSizesForCategory(cat?.name || '');
+                                                                const sSizes = (sub && sub.name !== 'Ninguna') ? getSizesForCategory(sub.name) : null;
+                                                                if (sSizes) {
+                                                                    if (sSizes.length === 1 && sSizes[0] === 'UNICO' && (pSizes.length > 1 || pSizes[0] !== 'UNICO')) {
+                                                                        return pSizes;
+                                                                    }
+                                                                    return sSizes;
+                                                                }
+                                                                return pSizes;
+                                                            };
+                                                            const currentSizes = resolveEffectiveSizes(newProduct.category, newProduct.subcategory);
+                                                            const newSizes = resolveEffectiveSizes(newProduct.category, newSubId);
+                                                            const newSub = categories.find(c => c.id === newSubId);
+                                                            let autoDescription = newProduct.description;
+                                                            const isAutoGenerated = !autoDescription || categories.some(c => c.description_template === autoDescription);
+                                                            if (isAutoGenerated) {
+                                                                autoDescription = newSub?.description_template || '';
+                                                            }
+                                                            setNewProduct({
+                                                                ...newProduct,
+                                                                subcategory: newSubId,
+                                                                description: autoDescription
+                                                            });
+                                                            if (JSON.stringify(currentSizes) !== JSON.stringify(newSizes)) {
+                                                                const initialMatrix: Record<string, number> = {};
+                                                                newSizes.forEach(s => initialMatrix[s] = 0);
+                                                                setStockMatrix(initialMatrix);
+                                                            }
+                                                        }}
+                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all appearance-none outline-none disabled:opacity-30 font-bold"
+                                                        disabled={!newProduct.category}
+                                                    >
+                                                        <option value="">Ninguna</option>
+                                                        {categories.filter(c => c.parent_id === newProduct.category).map(sub => (
+                                                            <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-primary font-black">Precio Regular (Gs.)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newProduct.originalPrice}
+                                                        onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                                                        className="w-full bg-black border border-primary/50 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all shadow-inner font-bold"
+                                                        placeholder="Ej: 280000"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Precio Oferta (Gs.)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newProduct.price}
+                                                        onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                        className="w-full bg-black border border-gray-800 rounded-xl p-4 text-white focus:border-primary focus:outline-none transition-all font-bold"
+                                                        placeholder="Ej: 250000"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Attribute Funnel Section */}
+                                        {(categories.find(c => c.id === newProduct.category)?.name.match(/Camisetas|Jerseys|Relojes/i) || categories.find(c => c.id === newProduct.subcategory)?.name.match(/Camisetas|Jerseys|Relojes/i)) && (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-gray-800/30 animate-in fade-in slide-in-from-top-4 duration-500">
+                                                {attributes
+                                                    .filter(attr => {
+                                                        const catName = categories.find(c => c.id === newProduct.category)?.name || '';
+                                                        const subName = categories.find(c => c.id === newProduct.subcategory)?.name || '';
+                                                        if (catName.includes('Camisetas') || subName.includes('Camisetas')) return ['Liga', 'Equipo'].includes(attr.name);
+                                                        if (catName.includes('Relojes') || subName.includes('Relojes')) return ['Marca'].includes(attr.name);
+                                                        return false;
+                                                    })
+                                                    .map(attr => (
+                                                        <div key={attr.id} className="space-y-2">
+                                                            <label className="text-[10px] uppercase tracking-widest text-blue-400 font-black">{attr.name}</label>
+                                                            <select
+                                                                value={newProduct.selectedAttributes[attr.id] || ''}
+                                                                onChange={e => setNewProduct({
+                                                                    ...newProduct,
+                                                                    selectedAttributes: { ...newProduct.selectedAttributes, [attr.id]: e.target.value }
+                                                                })}
+                                                                className="w-full bg-black border border-blue-900/30 rounded-xl p-4 text-white focus:border-blue-500 focus:outline-none transition-all font-bold"
+                                                            >
+                                                                <option value="">Seleccionar {attr.name}...</option>
+                                                                {attributeValues.filter(v => v.attribute_id === attr.id).map(val => (
+                                                                    <option key={val.id} value={val.id}>{val.value}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        )}
+
+                                        {/* Status & Featured Options */}
+                                        <details className="group border border-gray-800 rounded-2xl bg-black/30 overflow-hidden mt-6">
+                                            <summary className="p-5 cursor-pointer flex items-center gap-3 text-sm font-black italic uppercase tracking-tighter text-white hover:bg-white/5 transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
+                                                <Folder size={22} className="text-primary group-open:text-yellow-400 transition-colors" />
+                                                <span>Opciones Destacados / Especiales</span>
+                                                <ChevronDown size={18} className="ml-auto text-gray-500 group-open:rotate-180 transition-transform duration-300" />
+                                            </summary>
+                                            <div className="px-5 pb-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div
+                                                    onClick={() => setNewProduct(prev => ({ ...prev, isFeatured: !prev.isFeatured }))}
+                                                    className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isFeatured ? 'bg-primary/5 border-primary shadow-[0_0_20px_rgba(255,215,0,0.05)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-3 rounded-xl transition-all ${newProduct.isFeatured ? 'bg-primary text-black' : 'bg-gray-900 text-gray-500'}`}>
+                                                            <Star size={24} fill={newProduct.isFeatured ? "currentColor" : "none"} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white italic uppercase tracking-tighter">DESTACADO HOME</p>
+                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en sección "Destacados" principal</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isFeatured ? 'bg-primary' : 'bg-gray-800'}`}>
+                                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isFeatured ? 'left-7' : 'left-1'}`} />
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    onClick={() => setNewProduct(prev => ({ ...prev, isCategoryFeatured: !prev.isCategoryFeatured }))}
+                                                    className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isCategoryFeatured ? 'bg-white/5 border-white shadow-[0_0_20px_rgba(255,255,255,0.05)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-3 rounded-xl transition-all ${newProduct.isCategoryFeatured ? 'bg-white text-black' : 'bg-gray-900 text-gray-500'}`}>
+                                                            <Layers size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white italic uppercase tracking-tighter">DESTACADO CATEGORÍA</p>
+                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Top 8 principales de su categoría</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isCategoryFeatured ? 'bg-white' : 'bg-gray-800'}`}>
+                                                        <div className={`absolute top-1 w-4 h-4 bg-black rounded-full transition-all duration-300 ${newProduct.isCategoryFeatured ? 'left-7' : 'left-1'}`} />
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    onClick={() => setNewProduct(prev => ({ ...prev, isImported: !prev.isImported }))}
+                                                    className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isImported ? 'bg-blue-500/10 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-3 rounded-xl transition-all ${newProduct.isImported ? 'bg-blue-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                            <Globe size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white italic uppercase tracking-tighter">PRODUCTO IMPORTADO</p>
+                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Bajo pedido (Sin stock local / 25-30 días)</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isImported ? 'bg-blue-500' : 'bg-gray-800'}`}>
+                                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isImported ? 'left-7' : 'left-1'}`} />
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    onClick={() => setNewProduct(prev => ({ ...prev, isNew: !prev.isNew }))}
+                                                    className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isNew ? 'bg-purple-500/10 border-purple-500 shadow-[0_0_20_rgba(168,85,247,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-3 rounded-xl transition-all ${newProduct.isNew ? 'bg-purple-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                            <Sparkles size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white italic uppercase tracking-tighter">NUEVO PRODUCTO</p>
+                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecerá en "RECIEN LLEGADOS"</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isNew ? 'bg-purple-500' : 'bg-gray-800'}`}>
+                                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isNew ? 'left-7' : 'left-1'}`} />
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    onClick={() => setNewProduct(prev => ({ ...prev, isOffer: !prev.isOffer }))}
+                                                    className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${newProduct.isOffer ? 'bg-red-500/10 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-3 rounded-xl transition-all ${newProduct.isOffer ? 'bg-red-600 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                            <Percent size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white italic uppercase tracking-tighter">SECCIÓN OFERTAS</p>
+                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en carrusel de Ofertas</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newProduct.isOffer ? 'bg-red-600' : 'bg-gray-800'}`}>
+                                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${newProduct.isOffer ? 'left-7' : 'left-1'}`} />
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    onClick={() => setNewProduct(prev => ({ ...prev, isSeason: !(prev as any).isSeason }))}
+                                                    className={`flex items-center justify-between p-6 rounded-2xl border-2 cursor-pointer transition-all ${(newProduct as any).isSeason ? 'bg-pink-500/10 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.1)]' : 'bg-black border-gray-800 hover:border-gray-700'}`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`p-3 rounded-xl transition-all ${(newProduct as any).isSeason ? 'bg-pink-500 text-white' : 'bg-gray-900 text-gray-500'}`}>
+                                                            <Calendar size={24} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-white italic uppercase tracking-tighter">TEMPORADA / SEASON</p>
+                                                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Aparecer en sección "Temporada"</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-12 h-6 rounded-full relative transition-all duration-300 ${(newProduct as any).isSeason ? 'bg-pink-500' : 'bg-gray-800'}`}>
+                                                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${(newProduct as any).isSeason ? 'left-7' : 'left-1'}`} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </details>
 
                                         {/* Dynamic Stock Section */}
                                         <div className="space-y-6 pt-6 border-t border-gray-800/50">
@@ -1668,6 +1589,7 @@ const AdminDashboard: React.FC = () => {
                                             deleteProduct(id);
                                         }
                                     }}
+                                    searchTerm={adminSearchTerm}
                                 />
                             </div>
                         </div>
@@ -2676,7 +2598,7 @@ const AdminDashboard: React.FC = () => {
                                                     />
                                                 </div>
                                                 <div className="flex items-center gap-2 bg-black border border-gray-800 rounded p-2">
-                                                    <Link size={14} className="text-gray-500 shrink-0" />
+                                                    <Globe size={14} className="text-gray-500 shrink-0" />
                                                     <input
                                                         type="text"
                                                         value={ql.link}

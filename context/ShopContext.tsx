@@ -574,11 +574,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const { data: drops } = await supabase.from('drops').select('*').order('created_at', { ascending: false });
             if (drops) setDrops(drops);
 
-            // 5. ATTRIBUTES (Dynamic funnel)
-            const { data: attrData } = await supabase.from('attributes').select('*');
-            const { data: valData } = await supabase.from('attribute_values').select('*');
-            if (attrData) setAttributes(attrData);
-            if (valData) setAttributeValues(valData);
+            // 5. ATTRIBUTES (Dynamic funnel — tables may not exist yet)
+            const { data: attrData, error: attrError } = await supabase.from('attributes').select('*');
+            const { data: valData, error: valError } = await supabase.from('attribute_values').select('*');
+            if (!attrError && attrData) setAttributes(attrData);
+            if (!valError && valData) setAttributeValues(valData);
 
         } catch (secondaryError) {
             console.warn("Non-critical error loading secondary data:", secondaryError);
@@ -1047,7 +1047,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (itemToRemove) {
             toast(`🛒 Eliminado: ${itemToRemove.name} fuera del carrito.`, {
-                icon: '🛒',
                 style: {
                     backgroundColor: '#000000',
                     color: '#ffffff',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -26,13 +26,15 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
     const { signInWithEmail, signUpWithEmail, session } = useAuth(); // Get session
     const navigate = useNavigate();
+    const location = useLocation();
 
     // Redirect if already logged in (Only if not in inline mode)
     React.useEffect(() => {
         if (session && !onLoginSuccess) {
-            navigate('/');
+            const from = (location.state as any)?.from?.pathname || '/';
+            navigate(from, { replace: true });
         }
-    }, [session, navigate, onLoginSuccess]);
+    }, [session, navigate, onLoginSuccess, location]);
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -63,7 +65,8 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 if (onLoginSuccess) {
                     onLoginSuccess();
                 } else {
-                    navigate('/');
+                    const from = (location.state as any)?.from?.pathname || '/';
+                    navigate(from, { replace: true });
                 }
             } else {
                 // Register Validations

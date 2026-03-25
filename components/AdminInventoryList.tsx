@@ -20,6 +20,7 @@ interface AdminInventoryListProps {
     onToggleActive: (product: Product) => void;
     seasonProductIds: string[];
     onToggleSeason: (product: Product) => void;
+    searchTerm: string;
 }
 
 const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
@@ -29,12 +30,12 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
     onDelete,
     onToggleActive,
     seasonProductIds,
-    onToggleSeason
+    onToggleSeason,
+    searchTerm
 }) => {
     // Local state for folder toggles (Performance Optimization)
     const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({});
     const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
-    const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<'ALL' | 'FEATURED' | 'NEW' | 'OFFER' | 'IMPORTED' | 'SEASON'>('ALL');
 
     const toggleCategory = (catId: string) => {
@@ -110,17 +111,6 @@ const AdminInventoryList: React.FC<AdminInventoryListProps> = ({
                     >
                         📅 Season
                     </button>
-                </div>
-
-                <div className="relative w-full md:w-96">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Buscar producto por nombre..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-[#0c0c0c] border border-gray-800 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:border-primary focus:outline-none transition-colors"
-                    />
                 </div>
             </div>
 

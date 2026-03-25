@@ -85,9 +85,9 @@ const CategoryBento: React.FC = () => {
                 <motion.div
                   key={uniqueKey}
                   layout={shouldSlide}
-                  initial={shouldSlide ? { opacity: 0, x: 50, scale: 0.95 } : false}
-                  animate={shouldSlide ? { opacity: 1, x: 0, scale: 1 } : false}
-                  exit={shouldSlide ? { opacity: 0, x: -50, scale: 0.95 } : false}
+                  initial={shouldSlide ? { opacity: 0, x: 50, scale: 0.95 } : undefined}
+                  animate={shouldSlide ? { opacity: 1, x: 0, scale: 1 } : undefined}
+                  exit={shouldSlide ? { opacity: 0, x: -50, scale: 0.95 } : undefined}
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                   className={`flex-shrink-0 px-2 ${isMobile ? 'w-full' : 'w-[220px] md:w-[250px] lg:w-[270px] xl:w-[290px]'}`}
                 >

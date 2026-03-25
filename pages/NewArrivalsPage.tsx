@@ -9,7 +9,7 @@ import ProductCard from '../components/ProductCard';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const NewArrivalsPage: React.FC = () => {
-    const { products, cart, loading } = useShop();
+    const { products, cart, loading, addToCart } = useShop();
     const { theme } = useTheme();
     const navigate = useNavigate();
 
@@ -48,7 +48,7 @@ const NewArrivalsPage: React.FC = () => {
                     <div className="grid gap-6 grid-cols-2 md:grid-cols-4">
                         {newArrivals.length > 0 ? (
                             newArrivals.map((product) => (
-                                <ProductCard key={product.id} product={product} />
+                                <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
                             ))
                         ) : (
                             <div className="col-span-full py-20 text-center">

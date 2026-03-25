@@ -54,12 +54,12 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
             <div 
                 ref={scrollContainerRef}
                 onScroll={checkArrows}
-                className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                className="grid grid-cols-2 gap-x-3 gap-y-6 sm:flex sm:gap-6 sm:overflow-x-auto sm:snap-x sm:snap-mandatory sm:scroll-smooth sm:pb-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
                 {products.map(product => (
                     <div 
                         key={product.id} 
-                        className="flex-none w-[80vw] sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] snap-start"
+                        className="w-full flex-none sm:w-[calc(50%-12px)] lg:w-[calc(25%-18px)] sm:snap-start"
                     >
                         <ProductCard
                             product={product}
