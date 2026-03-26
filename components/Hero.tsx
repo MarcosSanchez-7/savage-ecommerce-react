@@ -3,11 +3,16 @@ import { useShop } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
 import { ChevronRight, ArrowLeft, ArrowRight, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+
+gsap.registerPlugin(useGSAP);
 
 const Hero: React.FC = () => {
   const { heroSlides, heroCarouselConfig, loading, categories, bannerBento } = useShop();
   const [currentSlide, setCurrentSlide] = useState(0);
   const timeoutRef = useRef<number | null>(null);
+  const heroRef = useRef<HTMLElement>(null);
 
   // Responsive Position Logic
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
@@ -49,6 +54,22 @@ const Hero: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Fall-from-above entrance on every Hero mount.
+  // No sessionStorage guard: in React 18 Strict Mode useLayoutEffect runs twice
+  // (both pre-paint), so any "ran once" flag set in the first run would block the
+  // second run — the one that actually shows. Without the guard, GSAP correctly
+  // sets the from-state before the browser paints and the animation plays.
+  useGSAP(() => {
+    gsap.from('.hero-anim', {
+      y: -70,
+      opacity: 0,
+      duration: 0.9,
+      ease: 'power3.out',
+      stagger: 0.14,
+      clearProps: 'all',
+    });
+  }, { scope: heroRef });
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -94,10 +115,10 @@ const Hero: React.FC = () => {
   const current = heroSlides?.[currentSlide];
 
   return (
-    <header className="w-full max-w-[1400px] mx-auto px-4 lg:px-6 py-6 pb-12">
+    <header ref={heroRef} className="w-full max-w-[1400px] mx-auto px-4 lg:px-6 py-6 pb-12">
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left Sidebar - Categories Menu (Always visible) */}
-        <aside className="hidden lg:flex w-full lg:w-[280px] shrink-0 bg-background-dark border border-gray-800 rounded-lg flex-col shadow-xl z-50 relative">
+        <aside className="hero-anim hidden lg:flex w-full lg:w-[280px] shrink-0 bg-background-dark border border-gray-800 rounded-lg flex-col shadow-xl z-50 relative">
           <div className="bg-primary text-black font-black uppercase tracking-wider px-4 py-3 flex items-center gap-2 rounded-t-lg">
             <span>CATEGORÍAS</span>
           </div>
@@ -170,8 +191,8 @@ const Hero: React.FC = () => {
         <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 auto-rows-[200px] lg:auto-rows-[240px]">
           
           {/* Main Hero Carousel - Takes top left large area */}
-          <div 
-            className="col-span-2 lg:col-span-2 row-span-2 relative rounded-lg overflow-hidden group/mainslider shadow-2xl"
+          <div
+            className="hero-anim col-span-2 lg:col-span-2 row-span-2 relative rounded-lg overflow-hidden group/mainslider shadow-2xl"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
@@ -260,7 +281,7 @@ const Hero: React.FC = () => {
                 <Link
                   key={banner.id}
                   to={banner.link}
-                  className="col-span-1 row-span-1 relative rounded-lg overflow-hidden group/bento block"
+                  className="hero-anim col-span-1 row-span-1 relative rounded-lg overflow-hidden group/bento block"
                 >
                   <div
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover/bento:scale-110"

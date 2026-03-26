@@ -6,6 +6,7 @@ import { Search, X, ArrowLeft, Heart, User, ShoppingCart, Menu, ChevronDown, Che
 import AnnouncementBar from './AnnouncementBar';
 import { useTheme } from '../context/ThemeContext';
 import { toast } from 'react-toastify';
+import LogoWithShine from './LogoWithShine';
 
 interface NavbarProps {
   cartCount: number;
@@ -174,37 +175,25 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </button>
 
             {/* Logo (Desktop) */}
-            <Link
-              to="/"
-              className="hidden md:flex items-center gap-2 group"
+            <LogoWithShine
+              linkClassName="hidden md:flex"
+              iconClassName="size-8 md:size-10"
+              textClassName="text-lg md:text-2xl"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            >
-              <div className="size-8 md:size-10 flex items-center justify-center transition-transform group-hover:scale-110">
-                <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.6)] filter brightness-110" />
-              </div>
-              <h2 className="text-text text-lg md:text-2xl font-black leading-none tracking-widest uppercase transition-colors group-hover:text-primary pt-1">
-                SAVAGE
-              </h2>
-            </Link>
+            />
           </div>
 
           {/* MOBILE LOGO (Centered and visually balanced) */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -ml-6 md:hidden z-50">
-            <Link
-              to="/"
-              className="flex items-center gap-2"
+            <LogoWithShine
+              linkClassName=""
+              iconClassName="size-8"
+              textClassName="text-lg"
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 setIsMobileMenuOpen(false);
               }}
-            >
-              <div className="size-8 flex items-center justify-center">
-                <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain" />
-              </div>
-              <h2 className="text-text text-lg font-black tracking-widest uppercase pt-1">
-                SAVAGE
-              </h2>
-            </Link>
+            />
           </div>
 
           {/* CENTER: Search Bar (Hidden on Mobile, Centered on Desktop) */}

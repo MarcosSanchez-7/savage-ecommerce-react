@@ -13,6 +13,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import WhatsAppFloatingButton from './components/WhatsAppFloatingButton';
 import { ThemeProvider } from './context/ThemeContext';
+import FootballBackground from './components/FootballBackground';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -49,6 +50,7 @@ const App: React.FC = () => {
     <AuthProvider>
       <ThemeProvider>
         <ShopProvider>
+          <FootballBackground />
           <ToastContainer
             aria-label="Notificaciones"
             position="top-center"
